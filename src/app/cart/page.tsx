@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, ShoppingBasket, Trash2 } from "lucide-react";
@@ -8,16 +9,36 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useCart } from "@/store/cart";
+import { PRODUCTS } from "@/data/products";
+import type { CartItem, Product } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { DELIVERY_FEE, MIN_ORDER_AMOUNT } from "@/lib/constants";
 
 export default function CartPage() {
-  const detailedItems = useCart((s) => s.detailedItems());
-  const subtotal = useCart((s) => s.subtotal());
+  const items = useCart((s) => s.items);
   const setQuantity = useCart((s) => s.setQuantity);
   const remove = useCart((s) => s.remove);
   const clear = useCart((s) => s.clear);
   const hydrated = useCart((s) => s.hydrated);
+
+  const detailedItems = useMemo<Array<CartItem & { product: Product }>>(
+    () =>
+      items
+        .map((i) => {
+          const product = PRODUCTS.find((p) => p.id === i.productId);
+          return product ? { ...i, product } : null;
+        })
+        .filter((x): x is CartItem & { product: Product } => x !== null),
+    [items]
+  );
+  const subtotal = useMemo(
+    () =>
+      detailedItems.reduce(
+        (sum, { product, quantity }) => sum + product.price * quantity,
+        0
+      ),
+    [detailedItems]
+  );
 
   if (!hydrated) {
     return (

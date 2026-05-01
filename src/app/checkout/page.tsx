@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MapPin, ShieldCheck, Wallet } from "lucide-react";
@@ -11,6 +11,8 @@ import { Input, Textarea } from "@/components/ui/Input";
 import { useCart } from "@/store/cart";
 import { useOrders } from "@/store/orders";
 import { useAuth } from "@/store/auth";
+import { PRODUCTS } from "@/data/products";
+import type { CartItem, Product } from "@/lib/types";
 import { formatPrice, isValidPhone, maskPhoneInput } from "@/lib/utils";
 import { DELIVERY_FEE, MIN_ORDER_AMOUNT } from "@/lib/constants";
 import {
@@ -24,10 +26,27 @@ import { cn } from "@/lib/utils";
 export default function CheckoutPage() {
   const router = useRouter();
   const items = useCart((s) => s.items);
-  const detailedItems = useCart((s) => s.detailedItems());
-  const subtotal = useCart((s) => s.subtotal());
   const clearCart = useCart((s) => s.clear);
   const hydrated = useCart((s) => s.hydrated);
+
+  const detailedItems = useMemo<Array<CartItem & { product: Product }>>(
+    () =>
+      items
+        .map((i) => {
+          const product = PRODUCTS.find((p) => p.id === i.productId);
+          return product ? { ...i, product } : null;
+        })
+        .filter((x): x is CartItem & { product: Product } => x !== null),
+    [items]
+  );
+  const subtotal = useMemo(
+    () =>
+      detailedItems.reduce(
+        (sum, { product, quantity }) => sum + product.price * quantity,
+        0
+      ),
+    [detailedItems]
+  );
   const addOrder = useOrders((s) => s.add);
   const user = useAuth((s) => s.user);
 
