@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, ClipboardList, ShoppingBasket, User } from "lucide-react";
@@ -16,9 +17,13 @@ const items = [
 
 export function BottomNav() {
   const pathname = usePathname() ?? "/";
-  const count = useCart((s) => s.count());
+  const items_ = useCart((s) => s.items);
   const hydrated = useCart((s) => s.hydrated);
   const mounted = useMounted();
+  const count = useMemo(
+    () => items_.reduce((sum, i) => sum + i.quantity, 0),
+    [items_]
+  );
 
   // Скрыть нижнее меню в админке
   if (pathname.startsWith("/admin")) return null;
