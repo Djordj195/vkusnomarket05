@@ -1,65 +1,124 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { Header } from "@/components/layout/Header";
+import { PageShell } from "@/components/layout/PageShell";
+import { SearchBar } from "@/components/catalog/SearchBar";
+import { SourceTabs } from "@/components/catalog/SourceTabs";
+import { CategoryGrid } from "@/components/catalog/CategoryGrid";
+import { ProductGrid } from "@/components/catalog/ProductCard";
+import { WeeklyBanner } from "@/components/catalog/WeeklyBanner";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Store } from "lucide-react";
+import {
+  CATEGORIES,
+  getCategoriesBySource,
+} from "@/data/categories";
+import { getShopsBySource } from "@/data/shops";
+import {
+  PRODUCTS,
+  getProductsBySource,
+  getWeeklyProducts,
+} from "@/data/products";
+import type { SourceType } from "@/lib/types";
+import { SOURCE_LABELS } from "@/lib/types";
+import Link from "next/link";
+
+export default function HomePage() {
+  const [source, setSource] = useState<SourceType>("market");
+
+  const categories = getCategoriesBySource(source);
+  const shops = getShopsBySource(source);
+  const products = getProductsBySource(source);
+  const weekly = getWeeklyProducts().filter((p) => p.source === source);
+
+  const totalProducts = PRODUCTS.length;
+  const totalCategories = CATEGORIES.length;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <PageShell>
+      <Header variant="home" />
+      <div className="px-4 pt-2 pb-4 space-y-5">
+        <SearchBar asLink />
+
+        <SourceTabs active={source} onChange={setSource} />
+
+        <WeeklyBanner count={weekly.length || 5} />
+
+        <section>
+          <div className="mb-3 flex items-end justify-between">
+            <h2 className="text-[18px] font-bold text-ink-900">Категории</h2>
+            <span className="text-[12px] text-ink-500">
+              {categories.length} разделов
+            </span>
+          </div>
+          {categories.length > 0 ? (
+            <CategoryGrid items={categories} />
+          ) : (
+            <EmptyState
+              icon={Store}
+              title="Скоро здесь появятся категории"
+              description={`В разделе «${SOURCE_LABELS[source]}» пока пусто. Категории добавляются через админ-панель.`}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          )}
+        </section>
+
+        {source === "shop" && (
+          <section>
+            <h2 className="mb-3 text-[18px] font-bold text-ink-900">Лавки</h2>
+            {shops.length === 0 ? (
+              <EmptyState
+                icon={Store}
+                title="Лавки пока не добавлены"
+                description="Раздел «Лавки» — для частных продавцов. Добавьте первого продавца через админ-панель."
+              />
+            ) : (
+              <ul className="space-y-3">
+                {shops.map((s) => (
+                  <li key={s.id}>
+                    <Link
+                      href={`/shop/${s.slug}`}
+                      className="flex items-center justify-between rounded-2xl bg-ink-50 p-4 hover:bg-ink-100"
+                    >
+                      <div>
+                        <div className="text-[15px] font-semibold text-ink-900">
+                          {s.name}
+                        </div>
+                        {s.description && (
+                          <div className="mt-0.5 text-[12px] text-ink-500">
+                            {s.description}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {products.length > 0 && (
+          <section>
+            <div className="mb-3 flex items-end justify-between">
+              <h2 className="text-[18px] font-bold text-ink-900">
+                {source === "food"
+                  ? "Хиты от кафе и ресторанов"
+                  : "Популярное на рынке"}
+              </h2>
+              <span className="text-[12px] text-ink-500">
+                {products.length}
+              </span>
+            </div>
+            <ProductGrid products={products.slice(0, 8)} />
+          </section>
+        )}
+
+        <div className="rounded-2xl bg-brand-50 p-4 text-[12px] leading-snug text-brand-800">
+          В каталоге уже {totalProducts} товаров и {totalCategories} категорий.
+          Добавляйте свои товары и магазины через админ-панель.
         </div>
-      </main>
-    </div>
+      </div>
+    </PageShell>
   );
 }
