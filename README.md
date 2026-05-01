@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🍅 ВКУСНОМАРКЕТ
 
-## Getting Started
+> Доставка свежих продуктов с рынка, товаров из лавок и готовой еды по г. Кизляр и району.
 
-First, run the development server:
+Полноценное мобильное приложение в формате PWA (Progressive Web App): открывается с телефона, ставится на главный экран, работает офлайн, поддерживает push-уведомления.
+
+## ✨ Что внутри
+
+- 🛍 **Каталог** на главном экране, переключатель «Рынок / Лавки / Готовая еда»
+- 🔍 Поиск по товарам, категории и подкатегории
+- ❤️ Избранные товары
+- 🛒 Корзина с подсчётом и минимальным заказом 500 ₽
+- 📱 Оформление заказа: имя, телефон, адрес, комментарий, оплата, геолокация
+- 📦 Заказы со статусами: Принят → Готовится → Передан курьеру → Доставлен
+- 📞 Номер курьера показывается клиенту, когда заказ передан
+- 🔐 Вход по номеру телефона (демо-код `1234`, далее SMS.ru)
+- 🛠 **Админ-панель** с отдельным входом: товары, категории, магазины/лавки, заказы, курьеры
+- 🤖 Уведомления администратору в Telegram о каждом новом заказе
+- 🌿 Дизайн: зелёный + белый + оранжевые акценты, крупные карточки, нижнее меню
+
+## 🧰 Технологии
+
+- [Next.js 16](https://nextjs.org/) (App Router) + [React 19](https://react.dev/)
+- TypeScript, [Tailwind CSS 4](https://tailwindcss.com/), [Zustand](https://github.com/pmndrs/zustand)
+- [lucide-react](https://lucide.dev/) — иконки
+- PWA-манифест и стандартные иконки 192/512/maskable
+- Telegram Bot API для уведомлений
+
+## 🚀 Запуск локально (для разработки)
 
 ```bash
+npm install
+cp .env.example .env.local   # заполните переменные позже
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Админ-панель: [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
+По умолчанию `admin` / `vkusno2025` (поменяйте через `ADMIN_LOGIN` / `ADMIN_PASSWORD`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 Сборка и деплой
 
-## Learn More
+```bash
+npm run build
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+Рекомендуемый хостинг: [Vercel](https://vercel.com/) (одна кнопка из GitHub).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔌 Интеграции
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+См. [`SETUP.md`](./SETUP.md) — пошаговая инструкция (с телефона) по подключению:
 
-## Deploy on Vercel
+1. **Vercel** — деплой и автообновление с GitHub.
+2. **Telegram-бот** — уведомления о заказах.
+3. **SMS.ru** — отправка SMS-кодов на телефон при входе.
+4. **Яндекс.Карты** — геолокация и карта в заказе.
+5. **Supabase** — база данных (товары, заказы, пользователи).
+6. **ЮKassa** — оплата картой.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🗂 Структура проекта
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/                     # Маршруты (App Router)
+    admin/                 # Админ-панель с отдельным входом
+      (dashboard)/         # Защищённые страницы админки
+      login/               # Логин админа
+    api/                   # API-эндпоинты (например, статус заказа)
+    auth/                  # Вход клиента по номеру телефона
+    cart/                  # Корзина
+    category/[slug]/       # Страница категории
+    checkout/              # Оформление заказа
+    favorites/             # Избранное клиента
+    orders/                # Список заказов и детальная страница
+    product/[slug]/        # Карточка товара
+    profile/               # Профиль клиента
+    search/                # Поиск
+    support/               # Поддержка (WhatsApp, Telegram, телефон)
+    page.tsx               # Главный экран (каталог)
+    layout.tsx             # Корневой layout с нижним меню
+  components/
+    catalog/               # ProductCard, CategoryGrid, SearchBar, SourceTabs, WeeklyBanner
+    layout/                # Header, BottomNav, PageShell, Logo
+    ui/                    # Button, Input, Badge, EmptyState
+  data/                    # Демо-данные: products.ts, categories.ts, shops.ts
+  lib/                     # constants.ts, types.ts, utils.ts, use-mounted.ts
+  server/                  # Server-only код (хранилища, server actions, telegram, admin auth)
+  store/                   # Zustand-сторы клиента: cart, favorites, auth, orders
+public/                    # Иконки PWA, og-image
+scripts/
+  generate-icons.mjs       # Скрипт пере-генерации PWA-иконок из SVG
+```
+
+## 🧪 Полезные команды
+
+| Команда            | Что делает                          |
+|--------------------|-------------------------------------|
+| `npm run dev`      | Локальный dev-сервер на 3000        |
+| `npm run build`    | Production-сборка                   |
+| `npm run start`    | Запуск собранной версии             |
+| `npm run lint`     | Проверка кода ESLint                |
+| `node scripts/generate-icons.mjs` | Пересборка PWA-иконок |
+
+## 🛟 Поддержка
+
+Контакты WhatsApp/Telegram/телефон администратора заполняются в файле
+[`src/lib/constants.ts`](./src/lib/constants.ts) в объекте `DEFAULT_CONTACTS`.
+
+---
+
+Сделано с заботой 🌿 для Кизляра.
