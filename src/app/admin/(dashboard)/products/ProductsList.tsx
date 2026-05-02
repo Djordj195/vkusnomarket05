@@ -2,12 +2,11 @@
 
 import Image from "next/image";
 import { useDeferredValue, useMemo, useState } from "react";
-import { Heart, Search, Star, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import type { Product, Category } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
-import { cn, formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import { SOURCE_SHORT_LABELS } from "@/lib/types";
-import { useAdminFavorites } from "@/store/admin-favorites";
 
 type Props = {
   products: Product[];
@@ -16,11 +15,7 @@ type Props = {
 
 export function ProductsList({ products, categories }: Props) {
   const [query, setQuery] = useState("");
-  const [onlyFav, setOnlyFav] = useState(false);
   const deferredQuery = useDeferredValue(query);
-
-  const favIds = useAdminFavorites((s) => s.ids);
-  const toggleFav = useAdminFavorites((s) => s.toggle);
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
@@ -29,16 +24,15 @@ export function ProductsList({ products, categories }: Props) {
 
   const filtered = useMemo(() => {
     const q = deferredQuery.trim().toLowerCase();
+    if (!q) return products;
     return products.filter((p) => {
-      if (onlyFav && !favIds.includes(p.id)) return false;
-      if (!q) return true;
       const cat = categoryMap.get(p.categoryId);
       return (
         p.name.toLowerCase().includes(q) ||
         (cat?.name?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [products, deferredQuery, categoryMap, onlyFav, favIds]);
+  }, [products, deferredQuery, categoryMap]);
 
   return (
     <div className="space-y-3">
@@ -69,51 +63,19 @@ export function ProductsList({ products, categories }: Props) {
         )}
       </label>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-500">
-        <span>
-          Найдено: <strong className="text-ink-900">{filtered.length}</strong>{" "}
-          из {products.length}
-        </span>
-        <button
-          type="button"
-          onClick={() => setOnlyFav((v) => !v)}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors",
-            onlyFav
-              ? "border-accent-500 bg-accent-500 text-white"
-              : "border-ink-200 bg-white text-ink-700 hover:bg-ink-50"
-          )}
-          aria-pressed={onlyFav}
-        >
-          <Star
-            size={12}
-            className={cn(onlyFav && "fill-white")}
-          />
-          Только избранное
-          {favIds.length > 0 && (
-            <span
-              className={cn(
-                "ml-0.5 rounded-full px-1.5 py-px text-[10px] font-bold",
-                onlyFav ? "bg-white/20 text-white" : "bg-ink-100 text-ink-700"
-              )}
-            >
-              {favIds.length}
-            </span>
-          )}
-        </button>
+      <div className="text-[11px] text-ink-500">
+        Найдено: <strong className="text-ink-900">{filtered.length}</strong> из{" "}
+        {products.length}
       </div>
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-ink-200 bg-white p-6 text-center text-[13px] text-ink-500">
-          {onlyFav && favIds.length === 0
-            ? "В избранном пока пусто. Нажмите на сердечко рядом с товаром, чтобы добавить."
-            : `Ничего не найдено по запросу «${deferredQuery}».`}
+          Ничего не найдено по запросу «{deferredQuery}».
         </div>
       ) : (
         <ul className="space-y-2">
           {filtered.map((p) => {
             const cat = categoryMap.get(p.categoryId);
-            const isFav = favIds.includes(p.id);
             return (
               <li
                 key={p.id}
@@ -138,38 +100,17 @@ export function ProductsList({ products, categories }: Props) {
                     <span>· {p.weight}</span>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <button
-                    type="button"
-                    onClick={() => toggleFav(p.id)}
-                    aria-pressed={isFav}
-                    aria-label={
-                      isFav ? "Убрать из избранного" : "Добавить в избранное"
-                    }
-                    className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-full border transition-colors",
-                      isFav
-                        ? "border-accent-200 bg-accent-50 text-accent-500"
-                        : "border-ink-200 bg-white text-ink-400 hover:bg-ink-50 hover:text-accent-500"
-                    )}
-                  >
-                    <Heart
-                      size={16}
-                      className={cn(isFav && "fill-accent-500")}
-                    />
-                  </button>
-                  <div className="text-right">
-                    <div className="whitespace-nowrap text-[13px] font-extrabold text-ink-900">
-                      {formatPrice(p.price)}
-                    </div>
-                    <div className="text-[10px] text-ink-500">/ {p.unit}</div>
+                <div className="text-right">
+                  <div className="whitespace-nowrap text-[13px] font-extrabold text-ink-900">
+                    {formatPrice(p.price)}
                   </div>
+                  <div className="text-[10px] text-ink-500">/ {p.unit}</div>
                   {p.inStock ? (
-                    <span className="inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                       В наличии
                     </span>
                   ) : (
-                    <span className="inline-block rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                    <span className="mt-1 inline-block rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
                       Нет
                     </span>
                   )}
