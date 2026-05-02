@@ -9,7 +9,7 @@ export const DELIVERY_FEE = 150;
 // Эти значения используются по умолчанию, если в админке ничего не задано.
 export const DEFAULT_CONTACTS = {
   whatsapp: "+79375021100", // Например: "+79280000000"
-  telegram: "@DjordjT", // Например: "@vkusnomarket"
+  telegram: "@vkusnomarket05_bot", // Например: "@vkusnomarket"
   phone: "+79375021100", // Например: "+78720000000"
   email: "",
 };
