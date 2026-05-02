@@ -1,7 +1,10 @@
 import { Store } from "lucide-react";
-import { SHOPS } from "@/data/shops";
+import { listShops } from "@/server/shops-store";
 
-export default function AdminShopsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminShopsPage() {
+  const shops = await listShops();
   return (
     <div className="space-y-5">
       <header>
@@ -14,7 +17,7 @@ export default function AdminShopsPage() {
         </p>
       </header>
 
-      {SHOPS.length === 0 ? (
+      {shops.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ink-300 bg-white py-16 text-center">
           <Store size={32} className="text-ink-400" />
           <h2 className="mt-3 text-[16px] font-bold text-ink-900">
@@ -27,7 +30,7 @@ export default function AdminShopsPage() {
         </div>
       ) : (
         <ul className="space-y-2">
-          {SHOPS.map((s) => (
+          {shops.map((s) => (
             <li
               key={s.id}
               className="flex items-center justify-between rounded-2xl border border-ink-200 bg-white p-4"

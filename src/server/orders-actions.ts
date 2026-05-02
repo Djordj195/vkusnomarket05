@@ -7,13 +7,13 @@ import {
   updateOrderStatus as updateOrderStatusInStore,
   assignCourier as assignCourierInStore,
 } from "./orders-store";
+import { getProductById } from "./products-store";
 import { notifyAdminNewOrder } from "./telegram";
 import { generateOrderNumber } from "@/lib/utils";
 import {
   DELIVERY_FEE,
   MIN_ORDER_AMOUNT,
 } from "@/lib/constants";
-import { PRODUCTS } from "@/data/products";
 import type { Order, OrderItem, OrderStatus, PaymentMethod } from "@/lib/types";
 
 export type CreateOrderInput = {
@@ -49,7 +49,7 @@ export async function createOrder(
 
   const orderItems: OrderItem[] = [];
   for (const it of input.items) {
-    const product = PRODUCTS.find((p) => p.id === it.productId);
+    const product = await getProductById(it.productId);
     if (!product) {
       return {
         ok: false,

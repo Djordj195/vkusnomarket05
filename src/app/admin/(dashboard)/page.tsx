@@ -12,15 +12,21 @@ import {
 } from "lucide-react";
 import { listOrders } from "@/server/orders-store";
 import { listCouriers } from "@/server/couriers-store";
-import { PRODUCTS } from "@/data/products";
-import { CATEGORIES } from "@/data/categories";
+import { listProducts } from "@/server/products-store";
+import { listCategories } from "@/server/categories-store";
+import { listShops } from "@/server/shops-store";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 
 export default async function AdminDashboardPage() {
-  const orders = await listOrders();
-  const couriers = await listCouriers();
+  const [orders, couriers, products, categories, shops] = await Promise.all([
+    listOrders(),
+    listCouriers(),
+    listProducts(),
+    listCategories(),
+    listShops(),
+  ]);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -126,19 +132,19 @@ export default async function AdminDashboardPage() {
             href="/admin/products"
             icon={<Package size={20} />}
             label="Товары"
-            sub={`${PRODUCTS.length} шт`}
+            sub={`${products.length} шт`}
           />
           <ServiceCard
             href="/admin/categories"
             icon={<Tag size={20} />}
             label="Категории"
-            sub={`${CATEGORIES.length} шт`}
+            sub={`${categories.length} шт`}
           />
           <ServiceCard
             href="/admin/shops"
             icon={<Store size={20} />}
             label="Магазины"
-            sub="0 шт"
+            sub={`${shops.length} шт`}
           />
           <ServiceCard
             href="/admin/couriers"

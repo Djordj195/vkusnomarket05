@@ -3,12 +3,17 @@ import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
 import { Badge } from "@/components/ui/Badge";
-import { getProductBySlug, getProductsByCategory, PRODUCTS } from "@/data/products";
-import { getCategoryById } from "@/data/categories";
+import {
+  getProductBySlug,
+  getProductsByCategory,
+} from "@/server/products-store";
+import { getCategoryById } from "@/server/categories-store";
 import { formatPrice } from "@/lib/utils";
 import { ProductActions } from "./ProductActions";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -18,24 +23,21 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   return {
     title: product?.name ?? "Товар",
     description: product?.description,
   };
 }
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
-}
-
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const category = getCategoryById(product.categoryId);
-  const related = getProductsByCategory(product.categoryId)
+  const category = await getCategoryById(product.categoryId);
+  const relatedAll = await getProductsByCategory(product.categoryId);
+  const related = relatedAll
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
 

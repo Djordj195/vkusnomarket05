@@ -33,3 +33,21 @@ export function getSupabaseAdmin(): SupabaseClient | null {
 export function isSupabaseConfigured(): boolean {
   return getSupabaseAdmin() !== null;
 }
+
+/**
+ * Detects "table missing in schema cache" errors that occur right after a
+ * Supabase project is first connected but before migrations have been
+ * applied. Used by store functions to gracefully fall back to bundled
+ * static data instead of throwing.
+ */
+export function isMissingTableError(error: {
+  code?: string;
+  message?: string;
+}): boolean {
+  return (
+    error.code === "PGRST205" ||
+    /could not find the table|relation .* does not exist/i.test(
+      error.message ?? ""
+    )
+  );
+}
