@@ -4,9 +4,11 @@ import { PageShell } from "@/components/layout/PageShell";
 import { ProductGrid } from "@/components/catalog/ProductCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Package } from "lucide-react";
-import { CATEGORIES, getCategoryBySlug } from "@/data/categories";
-import { getProductsByCategory } from "@/data/products";
+import { getCategoryBySlug } from "@/server/categories-store";
+import { getProductsByCategory } from "@/server/products-store";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -16,22 +18,18 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   return {
     title: category?.name ?? "Категория",
   };
 }
 
-export function generateStaticParams() {
-  return CATEGORIES.map((c) => ({ slug: c.slug }));
-}
-
 export default async function CategoryPage({ params }: PageProps) {
   const { slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const products = getProductsByCategory(category.id);
+  const products = await getProductsByCategory(category.id);
 
   return (
     <PageShell>
@@ -44,7 +42,8 @@ export default async function CategoryPage({ params }: PageProps) {
               {category.name}
             </h2>
             <p className="text-[12px] text-ink-500">
-              {products.length} {pluralize(products.length, ["товар", "товара", "товаров"])}
+              {products.length}{" "}
+              {pluralize(products.length, ["товар", "товара", "товаров"])}
             </p>
           </div>
         </div>
