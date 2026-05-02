@@ -1,10 +1,14 @@
 import Link from "next/link";
 import {
   Bell,
+  ChevronRight,
   ClipboardList,
   Package,
+  Tag,
   Truck,
+  Users,
   Wallet,
+  Store,
 } from "lucide-react";
 import { listOrders } from "@/server/orders-store";
 import { listCouriers } from "@/server/couriers-store";
@@ -27,160 +31,208 @@ export default async function AdminDashboardPage() {
   const activeOrders = orders.filter(
     (o) => o.status !== "delivered" && o.status !== "cancelled"
   );
+  const activeCouriers = couriers.filter((c) => c.isActive).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <header>
-        <h1 className="text-[24px] font-extrabold text-ink-900">Обзор</h1>
-        <p className="text-[14px] text-ink-500">
+        <h1 className="text-[22px] font-extrabold text-ink-900">Обзор</h1>
+        <p className="text-[13px] text-ink-500">
           Сводка по заказам и каталогу.
         </p>
       </header>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <section className="grid grid-cols-2 gap-3">
         <StatCard
-          icon={<ClipboardList size={20} />}
+          icon={<ClipboardList size={18} />}
           label="Заказы сегодня"
           value={todayOrders.length.toString()}
-          color="bg-brand-50 text-brand-700"
+          tone="brand"
         />
         <StatCard
-          icon={<Wallet size={20} />}
+          icon={<Wallet size={18} />}
           label="Выручка сегодня"
           value={formatPrice(revenue)}
-          color="bg-accent-50 text-accent-700"
+          tone="accent"
         />
         <StatCard
-          icon={<Bell size={20} />}
+          icon={<Bell size={18} />}
           label="Активные"
           value={activeOrders.length.toString()}
-          color="bg-amber-50 text-amber-700"
+          tone="amber"
         />
         <StatCard
-          icon={<Truck size={20} />}
+          icon={<Truck size={18} />}
           label="Курьеры"
-          value={`${couriers.filter((c) => c.isActive).length} / ${couriers.length}`}
-          color="bg-sky-50 text-sky-700"
+          value={`${activeCouriers} / ${couriers.length}`}
+          tone="sky"
         />
-      </div>
+      </section>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="rounded-2xl bg-white border border-ink-200 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[16px] font-bold text-ink-900">Каталог</h2>
-            <Link
-              href="/admin/products"
-              className="text-[13px] font-medium text-brand-600 hover:text-brand-700"
-            >
-              Управлять
-            </Link>
-          </div>
-          <ul className="text-[14px] space-y-1.5 text-ink-700">
-            <Row label="Товаров" value={PRODUCTS.length} />
-            <Row label="Категорий" value={CATEGORIES.length} />
-            <Row label="Магазинов / лавок" value={0} />
+      <section className="rounded-2xl border border-ink-200 bg-white p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[15px] font-bold text-ink-900">
+            Последние заказы
+          </h2>
+          <Link
+            href="/admin/orders"
+            className="text-[12px] font-semibold text-brand-600"
+          >
+            Все →
+          </Link>
+        </div>
+
+        {orders.length === 0 ? (
+          <p className="rounded-xl bg-ink-50 px-3 py-4 text-center text-[13px] text-ink-500">
+            Заказов пока нет
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {orders.slice(0, 5).map((o) => (
+              <li key={o.id}>
+                <Link
+                  href={`/admin/orders/${o.id}`}
+                  className="flex items-center justify-between gap-2 rounded-xl bg-ink-50 px-3 py-2.5 hover:bg-ink-100"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-bold text-ink-900">
+                      № {o.number}
+                    </div>
+                    <div className="truncate text-[11px] text-ink-500">
+                      {formatDate(o.createdAt)} · {o.customerName}
+                    </div>
+                  </div>
+                  <Badge tone="brand">{ORDER_STATUS_LABELS[o.status]}</Badge>
+                  <span className="text-[13px] font-bold text-ink-900">
+                    {formatPrice(o.total)}
+                  </span>
+                </Link>
+              </li>
+            ))}
           </ul>
-        </div>
+        )}
+      </section>
 
-        <div className="rounded-2xl bg-white border border-ink-200 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[16px] font-bold text-ink-900">
-              Последние заказы
-            </h2>
-            <Link
-              href="/admin/orders"
-              className="text-[13px] font-medium text-brand-600 hover:text-brand-700"
-            >
-              Все
-            </Link>
-          </div>
-          {orders.length === 0 ? (
-            <p className="text-[13px] text-ink-500">Заказов пока нет.</p>
-          ) : (
-            <ul className="space-y-2">
-              {orders.slice(0, 5).map((o) => (
-                <li key={o.id}>
-                  <Link
-                    href={`/admin/orders/${o.id}`}
-                    className="flex items-center justify-between rounded-lg p-2 hover:bg-ink-50"
-                  >
-                    <div>
-                      <div className="text-[13px] font-semibold text-ink-900">
-                        № {o.number}
-                      </div>
-                      <div className="text-[11px] text-ink-500">
-                        {formatDate(o.createdAt)} · {o.customerName}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge tone="brand">
-                        {ORDER_STATUS_LABELS[o.status]}
-                      </Badge>
-                      <span className="text-[14px] font-bold text-ink-900">
-                        {formatPrice(o.total)}
-                      </span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+      <section>
+        <h2 className="mb-2 text-[15px] font-bold text-ink-900">Управление</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <ServiceCard
+            href="/admin/orders"
+            icon={<ClipboardList size={20} />}
+            label="Заказы"
+            sub={`${orders.length} в системе`}
+          />
+          <ServiceCard
+            href="/admin/products"
+            icon={<Package size={20} />}
+            label="Товары"
+            sub={`${PRODUCTS.length} шт`}
+          />
+          <ServiceCard
+            href="/admin/categories"
+            icon={<Tag size={20} />}
+            label="Категории"
+            sub={`${CATEGORIES.length} шт`}
+          />
+          <ServiceCard
+            href="/admin/shops"
+            icon={<Store size={20} />}
+            label="Магазины"
+            sub="0 шт"
+          />
+          <ServiceCard
+            href="/admin/couriers"
+            icon={<Truck size={20} />}
+            label="Курьеры"
+            sub={`${activeCouriers} активных`}
+          />
+          <ServiceCard
+            href="/admin/users"
+            icon={<Users size={20} />}
+            label="Клиенты"
+            sub="0 шт"
+          />
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-        <div className="flex items-center gap-2 mb-1.5 text-amber-800 font-semibold">
-          <Package size={18} />
+      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className="mb-1.5 flex items-center gap-2 font-semibold text-amber-800">
+          <Package size={16} />
           Демо-данные
         </div>
-        <p className="text-[13px] text-amber-800/80 leading-snug">
-          Сейчас товары и категории берутся из демо-данных в файлах
-          <code className="mx-1 rounded bg-amber-100 px-1 font-mono">src/data/</code>.
-          После подключения базы данных Supabase их можно будет добавлять и
-          редактировать прямо отсюда.
+        <p className="text-[12px] leading-snug text-amber-800/80">
+          Сейчас товары и категории берутся из демо-файлов{" "}
+          <code className="rounded bg-amber-100 px-1 font-mono">src/data/</code>.
+          После подключения Supabase их можно будет редактировать прямо отсюда.
         </p>
-      </div>
+      </section>
     </div>
   );
 }
+
+const STAT_TONES: Record<string, string> = {
+  brand: "bg-brand-50 text-brand-700",
+  accent: "bg-accent-50 text-accent-700",
+  amber: "bg-amber-50 text-amber-700",
+  sky: "bg-sky-50 text-sky-700",
+};
 
 function StatCard({
   icon,
   label,
   value,
-  color,
+  tone,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  color: string;
+  tone: keyof typeof STAT_TONES | string;
 }) {
   return (
-    <div className="rounded-2xl bg-white border border-ink-200 p-4">
+    <div className="rounded-2xl border border-ink-200 bg-white p-3">
       <div
-        className={`flex h-9 w-9 items-center justify-center rounded-xl ${color}`}
+        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+          STAT_TONES[tone] ?? STAT_TONES.brand
+        }`}
       >
         {icon}
       </div>
-      <div className="mt-3 text-[12px] font-medium text-ink-500">{label}</div>
-      <div className="mt-0.5 text-[20px] font-extrabold text-ink-900">
+      <div className="mt-2 text-[11px] font-medium leading-tight text-ink-500">
+        {label}
+      </div>
+      <div className="mt-0.5 text-[18px] font-extrabold text-ink-900">
         {value}
       </div>
     </div>
   );
 }
 
-function Row({
+function ServiceCard({
+  href,
+  icon,
   label,
-  value,
+  sub,
 }: {
+  href: string;
+  icon: React.ReactNode;
   label: string;
-  value: number | string;
+  sub: string;
 }) {
   return (
-    <li className="flex justify-between">
-      <span className="text-ink-500">{label}</span>
-      <span className="font-semibold text-ink-900">{value}</span>
-    </li>
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3 hover:border-brand-300 hover:bg-brand-50"
+    >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13px] font-bold text-ink-900">
+          {label}
+        </div>
+        <div className="truncate text-[11px] text-ink-500">{sub}</div>
+      </div>
+      <ChevronRight size={16} className="text-ink-400" />
+    </Link>
   );
 }
