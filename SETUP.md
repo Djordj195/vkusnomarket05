@@ -110,20 +110,27 @@ export const DEFAULT_CONTACTS = {
 
 ---
 
-## ✅ Шаг 6. Supabase (полноценная база данных) — опционально
+## ✅ Шаг 6. Supabase — постоянное хранение заказов
 
-Сейчас товары, категории и заказы хранятся в файлах кода и в памяти сервера. Это работает для запуска, но при перезапусках Vercel заказы пропадают (Telegram-уведомление остаётся).
+По умолчанию заказы и курьеры хранятся в памяти процесса Vercel и **сбрасываются** при холодных стартах серверной функции. Telegram-уведомление о заказе при этом приходит, но заказ исчезает из админки. Чтобы починить — подключите Supabase:
 
-Когда захотите хранить всё в настоящей базе:
+1. Зарегистрируйтесь на [https://supabase.com/](https://supabase.com/) → **Start your project** (войдите через GitHub).
+2. **New Project** → название `vkusnomarket`, регион **Frankfurt**, придумайте пароль БД.
+3. Подождите 1–2 минуты, пока проект создастся.
+4. **Project Settings (⚙) → API** → скопируйте 3 значения:
+   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon public** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **service_role secret** → `SUPABASE_SERVICE_ROLE_KEY` (никому не показывайте!)
+5. В Vercel → ваш проект → **Settings → Environment Variables** добавьте все 3 (для всех окружений: Production, Preview, Development).
+6. В Supabase → **SQL Editor** → **New query** → вставьте содержимое файла [`supabase/migrations/0001_initial_schema.sql`](./supabase/migrations/0001_initial_schema.sql) → нажмите **Run**.
+7. В Vercel → **Deployments** → у самого верхнего «...» → **Redeploy** (без этого новые env-переменные не подхватятся).
 
-1. Зарегистрируйтесь на [https://supabase.com/](https://supabase.com/).
-2. Create New Project → выберите регион ближе к России (Frankfurt).
-3. Settings → API → скопируйте:
-   - URL → переменная `NEXT_PUBLIC_SUPABASE_URL`
-   - anon public → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - service_role (секрет!) → `SUPABASE_SERVICE_ROLE_KEY`
-4. Добавьте все 3 в Vercel.
-5. Сообщите — мы создадим таблицы и подключим админку к настоящей базе.
+После этого:
+- Заказы перестанут пропадать.
+- Курьеров можно добавлять/удалять через админку, и они тоже сохранятся.
+- Статусы заказов меняются и видны клиенту.
+
+Если переменные пустые — приложение работает в режиме in-memory (как раньше).
 
 ---
 
