@@ -69,3 +69,81 @@ export async function getShopById(id: string): Promise<Shop | undefined> {
   }
   return STATIC_SHOPS.find((s) => s.id === id);
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// Admin write API (Supabase-only — fails clearly if DB not configured)
+// ──────────────────────────────────────────────────────────────────────────
+
+function shopToRow(s: Omit<Shop, "id"> & { id?: string }) {
+  const row: Record<string, unknown> = {
+    slug: s.slug,
+    name: s.name,
+    source: s.source,
+    description: s.description ?? null,
+    cover: s.cover ?? null,
+    rating: s.rating ?? null,
+    is_open: s.isOpen ?? true,
+  };
+  if (s.id) row.id = s.id;
+  return row;
+}
+
+export async function createShop(input: Omit<Shop, "id">): Promise<Shop> {
+  if (!isSupabaseConfigured()) {
+    throw new Error(
+      "База данных не подключена. Заполните NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в Vercel и пересоберите проект."
+    );
+  }
+  const sb = getSupabaseAdmin()!;
+  const id = `shop-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  const { data, error } = await sb
+    .from("shops")
+    .insert(shopToRow({ ...input, id }))
+    .select()
+    .single();
+  if (error) throw new Error(`createShop: ${error.message}`);
+  return rowToShop(data as ShopRow);
+}
+
+export async function updateShop(
+  id: string,
+  patch: Partial<Omit<Shop, "id">>
+): Promise<Shop | undefined> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("База данных не подключена. Редактирование недоступно.");
+  }
+  const sb = getSupabaseAdmin()!;
+  const dbPatch: Record<string, unknown> = {};
+  if (patch.slug !== undefined) dbPatch.slug = patch.slug;
+  if (patch.name !== undefined) dbPatch.name = patch.name;
+  if (patch.source !== undefined) dbPatch.source = patch.source;
+  if (patch.description !== undefined)
+    dbPatch.description = patch.description ?? null;
+  if (patch.cover !== undefined) dbPatch.cover = patch.cover ?? null;
+  if (patch.rating !== undefined) dbPatch.rating = patch.rating ?? null;
+  if (patch.isOpen !== undefined) dbPatch.is_open = patch.isOpen;
+
+  const { data, error } = await sb
+    .from("shops")
+    .update(dbPatch)
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+  if (error) throw new Error(`updateShop: ${error.message}`);
+  return data ? rowToShop(data as ShopRow) : undefined;
+}
+
+export async function deleteShop(id: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("База данных не подключена. Удаление недоступно.");
+  }
+  const sb = getSupabaseAdmin()!;
+  // The FK in `products.shop_id` is `on delete set null`, so deleting a shop
+  // simply detaches its products — no extra guard needed.
+  const { error, count } = await sb
+    .from("shops")
+    .delete({ count: "exact" })
+    .eq("id", id);
+  if (error) throw new Error(`deleteShop: ${error.message}`);
+  return (count ?? 0) > 0;
+}
