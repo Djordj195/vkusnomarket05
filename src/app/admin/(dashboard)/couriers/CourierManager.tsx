@@ -56,8 +56,45 @@ export function CourierManager({
   };
 
   return (
-    <div className="grid md:grid-cols-3 gap-4">
-      <div className="md:col-span-2 rounded-2xl border border-ink-200 bg-white">
+    <div className="space-y-4">
+      <form
+        onSubmit={submit}
+        className="rounded-2xl border border-ink-200 bg-white p-4"
+      >
+        <h2 className="mb-3 flex items-center gap-2 text-[15px] font-bold text-ink-900">
+          <UserPlus size={18} />
+          Новый курьер
+        </h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <Input
+              label="Имя"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="flex-1">
+            <Input
+              label="Телефон"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              error={error ?? undefined}
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={pending}
+            className="sm:w-auto"
+            fullWidth
+          >
+            {pending ? "Добавляем..." : "Сохранить изменения"}
+          </Button>
+        </div>
+      </form>
+
+      <div className="rounded-2xl border border-ink-200 bg-white">
         {initialCouriers.length === 0 ? (
           <div className="p-8 text-center text-[13px] text-ink-500">
             Курьеры ещё не добавлены.
@@ -65,67 +102,44 @@ export function CourierManager({
         ) : (
           <ul className="divide-y divide-ink-100">
             {initialCouriers.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div>
-                  <div className="font-semibold text-ink-900">{c.name}</div>
-                  <div className="text-[12px] text-ink-500">{c.phone}</div>
+              <li
+                key={c.id}
+                className="flex items-center justify-between gap-3 px-4 py-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold text-ink-900">
+                    {c.name}
+                  </div>
+                  <div className="truncate text-[12px] text-ink-500">
+                    {c.phone}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => toggle(c)}
-                    className="flex items-center"
-                  >
-                    {c.isActive ? (
-                      <Badge tone="success">Активен</Badge>
-                    ) : (
-                      <Badge tone="neutral">Не активен</Badge>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => remove(c)}
-                    disabled={pending}
-                    aria-label="Удалить"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => toggle(c)}
+                  className="shrink-0"
+                >
+                  {c.isActive ? (
+                    <Badge tone="success">Активен</Badge>
+                  ) : (
+                    <Badge tone="neutral">Не активен</Badge>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => remove(c)}
+                  disabled={pending}
+                  aria-label="Удалить"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-400 hover:bg-red-50 hover:text-red-600"
+                >
+                  <Trash2 size={16} />
+                </button>
               </li>
             ))}
           </ul>
         )}
       </div>
-
-      <form
-        onSubmit={submit}
-        className="space-y-3 rounded-2xl border border-ink-200 bg-white p-5"
-      >
-        <h2 className="flex items-center gap-2 text-[15px] font-bold text-ink-900">
-          <UserPlus size={18} />
-          Новый курьер
-        </h2>
-        <Input
-          label="Имя"
-          placeholder="Например, Магомед"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <Input
-          label="Телефон"
-          placeholder="+7 (999) 123-45-67"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          required
-          error={error ?? undefined}
-        />
-        <Button type="submit" fullWidth disabled={pending}>
-          {pending ? "Добавляем..." : "Добавить"}
-        </Button>
-      </form>
     </div>
   );
 }

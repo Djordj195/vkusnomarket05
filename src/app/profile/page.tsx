@@ -12,7 +12,6 @@ import {
   Heart,
   HelpCircle,
   LogOut,
-  Phone,
   ShoppingBag,
   ChevronRight,
   Shield,
@@ -74,17 +73,6 @@ export default function ProfilePage() {
             Выйти
           </Button>
         )}
-
-        <div className="rounded-2xl bg-ink-50 p-4 text-[12px] leading-snug text-ink-500">
-          <div className="flex items-center gap-1.5 font-semibold text-ink-700">
-            <Phone size={14} />
-            Доставка по г. Кизляр и району
-          </div>
-          <p className="mt-1">
-            Минимальный заказ — 500 ₽. Время доставки уточняйте у менеджера
-            после оформления заказа.
-          </p>
-        </div>
       </div>
     </PageShell>
   );

@@ -11,7 +11,6 @@ import { WeeklyBanner } from "@/components/catalog/WeeklyBanner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Store } from "lucide-react";
 import type { Category, Product, Shop, SourceType } from "@/lib/types";
-import { SOURCE_LABELS } from "@/lib/types";
 import Link from "next/link";
 
 type Props = {
@@ -60,11 +59,7 @@ export function HomeView({ categories, shops, products }: Props) {
           {visibleCategories.length > 0 ? (
             <CategoryGrid items={visibleCategories} />
           ) : (
-            <EmptyState
-              icon={Store}
-              title="Скоро здесь появятся категории"
-              description={`В разделе «${SOURCE_LABELS[source]}» пока пусто. Категории добавляются через админ-панель.`}
-            />
+            <EmptyState icon={Store} title="Категории пока не добавлены" />
           )}
         </section>
 
@@ -72,11 +67,7 @@ export function HomeView({ categories, shops, products }: Props) {
           <section>
             <h2 className="mb-3 text-[18px] font-bold text-ink-900">Лавки</h2>
             {visibleShops.length === 0 ? (
-              <EmptyState
-                icon={Store}
-                title="Лавки пока не добавлены"
-                description="Раздел «Лавки» — для частных продавцов. Добавьте первого продавца через админ-панель."
-              />
+              <EmptyState icon={Store} title="Лавки пока не добавлены" />
             ) : (
               <ul className="space-y-3">
                 {visibleShops.map((s) => (
@@ -119,10 +110,6 @@ export function HomeView({ categories, shops, products }: Props) {
           </section>
         )}
 
-        <div className="rounded-2xl bg-brand-50 p-4 text-[12px] leading-snug text-brand-800">
-          В каталоге уже {products.length} товаров и {categories.length}{" "}
-          категорий. Добавляйте свои товары и магазины через админ-панель.
-        </div>
       </div>
     </PageShell>
   );

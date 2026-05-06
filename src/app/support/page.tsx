@@ -53,15 +53,6 @@ export default function SupportPage() {
           )}
         </ul>
 
-        <div className="rounded-2xl bg-amber-50 p-4 text-[12px] leading-snug text-amber-800">
-          <strong>Подсказка для администратора:</strong> заполните номера
-          WhatsApp и Telegram в файле{" "}
-          <code className="rounded bg-amber-100 px-1 font-mono">
-            src/lib/constants.ts
-          </code>{" "}
-          в поле <code className="rounded bg-amber-100 px-1 font-mono">DEFAULT_CONTACTS</code>.
-        </div>
-
         <Link
           href="/"
           className="block text-center text-[13px] text-ink-500 hover:text-ink-800"

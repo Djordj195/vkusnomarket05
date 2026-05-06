@@ -20,11 +20,6 @@ export default async function AdminLoginPage() {
         <div className="mt-6">
           <LoginForm />
         </div>
-        <p className="mt-4 text-center text-[11px] leading-snug text-ink-500">
-          В демо-режиме логин <strong>admin</strong>, пароль <strong>vkusno2025</strong>.
-          Поменяйте на свой через переменные окружения <code>ADMIN_LOGIN</code> и{" "}
-          <code>ADMIN_PASSWORD</code>.
-        </p>
       </div>
     </div>
   );

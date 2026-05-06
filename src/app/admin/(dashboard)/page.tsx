@@ -43,9 +43,6 @@ export default async function AdminDashboardPage() {
     <div className="space-y-5">
       <header>
         <h1 className="text-[22px] font-extrabold text-ink-900">Обзор</h1>
-        <p className="text-[13px] text-ink-500">
-          Сводка по заказам и каталогу.
-        </p>
       </header>
 
       <section className="grid grid-cols-2 gap-3">
@@ -161,17 +158,6 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-        <div className="mb-1.5 flex items-center gap-2 font-semibold text-amber-800">
-          <Package size={16} />
-          Демо-данные
-        </div>
-        <p className="text-[12px] leading-snug text-amber-800/80">
-          Сейчас товары и категории берутся из демо-файлов{" "}
-          <code className="rounded bg-amber-100 px-1 font-mono">src/data/</code>.
-          После подключения Supabase их можно будет редактировать прямо отсюда.
-        </p>
-      </section>
     </div>
   );
 }

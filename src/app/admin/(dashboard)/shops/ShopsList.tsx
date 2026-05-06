@@ -11,6 +11,7 @@ import { Pencil, Plus, Search, Store, Trash2, X } from "lucide-react";
 import type { Shop, SourceType } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { SOURCE_LABELS, SOURCE_SHORT_LABELS } from "@/lib/types";
 import {
   createShopAction,
@@ -122,12 +123,6 @@ export function ShopsList({ shops, productCounts, dbConfigured }: Props) {
 
   return (
     <div className="space-y-3">
-      {!dbConfigured && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-[12px] leading-snug text-amber-800">
-          <strong>База данных не подключена.</strong> Добавление и
-          редактирование магазинов недоступно.
-        </div>
-      )}
 
       <div className="flex items-center gap-2">
         <label className="relative block flex-1">
@@ -268,7 +263,6 @@ export function ShopsList({ shops, productCounts, dbConfigured }: Props) {
                 onChange={(e) =>
                   setEditing({ ...editing, name: e.target.value })
                 }
-                placeholder="Например, Лавка «У Магомеда»"
                 required
                 className={inputCls}
               />
@@ -285,7 +279,6 @@ export function ShopsList({ shops, productCounts, dbConfigured }: Props) {
                       .replace(/[^a-z0-9-]/g, ""),
                   })
                 }
-                placeholder="lavka-u-magomeda"
                 required
                 className={inputCls}
               />
@@ -317,32 +310,17 @@ export function ShopsList({ shops, productCounts, dbConfigured }: Props) {
                   setEditing({ ...editing, description: e.target.value })
                 }
                 rows={2}
-                placeholder="Свежие овощи и фрукты с местного рынка"
                 className={inputCls}
               />
             </Field>
 
-            <Field label="Ссылка на обложку (URL)">
-              <input
-                type="url"
-                value={editing.cover}
-                onChange={(e) =>
-                  setEditing({ ...editing, cover: e.target.value })
-                }
-                placeholder="https://..."
-                className={inputCls}
-              />
-              {editing.cover && (
-                <div className="relative mt-2 h-28 w-full overflow-hidden rounded-xl bg-ink-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={editing.cover}
-                    alt="превью"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              )}
-            </Field>
+            <ImagePicker
+              label="Обложка"
+              value={editing.cover}
+              onChange={(url) => setEditing({ ...editing, cover: url })}
+              folder="shops"
+              shape="wide"
+            />
 
             <Field label="Рейтинг (0–5, опц.)">
               <input
@@ -361,7 +339,6 @@ export function ShopsList({ shops, productCounts, dbConfigured }: Props) {
                         : Number(e.target.value),
                   })
                 }
-                placeholder="4.7"
                 className={inputCls}
               />
             </Field>
@@ -392,7 +369,7 @@ export function ShopsList({ shops, productCounts, dbConfigured }: Props) {
                 {pending
                   ? "Сохранение..."
                   : editing.id
-                  ? "Сохранить"
+                  ? "Сохранить изменения"
                   : "Создать"}
               </Button>
             </div>

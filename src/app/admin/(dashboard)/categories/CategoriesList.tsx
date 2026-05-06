@@ -11,6 +11,7 @@ import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import type { Category, SourceType } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { SOURCE_LABELS, SOURCE_SHORT_LABELS } from "@/lib/types";
 import {
   createCategoryAction,
@@ -32,8 +33,9 @@ const EMPTY: FormState = {
   slug: "",
   name: "",
   source: "market",
-  emoji: "🏷️",
+  emoji: "",
   icon: "tag",
+  image: "",
   highlight: false,
 };
 
@@ -73,6 +75,7 @@ export function CategoriesList({
       source: c.source,
       emoji: c.emoji,
       icon: c.icon,
+      image: c.image ?? "",
       highlight: c.highlight ?? false,
     });
   }
@@ -92,6 +95,7 @@ export function CategoriesList({
       source: editing.source,
       emoji: editing.emoji,
       icon: editing.icon,
+      image: editing.image,
       highlight: editing.highlight,
     };
 
@@ -123,12 +127,6 @@ export function CategoriesList({
 
   return (
     <div className="space-y-3">
-      {!dbConfigured && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-[12px] leading-snug text-amber-800">
-          <strong>База данных не подключена.</strong> Добавление и
-          редактирование категорий недоступно.
-        </div>
-      )}
 
       <div className="flex items-center gap-2">
         <label className="relative block flex-1">
@@ -192,8 +190,17 @@ export function CategoriesList({
               key={c.id}
               className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-ink-100 text-[26px]">
-                {c.emoji}
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-ink-100 text-[26px]">
+                {c.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.image}
+                    alt={c.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  c.emoji
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[14px] font-bold text-ink-900">
@@ -241,15 +248,20 @@ export function CategoriesList({
           onClose={close}
         >
           <form onSubmit={submit} className="space-y-3">
-            <Field label="Эмоджи">
+            <ImagePicker
+              label="Картинка"
+              value={editing.image ?? ""}
+              onChange={(url) => setEditing({ ...editing, image: url })}
+              folder="categories"
+            />
+
+            <Field label="Эмоджи (если без картинки)">
               <input
                 value={editing.emoji}
                 onChange={(e) =>
                   setEditing({ ...editing, emoji: e.target.value })
                 }
-                placeholder="🥕"
                 maxLength={4}
-                required
                 className={`${inputCls} text-center text-[24px]`}
               />
             </Field>
@@ -260,7 +272,6 @@ export function CategoriesList({
                 onChange={(e) =>
                   setEditing({ ...editing, name: e.target.value })
                 }
-                placeholder="Например, Овощи и фрукты"
                 required
                 className={inputCls}
               />
@@ -277,7 +288,6 @@ export function CategoriesList({
                       .replace(/[^a-z0-9-]/g, ""),
                   })
                 }
-                placeholder="ovoshchi-frukty"
                 required
                 className={inputCls}
               />
@@ -333,7 +343,7 @@ export function CategoriesList({
                 {pending
                   ? "Сохранение..."
                   : editing.id
-                  ? "Сохранить"
+                  ? "Сохранить изменения"
                   : "Создать"}
               </Button>
             </div>

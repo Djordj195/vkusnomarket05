@@ -15,6 +15,7 @@ export type CategoryFormInput = {
   source: SourceType;
   emoji: string;
   icon: string;
+  image?: string;
   highlight: boolean;
 };
 
@@ -27,7 +28,8 @@ function validate(input: CategoryFormInput): string | null {
   if (!input.slug.trim()) return "Укажите slug (латиницей через дефис).";
   if (!/^[a-z0-9-]+$/.test(input.slug))
     return "Slug должен содержать только латинские буквы, цифры и дефис.";
-  if (!input.emoji.trim()) return "Выберите эмоджи для категории.";
+  if (!input.image && !input.emoji.trim())
+    return "Выберите эмоджи или загрузите картинку.";
   return null;
 }
 
@@ -47,6 +49,7 @@ export async function createCategoryAction(
       source: input.source,
       emoji: input.emoji.trim(),
       icon: input.icon.trim() || "tag",
+      image: input.image?.trim() || undefined,
       itemsCount: 0,
       highlight: input.highlight,
     });
@@ -79,6 +82,7 @@ export async function updateCategoryAction(
       source: input.source,
       emoji: input.emoji.trim(),
       icon: input.icon.trim() || "tag",
+      image: input.image?.trim() ? input.image.trim() : undefined,
       highlight: input.highlight,
     });
     if (!category) return { ok: false, error: "Категория не найдена" };

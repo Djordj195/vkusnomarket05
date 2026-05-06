@@ -15,14 +15,12 @@ import {
   updateOrderStatus,
 } from "@/server/orders-actions";
 
-export function OrderStatusControls({
+export function CourierAssignSection({
   orderId,
-  currentStatus,
   currentCourierId,
   couriers,
 }: {
   orderId: string;
-  currentStatus: OrderStatus;
   currentCourierId?: string;
   couriers: Courier[];
 }) {
@@ -32,16 +30,11 @@ export function OrderStatusControls({
     currentCourierId ?? ""
   );
 
-  const handleStatus = (status: OrderStatus) => {
-    setError(null);
-    startTransition(async () => {
-      const res = await updateOrderStatus(orderId, status);
-      if (!res.ok) setError(res.error ?? "Ошибка");
-    });
-  };
+  const courierDirty =
+    selectedCourier !== "" && selectedCourier !== (currentCourierId ?? "");
 
-  const handleAssignCourier = () => {
-    if (!selectedCourier) return;
+  const save = () => {
+    if (!courierDirty) return;
     setError(null);
     startTransition(async () => {
       const res = await assignCourier(orderId, selectedCourier);
@@ -49,100 +42,148 @@ export function OrderStatusControls({
     });
   };
 
+  const activeCouriers = couriers.filter((c) => c.isActive);
+
   return (
-    <aside className="space-y-4">
-      <div className="rounded-2xl border border-ink-200 bg-white p-5">
-        <h2 className="mb-3 text-[15px] font-bold text-ink-900">Статус</h2>
-        <ol className="space-y-1.5">
-          {ORDER_STATUS_FLOW.map((s, i) => {
-            const stepIndex = ORDER_STATUS_FLOW.indexOf(currentStatus);
-            const done = stepIndex >= i;
-            const active = stepIndex === i;
-            return (
-              <li key={s}>
+    <section className="rounded-2xl border border-ink-200 bg-white p-4">
+      <h2 className="mb-3 text-[15px] font-bold text-ink-900">
+        Назначить курьера
+      </h2>
+      {activeCouriers.length === 0 ? (
+        <p className="text-[13px] text-ink-500">Нет активных курьеров.</p>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-2">
+            {activeCouriers.map((c) => {
+              const active = selectedCourier === c.id;
+              return (
                 <button
+                  key={c.id}
                   type="button"
-                  disabled={pending}
-                  onClick={() => handleStatus(s)}
+                  onClick={() => setSelectedCourier(c.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px]",
+                    "rounded-xl border px-3 py-2 text-[13px] font-semibold transition-colors",
                     active
-                      ? "bg-brand-50 font-bold text-brand-700"
-                      : done
-                      ? "text-ink-700 hover:bg-ink-50"
-                      : "text-ink-500 hover:bg-ink-50"
+                      ? "border-brand-500 bg-brand-500 text-white"
+                      : "border-ink-200 bg-white text-ink-700 hover:bg-ink-50"
                   )}
                 >
-                  <span
-                    className={cn(
-                      "flex h-5 w-5 items-center justify-center rounded-full border-2 text-[10px]",
-                      done
-                        ? "border-brand-500 bg-brand-500 text-white"
-                        : "border-ink-300 bg-white text-ink-500"
-                    )}
-                  >
-                    {done ? <Check size={12} /> : i + 1}
-                  </span>
-                  {ORDER_STATUS_LABELS[s]}
+                  {c.name}
                 </button>
-              </li>
-            );
-          })}
-        </ol>
-        {currentStatus !== "cancelled" && (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => handleStatus("cancelled")}
-            className="mt-2 w-full rounded-lg px-3 py-2 text-left text-[12px] text-red-600 hover:bg-red-50"
-          >
-            Отменить заказ
-          </button>
-        )}
-      </div>
-
-      <div className="rounded-2xl border border-ink-200 bg-white p-5">
-        <h2 className="mb-3 text-[15px] font-bold text-ink-900">
-          Назначить курьера
-        </h2>
-        {couriers.length === 0 ? (
-          <p className="text-[13px] text-ink-500">
-            Курьеры пока не добавлены. Перейдите в раздел «Курьеры».
-          </p>
-        ) : (
-          <div className="space-y-3">
-            <select
-              value={selectedCourier}
-              onChange={(e) => setSelectedCourier(e.target.value)}
-              className="block w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-[14px] outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-            >
-              <option value="">— выберите курьера —</option>
-              {couriers
-                .filter((c) => c.isActive)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} · {c.phone}
-                  </option>
-                ))}
-            </select>
-            <Button
-              fullWidth
-              size="md"
-              disabled={!selectedCourier || pending}
-              onClick={handleAssignCourier}
-              variant="accent"
-            >
-              {pending ? "Сохраняем..." : "Назначить и передать курьеру"}
-            </Button>
+              );
+            })}
           </div>
-        )}
-      </div>
+          <Button
+            fullWidth
+            size="md"
+            className="mt-3"
+            variant="accent"
+            disabled={!courierDirty || pending}
+            onClick={save}
+          >
+            {pending ? "Сохраняем..." : "Сохранить изменения"}
+          </Button>
+          {error && (
+            <div className="mt-2 rounded-xl bg-red-50 p-2.5 text-[12px] text-red-700">
+              {error}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
 
+export function StatusSection({
+  orderId,
+  currentStatus,
+}: {
+  orderId: string;
+  currentStatus: OrderStatus;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] =
+    useState<OrderStatus>(currentStatus);
+
+  const dirty = selectedStatus !== currentStatus;
+
+  const save = () => {
+    if (!dirty) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await updateOrderStatus(orderId, selectedStatus);
+      if (!res.ok) setError(res.error ?? "Ошибка");
+    });
+  };
+
+  const stepIndex = ORDER_STATUS_FLOW.indexOf(selectedStatus);
+
+  return (
+    <section className="rounded-2xl border border-ink-200 bg-white p-4">
+      <h2 className="mb-3 text-[15px] font-bold text-ink-900">Статус</h2>
+      <div className="flex flex-wrap gap-2">
+        {ORDER_STATUS_FLOW.map((s, i) => {
+          const active = selectedStatus === s;
+          const done = stepIndex >= i;
+          return (
+            <button
+              key={s}
+              type="button"
+              disabled={pending}
+              onClick={() => setSelectedStatus(s)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[13px] font-semibold transition-colors",
+                active
+                  ? "border-brand-500 bg-brand-500 text-white"
+                  : done
+                  ? "border-brand-200 bg-brand-50 text-brand-700"
+                  : "border-ink-200 bg-white text-ink-700"
+              )}
+            >
+              <span
+                className={cn(
+                  "flex h-5 w-5 items-center justify-center rounded-full text-[10px]",
+                  active || done
+                    ? "bg-white/20 text-current"
+                    : "bg-ink-100 text-ink-500"
+                )}
+              >
+                {done ? <Check size={12} /> : i + 1}
+              </span>
+              {ORDER_STATUS_LABELS[s]}
+            </button>
+          );
+        })}
+        <button
+          key="cancelled"
+          type="button"
+          disabled={pending}
+          onClick={() => setSelectedStatus("cancelled")}
+          className={cn(
+            "rounded-xl border px-3 py-2 text-[13px] font-semibold transition-colors",
+            selectedStatus === "cancelled"
+              ? "border-red-500 bg-red-500 text-white"
+              : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+          )}
+        >
+          {ORDER_STATUS_LABELS.cancelled}
+        </button>
+      </div>
+      <Button
+        fullWidth
+        size="md"
+        className="mt-3"
+        disabled={!dirty || pending}
+        onClick={save}
+      >
+        {pending ? "Сохраняем..." : "Сохранить изменения"}
+      </Button>
       {error && (
-        <div className="rounded-2xl bg-red-50 p-3 text-[13px] text-red-700">
+        <div className="mt-2 rounded-xl bg-red-50 p-2.5 text-[12px] text-red-700">
           {error}
         </div>
       )}
-    </aside>
+    </section>
   );
 }

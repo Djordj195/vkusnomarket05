@@ -72,7 +72,6 @@ export default function AuthPage() {
           <div className="space-y-3">
             <Input
               label="Имя (необязательно)"
-              placeholder="Например, Артур"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="given-name"
@@ -86,11 +85,6 @@ export default function AuthPage() {
               autoComplete="tel"
               error={error ?? undefined}
             />
-            <div className="rounded-xl bg-amber-50 p-3 text-[12px] leading-snug text-amber-800">
-              <strong>Демо-режим:</strong> код подтверждения всегда{" "}
-              <strong>{DEMO_SMS_CODE}</strong>. Когда подключим SMS.ru, код
-              будет приходить в настоящем SMS.
-            </div>
             <Button fullWidth size="lg" onClick={sendCode} disabled={loading}>
               {loading ? "Отправляем..." : "Получить код"}
             </Button>
