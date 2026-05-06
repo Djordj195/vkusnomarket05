@@ -129,6 +129,11 @@ export async function getProductsByCategory(
   return all.filter((p) => p.categoryId === categoryId);
 }
 
+export async function getProductsByShop(shopId: string): Promise<Product[]> {
+  const all = await listProducts();
+  return all.filter((p) => p.shopId === shopId);
+}
+
 export async function getProductsBySource(
   source: SourceType
 ): Promise<Product[]> {

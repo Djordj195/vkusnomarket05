@@ -70,6 +70,24 @@ export async function getShopById(id: string): Promise<Shop | undefined> {
   return STATIC_SHOPS.find((s) => s.id === id);
 }
 
+export async function getShopBySlug(slug: string): Promise<Shop | undefined> {
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("shops")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (error) {
+      if (isMissingTableError(error))
+        return STATIC_SHOPS.find((s) => s.slug === slug);
+      throw new Error(`getShopBySlug: ${error.message}`);
+    }
+    return data ? rowToShop(data as ShopRow) : undefined;
+  }
+  return STATIC_SHOPS.find((s) => s.slug === slug);
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Admin write API (Supabase-only — fails clearly if DB not configured)
 // ──────────────────────────────────────────────────────────────────────────
