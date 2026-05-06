@@ -14,6 +14,7 @@ type CategoryRow = {
   source: SourceType;
   icon: string;
   emoji: string;
+  image: string | null;
   items_count: number;
   highlight: boolean;
   sort_order: number;
@@ -27,6 +28,7 @@ function rowToCategory(r: CategoryRow): Category {
     source: r.source,
     icon: r.icon,
     emoji: r.emoji,
+    image: r.image ?? undefined,
     itemsCount: r.items_count,
     highlight: r.highlight,
   };
@@ -107,6 +109,7 @@ function categoryToRow(c: Omit<Category, "id"> & { id?: string }) {
     source: c.source,
     icon: c.icon,
     emoji: c.emoji,
+    image: c.image ?? null,
     items_count: c.itemsCount ?? 0,
     highlight: c.highlight ?? false,
   };
@@ -160,6 +163,7 @@ export async function updateCategory(
   if (patch.source !== undefined) dbPatch.source = patch.source;
   if (patch.icon !== undefined) dbPatch.icon = patch.icon;
   if (patch.emoji !== undefined) dbPatch.emoji = patch.emoji;
+  if (patch.image !== undefined) dbPatch.image = patch.image ?? null;
   if (patch.itemsCount !== undefined) dbPatch.items_count = patch.itemsCount;
   if (patch.highlight !== undefined) dbPatch.highlight = patch.highlight;
 

@@ -12,6 +12,7 @@ import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import type { Category, Product, SourceType } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ImagePicker } from "@/components/admin/ImagePicker";
 import { formatPrice } from "@/lib/utils";
 import { SOURCE_LABELS, SOURCE_SHORT_LABELS } from "@/lib/types";
 import {
@@ -154,15 +155,6 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
 
   return (
     <div className="space-y-3">
-      {!dbConfigured && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-[12px] leading-snug text-amber-800">
-          <strong>База данных не подключена.</strong> Добавление и
-          редактирование товаров недоступно. Заполните переменные
-          NEXT_PUBLIC_SUPABASE_URL и SUPABASE_SERVICE_ROLE_KEY в Vercel и
-          пересоберите проект.
-        </div>
-      )}
-
       <div className="flex items-center gap-2">
         <label className="relative block flex-1">
           <span className="sr-only">Поиск товаров</span>
@@ -300,7 +292,6 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
                 onChange={(e) =>
                   setEditing({ ...editing, name: e.target.value })
                 }
-                placeholder="Например, Помидоры «Бычье сердце»"
                 required
                 className={inputCls}
               />
@@ -317,7 +308,6 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
                       .replace(/[^a-z0-9-]/g, ""),
                   })
                 }
-                placeholder="pomidory-bychye-serdtse"
                 required
                 className={inputCls}
               />
@@ -367,7 +357,6 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
                   onChange={(e) =>
                     setEditing({ ...editing, unit: e.target.value })
                   }
-                  placeholder="кг / шт / порция"
                   required
                   className={inputCls}
                 />
@@ -378,7 +367,6 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
                   onChange={(e) =>
                     setEditing({ ...editing, weight: e.target.value })
                   }
-                  placeholder="500 г"
                   className={inputCls}
                 />
               </Field>
@@ -419,34 +407,19 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
                   .filter((c) => c.source === editing.source)
                   .map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.emoji} {c.name}
+                      {c.emoji ? `${c.emoji} ` : ""}{c.name}
                     </option>
                   ))}
               </select>
             </Field>
 
-            <Field label="Ссылка на фото (URL)">
-              <input
-                type="url"
-                value={editing.image}
-                onChange={(e) =>
-                  setEditing({ ...editing, image: e.target.value })
-                }
-                placeholder="https://..."
-                required
-                className={inputCls}
-              />
-              {editing.image && (
-                <div className="relative mt-2 h-28 w-28 overflow-hidden rounded-xl bg-ink-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={editing.image}
-                    alt="превью"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              )}
-            </Field>
+            <ImagePicker
+              label="Фото товара"
+              value={editing.image}
+              onChange={(url) => setEditing({ ...editing, image: url })}
+              folder="products"
+              required
+            />
 
             <Field label="Описание">
               <textarea
@@ -455,7 +428,6 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
                   setEditing({ ...editing, description: e.target.value })
                 }
                 rows={3}
-                placeholder="Спелые помидоры с местного рынка..."
                 className={inputCls}
               />
             </Field>
@@ -504,7 +476,7 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
                 {pending
                   ? "Сохранение..."
                   : editing.id
-                  ? "Сохранить"
+                  ? "Сохранить изменения"
                   : "Создать"}
               </Button>
             </div>

@@ -19,6 +19,7 @@ export type Category = {
   source: SourceType;
   icon: string;
   emoji: string;
+  image?: string;
   itemsCount: number;
   highlight?: boolean;
 };

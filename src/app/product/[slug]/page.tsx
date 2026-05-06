@@ -91,18 +91,6 @@ export default async function ProductPage({ params }: PageProps) {
             {product.description}
           </p>
 
-          <div className="rounded-2xl border border-ink-200 p-4 text-[13px] leading-relaxed text-ink-600">
-            <div className="font-semibold text-ink-900">О доставке</div>
-            <ul className="mt-1.5 space-y-0.5 list-disc pl-5">
-              <li>Доставка по Кизляру и району</li>
-              <li>Минимальный заказ — 500 ₽</li>
-              <li>Оплата наличными курьеру или картой*</li>
-            </ul>
-            <p className="mt-2 text-[11px] text-ink-400">
-              * Оплата картой подключается отдельно.
-            </p>
-          </div>
-
           {related.length > 0 && (
             <section className="pt-2">
               <h2 className="mb-3 text-[16px] font-bold text-ink-900">

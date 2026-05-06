@@ -146,7 +146,6 @@ export function CheckoutView({ products }: Props) {
         <Section title="Контактные данные">
           <Input
             label="Ваше имя"
-            placeholder="Например, Артур"
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoComplete="given-name"
@@ -164,7 +163,6 @@ export function CheckoutView({ products }: Props) {
         <Section title="Адрес доставки">
           <Textarea
             label="Адрес"
-            placeholder="ул. Советская, дом 12, кв. 5, подъезд 2"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             rows={2}
@@ -192,7 +190,6 @@ export function CheckoutView({ products }: Props) {
           </button>
           <Textarea
             label="Комментарий курьеру (необязательно)"
-            placeholder="Например, домофон не работает"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={2}
@@ -205,14 +202,12 @@ export function CheckoutView({ products }: Props) {
               checked={payment === "cash"}
               onClick={() => setPayment("cash")}
               label={PAYMENT_LABELS.cash}
-              hint="Курьер привезёт сдачу"
               icon={<Wallet size={20} />}
             />
             <PaymentOption
               checked={payment === "card"}
               onClick={() => setPayment("card")}
               label={PAYMENT_LABELS.card}
-              hint="Оплата картой подключается отдельно"
               disabled
               icon={<ShieldCheck size={20} />}
             />
@@ -244,11 +239,6 @@ export function CheckoutView({ products }: Props) {
             {error}
           </div>
         )}
-
-        <p className="text-[11px] leading-snug text-ink-500">
-          Нажимая «Оформить заказ», вы соглашаетесь с условиями доставки.
-          После оформления заказ появится в разделе «Заказы».
-        </p>
 
         <div
           className="fixed bottom-[72px] inset-x-0 z-30 mx-auto max-w-md border-t border-ink-100 bg-white p-3"

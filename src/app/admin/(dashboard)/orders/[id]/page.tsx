@@ -7,7 +7,10 @@ import { listCouriers } from "@/server/couriers-store";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { ORDER_STATUS_LABELS, PAYMENT_LABELS } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
-import { OrderStatusControls } from "./OrderStatusControls";
+import {
+  CourierAssignSection,
+  StatusSection,
+} from "./OrderStatusControls";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -43,8 +46,13 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
         <Badge tone="brand">{ORDER_STATUS_LABELS[order.status]}</Badge>
       </header>
 
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 space-y-4">
+      <CourierAssignSection
+        orderId={order.id}
+        currentCourierId={order.courierId}
+        couriers={couriers}
+      />
+
+      <div className="space-y-4">
           <div className="rounded-2xl border border-ink-200 bg-white p-5">
             <h2 className="mb-3 text-[15px] font-bold text-ink-900">
               Состав заказа
@@ -142,15 +150,9 @@ export default async function AdminOrderDetailPage({ params }: PageProps) {
               />
             </ul>
           </div>
-        </div>
-
-        <OrderStatusControls
-          orderId={order.id}
-          currentStatus={order.status}
-          currentCourierId={order.courierId}
-          couriers={couriers}
-        />
       </div>
+
+      <StatusSection orderId={order.id} currentStatus={order.status} />
     </div>
   );
 }
