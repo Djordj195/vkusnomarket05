@@ -4,6 +4,7 @@ import {
   ChevronRight,
   ClipboardList,
   Package,
+  Sparkles,
   Tag,
   Truck,
   Users,
@@ -130,6 +131,12 @@ export default async function AdminDashboardPage() {
             icon={<Package size={20} />}
             label="Товары"
             sub={`${products.length} шт`}
+          />
+          <ServiceCard
+            href="/admin/weekly"
+            icon={<Sparkles size={20} />}
+            label="Товары недели"
+            sub={`${products.filter((p) => p.isWeekly).length} в разделе`}
           />
           <ServiceCard
             href="/admin/categories"

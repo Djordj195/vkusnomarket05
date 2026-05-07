@@ -35,8 +35,8 @@ export function HomeView({ categories, shops, products }: Props) {
     [products, source]
   );
   const weekly = useMemo(
-    () => products.filter((p) => p.isWeekly && p.source === source),
-    [products, source]
+    () => products.filter((p) => p.isWeekly),
+    [products]
   );
 
   return (
@@ -47,7 +47,7 @@ export function HomeView({ categories, shops, products }: Props) {
 
         <SourceTabs active={source} onChange={setSource} />
 
-        <WeeklyBanner count={weekly.length || 5} />
+        {weekly.length > 0 && <WeeklyBanner count={weekly.length} />}
 
         <section>
           <div className="mb-3 flex items-end justify-between">
