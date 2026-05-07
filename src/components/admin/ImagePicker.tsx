@@ -95,14 +95,13 @@ export function ImagePicker({
           ) : (
             <Upload size={16} />
           )}
-          <span>{pending ? "Загружаем..." : "Загрузить с телефона"}</span>
+          <span>{pending ? "Загружаем..." : "Загрузить фото"}</span>
         </label>
         <input
           id={inputId}
           ref={fileRef}
           type="file"
           accept="image/*"
-          capture="environment"
           className="sr-only"
           onChange={(e) => {
             const f = e.target.files?.[0];

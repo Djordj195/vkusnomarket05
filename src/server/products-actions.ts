@@ -6,6 +6,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  getProductById,
 } from "./products-store";
 import type { Product, SourceType } from "@/lib/types";
 
@@ -139,6 +140,32 @@ export async function deleteProductAction(id: string): Promise<Result> {
     return {
       ok: false,
       error: e instanceof Error ? e.message : "Не удалось удалить товар",
+    };
+  }
+}
+
+export async function setProductWeeklyAction(
+  id: string,
+  isWeekly: boolean
+): Promise<Result> {
+  if (!(await isAdminAuthenticated())) {
+    return { ok: false, error: "Доступ запрещён" };
+  }
+  try {
+    const existing = await getProductById(id);
+    if (!existing) return { ok: false, error: "Товар не найден" };
+    const product = await updateProduct(id, { isWeekly });
+    if (!product) return { ok: false, error: "Товар не найден" };
+    revalidatePath("/admin/weekly");
+    revalidatePath("/admin/products");
+    revalidatePath("/weekly");
+    revalidatePath("/");
+    revalidatePath(`/product/${product.slug}`);
+    return { ok: true, product };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Не удалось обновить товар",
     };
   }
 }

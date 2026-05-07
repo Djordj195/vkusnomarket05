@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Home,
   Package,
+  Sparkles,
   Store,
   Tag,
   Truck,
@@ -38,6 +39,12 @@ const items: Item[] = [
     label: "Товары",
     icon: Package,
     match: (p) => p.startsWith("/admin/products"),
+  },
+  {
+    href: "/admin/weekly",
+    label: "Недели",
+    icon: Sparkles,
+    match: (p) => p.startsWith("/admin/weekly"),
   },
   {
     href: "/admin/categories",
