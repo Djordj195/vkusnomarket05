@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
+import { BrandPill } from "@/components/layout/Logo";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/store/auth";
 import { useOrders } from "@/store/orders";
@@ -15,6 +15,11 @@ import {
   ShoppingBag,
   ChevronRight,
   Shield,
+  User as UserIcon,
+  Globe,
+  Info,
+  Briefcase,
+  Gift,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -24,45 +29,101 @@ export default function ProfilePage() {
   const favCount = useFavorites((s) => s.ids.length);
 
   return (
-    <PageShell>
-      <Header variant="page" title="Профиль" showBack={false} />
-      <div className="px-4 pt-2 pb-4 space-y-4">
+    <PageShell className="bg-white">
+      <div className="px-4 pt-3">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/profile"
+            aria-label="Бонус за друга"
+            className="inline-flex items-center gap-2 rounded-full bg-ink-900 px-3.5 py-1.5 text-[12px] font-semibold text-white"
+          >
+            <Gift size={14} className="text-accent-300" />
+            Бонус за друга
+          </Link>
+          <BrandPill />
+          <span className="w-9" />
+        </div>
+      </div>
+
+      <div className="px-4 pt-8 pb-2 flex flex-col items-center text-center">
         {user ? (
-          <div className="flex items-center gap-3 rounded-2xl bg-brand-50 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-[18px] font-bold text-white">
+          <>
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-500 text-[34px] font-extrabold text-white">
               {(user.name?.[0] || user.phone[2] || "В").toUpperCase()}
             </div>
-            <div className="flex-1 leading-tight">
-              <div className="text-[15px] font-bold text-ink-900">
-                {user.name || "Гость"}
-              </div>
-              <div className="mt-0.5 text-[13px] text-ink-600">
-                {formatPhone(user.phone)}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-2xl bg-brand-50 p-4">
-            <div className="text-[15px] font-bold text-ink-900">
-              Войдите в аккаунт
-            </div>
-            <p className="mt-1 text-[13px] text-ink-600">
-              Это позволит видеть историю заказов и сохранять адрес.
+            <h1 className="mt-4 text-[24px] font-extrabold text-ink-900">
+              {user.name || "Гость"}
+            </h1>
+            <p className="mt-1 text-[14px] text-ink-500">
+              {formatPhone(user.phone)}
             </p>
-            <Link href="/auth" className="mt-3 block">
-              <Button fullWidth>Войти по номеру телефона</Button>
+          </>
+        ) : (
+          <>
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-ink-100 text-ink-400">
+              <UserIcon size={40} strokeWidth={1.6} />
+            </div>
+            <h1 className="mt-4 text-[24px] font-extrabold text-ink-900">
+              Войдите в профиль
+            </h1>
+            <p className="mt-2 max-w-[280px] text-[14px] text-ink-500">
+              Чтобы получить доступ ко всем функциям приложения
+            </p>
+            <Link href="/auth" className="mt-5 block w-full">
+              <Button fullWidth size="lg">
+                Войти или зарегистрироваться
+              </Button>
             </Link>
-          </div>
+          </>
         )}
+      </div>
 
-        <ul className="overflow-hidden rounded-2xl border border-ink-200">
-          <Item href="/orders" icon={<ShoppingBag size={20} />} title="Мои заказы" right={ordersCount.toString()} />
-          <Item href="/favorites" icon={<Heart size={20} />} title="Избранное" right={favCount.toString()} />
-          <Item href="/support" icon={<HelpCircle size={20} />} title="Поддержка" />
-          <Item href="/admin/login" icon={<Shield size={20} />} title="Вход для администратора" />
+      <div className="px-4 pt-6">
+        <h2 className="text-[24px] font-extrabold text-ink-900">Ещё</h2>
+        <ul className="mt-3 overflow-hidden rounded-3xl bg-ink-100">
+          <Item
+            href="/orders"
+            icon={<ShoppingBag size={20} />}
+            title="Мои заказы"
+            right={ordersCount > 0 ? ordersCount.toString() : undefined}
+          />
+          <Item
+            href="/favorites"
+            icon={<Heart size={20} />}
+            title="Избранное"
+            right={favCount > 0 ? favCount.toString() : undefined}
+          />
+          <Item
+            href="/support"
+            icon={<HelpCircle size={20} />}
+            title="Поддержка"
+          />
+          <Item
+            href="/?lang=ru"
+            icon={<Globe size={20} />}
+            title="Язык и валюта"
+            right="RU · ₽"
+          />
+          <Item
+            href="/support"
+            icon={<Info size={20} />}
+            title="О приложении"
+          />
+          <Item
+            href="/admin/login"
+            icon={<Briefcase size={20} />}
+            title="Бизнесу"
+          />
+          <Item
+            href="/admin/login"
+            icon={<Shield size={20} />}
+            title="Вход для администратора"
+          />
         </ul>
+      </div>
 
-        {user && (
+      {user && (
+        <div className="px-4 pt-4">
           <Button
             variant="ghost"
             fullWidth
@@ -72,8 +133,10 @@ export default function ProfilePage() {
             <LogOut size={18} />
             Выйти
           </Button>
-        )}
-      </div>
+        </div>
+      )}
+
+      <div className="h-6" />
     </PageShell>
   );
 }
@@ -90,20 +153,18 @@ function Item({
   right?: string;
 }) {
   return (
-    <li className="border-b border-ink-100 last:border-b-0">
+    <li className="border-b border-white/60 last:border-b-0">
       <Link
         href={href}
-        className="flex items-center gap-3 px-4 py-3.5 hover:bg-ink-50"
+        className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/40"
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-ink-700 shadow-sm">
           {icon}
         </span>
-        <span className="flex-1 text-[14px] font-medium text-ink-900">
+        <span className="flex-1 text-[15px] font-medium text-ink-900">
           {title}
         </span>
-        {right && (
-          <span className="text-[13px] text-ink-500">{right}</span>
-        )}
+        {right && <span className="text-[13px] text-ink-500">{right}</span>}
         <ChevronRight size={18} className="text-ink-400" />
       </Link>
     </li>

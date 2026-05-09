@@ -1,17 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Header } from "@/components/layout/Header";
+import { useMemo } from "react";
 import { PageShell } from "@/components/layout/PageShell";
-import { SearchBar } from "@/components/catalog/SearchBar";
-import { SourceTabs } from "@/components/catalog/SourceTabs";
+import { HomeHero } from "@/components/home/HomeHero";
+import { StoriesRail } from "@/components/home/StoriesRail";
+import { HighlightCards } from "@/components/home/HighlightCards";
+import { IdeasSection } from "@/components/home/IdeasSection";
 import { CategoryGrid } from "@/components/catalog/CategoryGrid";
 import { ProductGrid } from "@/components/catalog/ProductCard";
-import { WeeklyBanner } from "@/components/catalog/WeeklyBanner";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Store } from "lucide-react";
-import type { Category, Product, Shop, SourceType } from "@/lib/types";
-import Link from "next/link";
+import type { Category, Product, Shop } from "@/lib/types";
 
 type Props = {
   categories: Category[];
@@ -19,97 +16,49 @@ type Props = {
   products: Product[];
 };
 
-export function HomeView({ categories, shops, products }: Props) {
-  const [source, setSource] = useState<SourceType>("market");
-
-  const visibleCategories = useMemo(
-    () => categories.filter((c) => c.source === source),
-    [categories, source]
-  );
-  const visibleShops = useMemo(
-    () => shops.filter((s) => s.source === source),
-    [shops, source]
-  );
-  const visibleProducts = useMemo(
-    () => products.filter((p) => p.source === source),
-    [products, source]
-  );
+export function HomeView({ categories, products }: Props) {
   const weekly = useMemo(
     () => products.filter((p) => p.isWeekly),
     [products]
   );
+  const homeCategories = categories;
+  const popularProducts = useMemo(
+    () => products.slice(0, 6),
+    [products]
+  );
 
   return (
-    <PageShell>
-      <Header variant="home" />
-      <div className="px-4 pt-2 pb-4 space-y-5">
-        <SearchBar asLink />
+    <PageShell className="bg-white" noBottomPadding>
+      <div className="pb-bottom-nav space-y-6">
+        <HomeHero />
 
-        <SourceTabs active={source} onChange={setSource} />
+        <StoriesRail weekly={weekly} />
 
-        {weekly.length > 0 && <WeeklyBanner count={weekly.length} />}
+        <HighlightCards />
 
-        <section>
-          <div className="mb-3 flex items-end justify-between">
-            <h2 className="text-[18px] font-bold text-ink-900">Категории</h2>
-            <span className="text-[12px] text-ink-500">
-              {visibleCategories.length} разделов
-            </span>
-          </div>
-          {visibleCategories.length > 0 ? (
-            <CategoryGrid items={visibleCategories} />
-          ) : (
-            <EmptyState icon={Store} title="Категории пока не добавлены" />
-          )}
-        </section>
-
-        {source === "shop" && (
+        {homeCategories.length > 0 && (
           <section>
-            <h2 className="mb-3 text-[18px] font-bold text-ink-900">Лавки</h2>
-            {visibleShops.length === 0 ? (
-              <EmptyState icon={Store} title="Лавки пока не добавлены" />
-            ) : (
-              <ul className="space-y-3">
-                {visibleShops.map((s) => (
-                  <li key={s.id}>
-                    <Link
-                      href={`/shop/${s.slug}`}
-                      className="flex items-center justify-between rounded-2xl bg-ink-50 p-4 hover:bg-ink-100"
-                    >
-                      <div>
-                        <div className="text-[15px] font-semibold text-ink-900">
-                          {s.name}
-                        </div>
-                        {s.description && (
-                          <div className="mt-0.5 text-[12px] text-ink-500">
-                            {s.description}
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        )}
-
-        {visibleProducts.length > 0 && (
-          <section>
-            <div className="mb-3 flex items-end justify-between">
-              <h2 className="text-[18px] font-bold text-ink-900">
-                {source === "food"
-                  ? "Хиты от кафе и ресторанов"
-                  : "Популярное на рынке"}
-              </h2>
-              <span className="text-[12px] text-ink-500">
-                {visibleProducts.length}
-              </span>
+            <h2 className="mb-3 px-4 text-[18px] font-bold text-ink-900">
+              Все категории
+            </h2>
+            <div className="px-4">
+              <CategoryGrid items={homeCategories} />
             </div>
-            <ProductGrid products={visibleProducts.slice(0, 8)} />
           </section>
         )}
 
+        {popularProducts.length > 0 && (
+          <section>
+            <h2 className="mb-3 px-4 text-[18px] font-bold text-ink-900">
+              Популярные товары
+            </h2>
+            <div className="px-4">
+              <ProductGrid products={popularProducts} />
+            </div>
+          </section>
+        )}
+
+        <IdeasSection />
       </div>
     </PageShell>
   );
