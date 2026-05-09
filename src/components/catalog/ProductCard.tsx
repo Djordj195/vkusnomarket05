@@ -39,11 +39,11 @@ export function ProductCard({ product }: { product: Product }) {
             e.stopPropagation();
             toggleFav(product.id);
           }}
-          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink-700 backdrop-blur transition hover:text-accent-500"
+          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink-700 backdrop-blur transition hover:text-rose-500"
         >
           <Heart
             size={16}
-            className={cn(fav && "fill-accent-500 text-accent-500")}
+            className={cn(fav && "fill-rose-500 text-rose-500")}
           />
         </button>
         {!product.inStock && (

@@ -29,7 +29,7 @@ export function ProductActions({ product }: { product: Product }) {
           aria-label={fav ? "Убрать из избранного" : "В избранное"}
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-ink-200 text-ink-700 hover:bg-ink-50"
         >
-          <Heart size={20} className={cn(fav && "fill-accent-500 text-accent-500")} />
+          <Heart size={20} className={cn(fav && "fill-rose-500 text-rose-500")} />
         </button>
 
         {qty === 0 ? (

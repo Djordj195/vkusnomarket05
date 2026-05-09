@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
-import { Phone, MessageCircle, Send, Mail } from "lucide-react";
+import { BrandPill } from "@/components/layout/Logo";
+import { Phone, MessageCircle, Send, Mail, HelpCircle } from "lucide-react";
 import { DEFAULT_CONTACTS } from "@/lib/constants";
 
 export default function SupportPage() {
@@ -9,83 +9,93 @@ export default function SupportPage() {
   const tg = DEFAULT_CONTACTS.telegram.replace(/^@/, "");
 
   return (
-    <PageShell>
-      <Header variant="page" title="Поддержка" showBack />
-      <div className="px-4 pt-2 pb-4 space-y-4">
-        <p className="text-[14px] text-ink-600">
-          Свяжитесь с нами любым удобным способом — мы ответим быстро.
-        </p>
-
-        <ul className="space-y-2">
-          <ContactItem
-            icon={<MessageCircle size={20} />}
-            title="WhatsApp"
-            subtitle={DEFAULT_CONTACTS.whatsapp || "Скоро добавим номер"}
-            href={wa ? `https://wa.me/${wa.replace(/^\+/, "")}` : undefined}
-            colorClass="bg-emerald-500 text-white"
-          />
-          <ContactItem
-            icon={<Send size={20} />}
-            title="Telegram"
-            subtitle={DEFAULT_CONTACTS.telegram || "Скоро добавим аккаунт"}
-            href={tg ? `https://t.me/${tg}` : undefined}
-            colorClass="bg-sky-500 text-white"
-          />
-          <ContactItem
-            icon={<Phone size={20} />}
-            title="Телефон"
-            subtitle={DEFAULT_CONTACTS.phone || "Скоро добавим номер"}
-            href={
-              DEFAULT_CONTACTS.phone
-                ? `tel:${DEFAULT_CONTACTS.phone.replace(/[^+\d]/g, "")}`
-                : undefined
-            }
-            colorClass="bg-brand-600 text-white"
-          />
-          {DEFAULT_CONTACTS.email && (
-            <ContactItem
-              icon={<Mail size={20} />}
-              title="Email"
-              subtitle={DEFAULT_CONTACTS.email}
-              href={`mailto:${DEFAULT_CONTACTS.email}`}
-              colorClass="bg-accent-500 text-white"
-            />
-          )}
-        </ul>
-
-        <Link
-          href="/"
-          className="block text-center text-[13px] text-ink-500 hover:text-ink-800"
-        >
-          Вернуться в каталог
-        </Link>
+    <PageShell className="bg-white">
+      <div className="px-4 pt-3">
+        <div className="flex items-center justify-between">
+          <span className="w-24" />
+          <BrandPill />
+          <Link
+            href="/?faq=1"
+            className="text-[14px] font-semibold text-brand-600"
+          >
+            Частые вопросы
+          </Link>
+        </div>
       </div>
+
+      <div className="px-4 pt-6">
+        <h1 className="text-[28px] font-extrabold text-ink-900">Чаты</h1>
+      </div>
+
+      <ul className="mt-3 px-4 space-y-1">
+        <ChatRow
+          href={wa ? `https://wa.me/${wa.replace(/^\+/, "")}` : undefined}
+          title="Поддержка"
+          subtitle="Мы рядом 24/7"
+          avatarBg="bg-emerald-500"
+          icon={<MessageCircle size={26} />}
+        />
+        <ChatRow
+          href={tg ? `https://t.me/${tg}` : undefined}
+          title="Telegram"
+          subtitle="Новости и акции"
+          avatarBg="bg-sky-500"
+          icon={<Send size={24} />}
+        />
+        <ChatRow
+          href={
+            DEFAULT_CONTACTS.phone
+              ? `tel:${DEFAULT_CONTACTS.phone.replace(/[^+\d]/g, "")}`
+              : undefined
+          }
+          title="Телефон"
+          subtitle={DEFAULT_CONTACTS.phone || "Скоро добавим номер"}
+          avatarBg="bg-brand-500"
+          icon={<Phone size={24} />}
+        />
+        {DEFAULT_CONTACTS.email && (
+          <ChatRow
+            href={`mailto:${DEFAULT_CONTACTS.email}`}
+            title="Email"
+            subtitle={DEFAULT_CONTACTS.email}
+            avatarBg="bg-accent-500"
+            icon={<Mail size={24} />}
+          />
+        )}
+        <ChatRow
+          href="/?faq=1"
+          title="Частые вопросы"
+          subtitle="Ответы за пару секунд"
+          avatarBg="bg-ink-900"
+          icon={<HelpCircle size={24} />}
+        />
+      </ul>
     </PageShell>
   );
 }
 
-function ContactItem({
-  icon,
+function ChatRow({
+  href,
   title,
   subtitle,
-  href,
-  colorClass,
+  avatarBg,
+  icon,
 }: {
-  icon: React.ReactNode;
+  href?: string;
   title: string;
   subtitle: string;
-  href?: string;
-  colorClass: string;
+  avatarBg: string;
+  icon: React.ReactNode;
 }) {
   const content = (
-    <div className="flex items-center gap-3 rounded-2xl border border-ink-200 p-4 hover:bg-ink-50">
+    <div className="flex items-center gap-3 rounded-2xl px-2 py-2.5 hover:bg-ink-50">
       <span
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl ${colorClass}`}
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${avatarBg} text-white`}
       >
         {icon}
       </span>
       <div className="flex-1 leading-tight">
-        <div className="text-[15px] font-bold text-ink-900">{title}</div>
+        <div className="text-[16px] font-bold text-ink-900">{title}</div>
         <div className="mt-0.5 text-[13px] text-ink-500">{subtitle}</div>
       </div>
     </div>
@@ -93,11 +103,16 @@ function ContactItem({
   if (!href) {
     return <li className="opacity-60">{content}</li>;
   }
+  const isExternal = href.startsWith("http") || href.startsWith("tel:") || href.startsWith("mailto:");
   return (
     <li>
-      <a href={href} target="_blank" rel="noopener noreferrer">
-        {content}
-      </a>
+      {isExternal ? (
+        <a href={href} target="_blank" rel="noopener noreferrer">
+          {content}
+        </a>
+      ) : (
+        <Link href={href}>{content}</Link>
+      )}
     </li>
   );
 }

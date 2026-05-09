@@ -1,41 +1,52 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f0fdf4;
-  --color-brand-100: #dcfce7;
-  --color-brand-200: #bbf7d0;
-  --color-brand-300: #86efac;
-  --color-brand-400: #4ade80;
-  --color-brand-500: #22c55e;
-  --color-brand-600: #16a34a;
-  --color-brand-700: #15803d;
-  --color-brand-800: #166534;
-  --color-brand-900: #14532d;
+  /* Brand: OneTwoTrip-style purple */
+  --color-brand-50: #f3f0ff;
+  --color-brand-100: #e9e3ff;
+  --color-brand-200: #d4c8ff;
+  --color-brand-300: #b6a1ff;
+  --color-brand-400: #9277ff;
+  --color-brand-500: #6f46ff;
+  --color-brand-600: #5b30f0;
+  --color-brand-700: #4824c7;
+  --color-brand-800: #3a1ea3;
+  --color-brand-900: #2c1880;
 
-  --color-accent-50: #fff7ed;
-  --color-accent-100: #ffedd5;
-  --color-accent-200: #fed7aa;
-  --color-accent-300: #fdba74;
-  --color-accent-400: #fb923c;
-  --color-accent-500: #f97316;
-  --color-accent-600: #ea580c;
-  --color-accent-700: #c2410c;
+  /* Accent: bright yellow pill */
+  --color-accent-50: #fffceb;
+  --color-accent-100: #fff7c4;
+  --color-accent-200: #ffee87;
+  --color-accent-300: #ffe53a;
+  --color-accent-400: #ffd61a;
+  --color-accent-500: #f5b800;
+  --color-accent-600: #d09600;
+  --color-accent-700: #a37300;
 
-  --color-ink-50: #f8fafc;
-  --color-ink-100: #f1f5f9;
-  --color-ink-200: #e2e8f0;
-  --color-ink-300: #cbd5e1;
-  --color-ink-400: #94a3b8;
-  --color-ink-500: #64748b;
-  --color-ink-600: #475569;
-  --color-ink-700: #334155;
-  --color-ink-800: #1e293b;
-  --color-ink-900: #0f172a;
+  /* Ink: cool slate (unchanged) */
+  --color-ink-50: #f7f8fa;
+  --color-ink-100: #eef0f4;
+  --color-ink-200: #e2e5eb;
+  --color-ink-300: #cbd0d9;
+  --color-ink-400: #98a0ad;
+  --color-ink-500: #6b7280;
+  --color-ink-600: #4a5260;
+  --color-ink-700: #2f3540;
+  --color-ink-800: #1c2028;
+  --color-ink-900: #0e1116;
+
+  /* Warm food-themed surface */
+  --color-warm-50: #fdf7ec;
+  --color-warm-100: #fbe9c9;
+  --color-warm-200: #f7d490;
+  --color-warm-300: #f1b755;
+  --color-warm-400: #e29327;
+  --color-warm-500: #c47217;
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #f4f5f7;
+  --foreground: #0e1116;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -43,10 +54,12 @@ html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "cv11";
 }
 
 /* Hide scrollbars on horizontal scrollers */
@@ -66,4 +79,24 @@ body {
 /* Bottom-nav-aware spacing helper */
 .pb-bottom-nav {
   padding-bottom: calc(72px + var(--safe-bottom));
+}
+
+/* Glassmorphism tile */
+.glass-tile {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.glass-tile-dark {
+  background: rgba(15, 17, 22, 0.28);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Soft card shadow used across home sections */
+.card-shadow {
+  box-shadow: 0 1px 2px rgba(15, 17, 22, 0.04),
+    0 6px 18px rgba(15, 17, 22, 0.06);
 }

@@ -38,7 +38,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#16a34a",
+  themeColor: "#6f46ff",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -52,8 +52,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={`${inter.variable} h-full antialiased`}>
-      <body className="bg-ink-50 min-h-full">
-        <div className="mx-auto max-w-md min-h-screen bg-white shadow-[0_0_60px_rgba(15,23,42,0.05)]">
+      <body className="bg-[var(--background)] min-h-full">
+        <div className="mx-auto max-w-md min-h-screen bg-white shadow-[0_0_60px_rgba(15,17,22,0.06)]">
           {children}
         </div>
         <BottomNav />
