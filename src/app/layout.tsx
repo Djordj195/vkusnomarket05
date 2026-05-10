@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: `%s · ${APP_NAME}`,
   },
   description:
-    "Доставка свежих продуктов с рынка, товаров из лавок и готовой еды по г. Кизляр и району. Минимальный заказ 500 ₽.",
+    "Доставка свежих продуктов с рынка, товаров из лавок и готовой еды по г. Кизляр и району.",
   applicationName: APP_NAME,
   manifest: "/manifest.webmanifest",
   appleWebApp: {

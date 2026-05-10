@@ -7,6 +7,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { RepeatOrderButton } from "@/components/orders/RepeatOrderButton";
 import { useOrders } from "@/store/orders";
 import { formatDate, formatPrice } from "@/lib/utils";
 import {
@@ -49,11 +50,11 @@ export default function OrdersPage() {
       <Header variant="page" title="Мои заказы" showBack={false} />
       <ul className="px-4 pt-2 pb-4 space-y-3">
         {orders.map((order: Order) => (
-          <li key={order.id}>
-            <Link
-              href={`/orders/${order.id}`}
-              className="block rounded-2xl border border-ink-200 p-4 hover:bg-ink-50"
-            >
+          <li
+            key={order.id}
+            className="rounded-2xl border border-ink-200 p-4 hover:bg-ink-50"
+          >
+            <Link href={`/orders/${order.id}`} className="block">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="text-[12px] text-ink-500">
@@ -76,6 +77,14 @@ export default function OrdersPage() {
                 </span>
               </div>
             </Link>
+            <div className="mt-3">
+              <RepeatOrderButton
+                order={order}
+                variant="ghost"
+                size="sm"
+                className="w-full justify-center bg-brand-50 text-brand-700 hover:bg-brand-100"
+              />
+            </div>
           </li>
         ))}
       </ul>

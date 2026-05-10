@@ -12,7 +12,7 @@ export default async function AdminDashboardLayout({
   children: React.ReactNode;
 }) {
   if (!(await isAdminAuthenticated())) {
-    redirect("/admin/login");
+    redirect("/admin/Maksud");
   }
 
   return (

@@ -10,10 +10,7 @@ import {
 import { getProductById } from "./products-store";
 import { notifyAdminNewOrder } from "./telegram";
 import { generateOrderNumber } from "@/lib/utils";
-import {
-  DELIVERY_FEE,
-  MIN_ORDER_AMOUNT,
-} from "@/lib/constants";
+import { DELIVERY_FEE } from "@/lib/constants";
 import type { Order, OrderItem, OrderStatus, PaymentMethod } from "@/lib/types";
 
 export type CreateOrderInput = {
@@ -75,13 +72,6 @@ export async function createOrder(
     (s, i) => s + i.price * i.quantity,
     0
   );
-
-  if (subtotal < MIN_ORDER_AMOUNT) {
-    return {
-      ok: false,
-      error: `Минимальная сумма заказа — ${MIN_ORDER_AMOUNT} ₽.`,
-    };
-  }
 
   if (input.payment === "card") {
     return {

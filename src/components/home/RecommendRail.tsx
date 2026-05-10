@@ -11,35 +11,51 @@ type Story = {
 const PROMO_STORIES: Story[] = [
   {
     href: "/weekly",
-    title: "−15% на овощи и зелень",
+    title: "Скидки недели",
     image:
       "https://images.unsplash.com/photo-1518843875459-f738682238a6?auto=format&fit=crop&w=480&q=70",
   },
   {
-    href: "/?source=food",
-    title: "Готовая еда: пицца и роллы",
+    href: "/section/food",
+    title: "Готовая еда",
     image:
       "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?auto=format&fit=crop&w=480&q=70",
   },
   {
-    href: "/?source=market",
-    title: "Свежее мясо с фермы",
+    href: "/section/market",
+    title: "Свежее с рынка",
     image:
       "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=480&q=70",
   },
+  {
+    href: "/shops",
+    title: "Лавки и магазины",
+    image:
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=480&q=70",
+  },
 ];
 
-export function StoriesRail({ weekly }: { weekly: Product[] }) {
-  const productStories: Story[] = weekly.slice(0, 6).map((p) => ({
-    href: `/product/${p.slug}`,
-    title: p.name,
-    image: p.image,
-  }));
+export function RecommendRail({
+  weekly,
+  popular,
+}: {
+  weekly: Product[];
+  popular: Product[];
+}) {
+  const productStories: Story[] = [...weekly, ...popular]
+    .slice(0, 8)
+    .map((p) => ({
+      href: `/product/${p.slug}`,
+      title: p.name,
+      image: p.image,
+    }));
   const stories = [...PROMO_STORIES, ...productStories];
 
   return (
     <section>
-      <h2 className="mb-2 px-4 text-[18px] font-bold text-ink-900">Истории</h2>
+      <h2 className="mb-2 px-4 text-[18px] font-bold text-ink-900">
+        Рекомендуем
+      </h2>
       <div className="-mx-0 overflow-x-auto no-scrollbar">
         <div className="flex gap-3 px-4 pb-1">
           {stories.map((s) => (

@@ -3,16 +3,11 @@
 import { useSyncExternalStore } from "react";
 
 const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
 
-/**
- * Возвращает true только после гидратации на клиенте.
- * Используем `useSyncExternalStore`, чтобы избежать setState в эффекте
- * (правило `react-hooks/set-state-in-effect` в React 19).
- */
+/** Returns true after the first client render. Used to gate UI that depends
+ *  on persisted (zustand) stores so SSR/CSR markup doesn't disagree. */
 export function useMounted(): boolean {
-  return useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false
-  );
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

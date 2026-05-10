@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, ShoppingBasket, Trash2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Minus, Plus, Repeat, ShoppingBasket, Trash2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useCart } from "@/store/cart";
 import type { CartItem, Product } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
-import { DELIVERY_FEE, MIN_ORDER_AMOUNT } from "@/lib/constants";
+import { DELIVERY_FEE } from "@/lib/constants";
 
 type Props = { products: Product[] };
 
@@ -21,6 +22,8 @@ export function CartView({ products }: Props) {
   const remove = useCart((s) => s.remove);
   const clear = useCart((s) => s.clear);
   const hydrated = useCart((s) => s.hydrated);
+  const searchParams = useSearchParams();
+  const isRepeated = searchParams?.get("repeated") === "1";
 
   const productMap = useMemo(() => {
     const m = new Map<string, Product>();
@@ -62,7 +65,7 @@ export function CartView({ products }: Props) {
         <EmptyState
           icon={ShoppingBasket}
           title="Корзина пуста"
-          description="Добавьте товары из каталога. Минимальный заказ — 500 ₽."
+          description="Добавьте товары из каталога."
           action={
             <Link href="/">
               <Button variant="primary">Перейти в каталог</Button>
@@ -73,7 +76,6 @@ export function CartView({ products }: Props) {
     );
   }
 
-  const belowMin = subtotal < MIN_ORDER_AMOUNT;
   const total = subtotal + DELIVERY_FEE;
 
   return (
@@ -94,6 +96,15 @@ export function CartView({ products }: Props) {
       />
 
       <div className="px-4 pt-2 pb-4 space-y-2">
+        {isRepeated && (
+          <div className="flex items-start gap-2 rounded-2xl bg-brand-50 p-3 text-[13px] text-brand-800">
+            <Repeat size={18} className="shrink-0 text-brand-600" />
+            <span>
+              Корзина заполнена из вашего последнего заказа. Можно изменить
+              количество, удалить или добавить товары перед оформлением.
+            </span>
+          </div>
+        )}
         {detailedItems.map(({ product, quantity }) => (
           <div
             key={product.id}
@@ -168,12 +179,6 @@ export function CartView({ products }: Props) {
           <Row label="Итого" value={formatPrice(total)} bold />
         </div>
 
-        {belowMin && (
-          <div className="rounded-2xl bg-amber-50 p-3 text-[12px] text-amber-800">
-            Минимальный заказ — {formatPrice(MIN_ORDER_AMOUNT)}. Добавьте ещё
-            на <strong>{formatPrice(MIN_ORDER_AMOUNT - subtotal)}</strong>.
-          </div>
-        )}
       </div>
 
       <div
@@ -182,8 +187,8 @@ export function CartView({ products }: Props) {
           paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
         }}
       >
-        <Link href={belowMin ? "#" : "/checkout"}>
-          <Button size="lg" fullWidth disabled={belowMin}>
+        <Link href="/checkout">
+          <Button size="lg" fullWidth>
             Оформить заказ · {formatPrice(total)}
           </Button>
         </Link>

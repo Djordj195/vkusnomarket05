@@ -2,7 +2,7 @@ export const APP_NAME = "ВКУСНОМАРКЕТ";
 export const APP_TAGLINE = "Доставка по Кизляру и району";
 export const CITY_NAME = "Кизляр";
 
-export const MIN_ORDER_AMOUNT = 500;
+// Минимальной суммы заказа нет — клиент может заказать на любую сумму.
 export const DELIVERY_FEE = 150;
 
 // Контакты — заполните позже в админке или здесь напрямую.

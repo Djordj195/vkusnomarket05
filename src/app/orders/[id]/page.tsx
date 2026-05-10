@@ -9,6 +9,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { RepeatOrderButton } from "@/components/orders/RepeatOrderButton";
 import { useOrders } from "@/store/orders";
 import { formatDate, formatPrice, cn } from "@/lib/utils";
 import {
@@ -234,6 +235,8 @@ export default function OrderPage({ params }: PageProps) {
         <Badge tone="info">
           Статус: {ORDER_STATUS_LABELS[order.status]}
         </Badge>
+
+        <RepeatOrderButton order={order} size="lg" fullWidth />
       </div>
     </PageShell>
   );
