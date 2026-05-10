@@ -16,12 +16,12 @@ type Tile = {
 };
 
 const TOP_TILES: Tile[] = [
-  { href: "/?source=market", label: "Рынок", icon: Apple, big: true },
-  { href: "/?source=food", label: "Готовая еда", icon: Pizza, big: true },
+  { href: "/section/market", label: "Рынок", icon: Apple, big: true },
+  { href: "/section/food", label: "Готовая еда", icon: Pizza, big: true },
 ];
 
 const BOTTOM_TILES: Tile[] = [
-  { href: "/?source=shop", label: "Лавки", icon: Store },
+  { href: "/shops", label: "Лавки", icon: Store },
   { href: "/orders", label: "Доставка", icon: Bike },
   { href: "/search", label: "Поиск", icon: Search },
 ];

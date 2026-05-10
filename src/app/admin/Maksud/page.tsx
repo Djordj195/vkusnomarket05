@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/server/admin-auth";
 import { LoginForm } from "./LoginForm";
 import { Logo } from "@/components/layout/Logo";
+
+export const metadata: Metadata = {
+  title: "Админ-панель",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLoginPage() {
   if (await isAdminAuthenticated()) {

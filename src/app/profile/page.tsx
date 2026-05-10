@@ -14,11 +14,9 @@ import {
   LogOut,
   ShoppingBag,
   ChevronRight,
-  Shield,
   User as UserIcon,
-  Globe,
   Info,
-  Briefcase,
+  MessageSquare,
   Gift,
 } from "lucide-react";
 
@@ -99,25 +97,14 @@ export default function ProfilePage() {
             title="Поддержка"
           />
           <Item
-            href="/?lang=ru"
-            icon={<Globe size={20} />}
-            title="Язык и валюта"
-            right="RU · ₽"
+            href="/feedback"
+            icon={<MessageSquare size={20} />}
+            title="Отзывы и предложения"
           />
           <Item
             href="/support"
             icon={<Info size={20} />}
             title="О приложении"
-          />
-          <Item
-            href="/admin/login"
-            icon={<Briefcase size={20} />}
-            title="Бизнесу"
-          />
-          <Item
-            href="/admin/login"
-            icon={<Shield size={20} />}
-            title="Вход для администратора"
           />
         </ul>
       </div>

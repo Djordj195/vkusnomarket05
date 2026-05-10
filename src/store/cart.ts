@@ -11,6 +11,7 @@ type CartState = {
   add: (productId: string, quantity?: number) => void;
   remove: (productId: string) => void;
   setQuantity: (productId: string, quantity: number) => void;
+  replaceAll: (items: CartItem[]) => void;
   clear: () => void;
 };
 
@@ -54,6 +55,12 @@ export const useCart = create<CartState>()(
               i.productId === productId ? { ...i, quantity } : i
             ),
           };
+        }),
+      replaceAll: (items) =>
+        set({
+          items: items
+            .filter((i) => i.quantity > 0)
+            .map((i) => ({ productId: i.productId, quantity: i.quantity })),
         }),
       clear: () => set({ items: [] }),
     }),

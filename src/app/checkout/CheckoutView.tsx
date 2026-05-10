@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { MapPin, ShieldCheck, Wallet } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
@@ -13,7 +12,7 @@ import { useOrders } from "@/store/orders";
 import { useAuth } from "@/store/auth";
 import type { CartItem, Product } from "@/lib/types";
 import { formatPrice, isValidPhone, maskPhoneInput } from "@/lib/utils";
-import { DELIVERY_FEE, MIN_ORDER_AMOUNT } from "@/lib/constants";
+import { DELIVERY_FEE } from "@/lib/constants";
 import {
   PAYMENT_LABELS,
   type PaymentMethod,
@@ -78,7 +77,6 @@ export function CheckoutView({ products }: Props) {
   }, [hydrated, items.length, submitting, router]);
 
   const total = subtotal + DELIVERY_FEE;
-  const belowMin = subtotal < MIN_ORDER_AMOUNT;
 
   const requestGeo = () => {
     if (!("geolocation" in navigator)) {
@@ -104,8 +102,6 @@ export function CheckoutView({ products }: Props) {
     if (!isValidPhone(phone))
       return setError("Укажите корректный номер (+7...).");
     if (!address.trim()) return setError("Укажите адрес доставки.");
-    if (belowMin)
-      return setError(`Минимальный заказ — ${formatPrice(MIN_ORDER_AMOUNT)}.`);
 
     setSubmitting(true);
     try {
@@ -250,20 +246,12 @@ export function CheckoutView({ products }: Props) {
             type="submit"
             size="lg"
             fullWidth
-            disabled={submitting || belowMin}
+            disabled={submitting}
           >
             {submitting
               ? "Оформляем..."
               : `Оформить заказ · ${formatPrice(total)}`}
           </Button>
-          {belowMin && (
-            <Link
-              href="/"
-              className="mt-2 block text-center text-[12px] text-ink-500"
-            >
-              Минимальный заказ {formatPrice(MIN_ORDER_AMOUNT)} — добавьте товары
-            </Link>
-          )}
         </div>
       </form>
     </PageShell>

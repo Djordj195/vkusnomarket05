@@ -27,5 +27,5 @@ export async function loginAction(
 export async function logoutAction(): Promise<void> {
   await adminLogout();
   revalidatePath("/admin");
-  redirect("/admin/login");
+  redirect("/admin/Maksud");
 }

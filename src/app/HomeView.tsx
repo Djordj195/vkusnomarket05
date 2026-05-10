@@ -1,13 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
+import { ArrowRight } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { HomeHero } from "@/components/home/HomeHero";
-import { StoriesRail } from "@/components/home/StoriesRail";
+import { RecommendRail } from "@/components/home/RecommendRail";
 import { HighlightCards } from "@/components/home/HighlightCards";
-import { IdeasSection } from "@/components/home/IdeasSection";
+import { RepeatLastOrderCard } from "@/components/home/RepeatLastOrderCard";
 import { CategoryGrid } from "@/components/catalog/CategoryGrid";
 import { ProductGrid } from "@/components/catalog/ProductCard";
+import { sortCategoriesByGroup } from "@/lib/category-order";
 import type { Category, Product, Shop } from "@/lib/types";
 
 type Props = {
@@ -21,7 +24,10 @@ export function HomeView({ categories, products }: Props) {
     () => products.filter((p) => p.isWeekly),
     [products]
   );
-  const homeCategories = categories;
+  const homeCategories = useMemo(
+    () => sortCategoriesByGroup(categories),
+    [categories]
+  );
   const popularProducts = useMemo(
     () => products.slice(0, 6),
     [products]
@@ -32,15 +38,29 @@ export function HomeView({ categories, products }: Props) {
       <div className="pb-bottom-nav space-y-6">
         <HomeHero />
 
-        <StoriesRail weekly={weekly} />
+        <RepeatLastOrderCard />
+
+        <RecommendRail
+          weekly={weekly}
+          popular={popularProducts.filter((p) => !p.isWeekly).slice(0, 4)}
+        />
 
         <HighlightCards />
 
         {homeCategories.length > 0 && (
           <section>
-            <h2 className="mb-3 px-4 text-[18px] font-bold text-ink-900">
-              Все категории
-            </h2>
+            <div className="mb-3 flex items-center justify-between px-4">
+              <h2 className="text-[18px] font-bold text-ink-900">
+                Все категории
+              </h2>
+              <Link
+                href="/catalog"
+                className="inline-flex items-center gap-1 text-[14px] font-semibold text-brand-600 hover:text-brand-700"
+              >
+                Всё
+                <ArrowRight size={16} />
+              </Link>
+            </div>
             <div className="px-4">
               <CategoryGrid items={homeCategories} />
             </div>
@@ -57,8 +77,6 @@ export function HomeView({ categories, products }: Props) {
             </div>
           </section>
         )}
-
-        <IdeasSection />
       </div>
     </PageShell>
   );
