@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
-  Tag,
   ClipboardList,
   MessageCircle,
   User,
@@ -27,13 +26,18 @@ const items = [
       p.startsWith("/product") ||
       p.startsWith("/search") ||
       p.startsWith("/shop") ||
-      p.startsWith("/weekly"),
+      p.startsWith("/weekly") ||
+      p.startsWith("/reviews") ||
+      p.startsWith("/section"),
   },
   {
-    href: "/deals",
-    label: "Скидки",
-    icon: Tag,
-    match: (p: string) => p.startsWith("/deals") || p.startsWith("/favorites"),
+    href: "/cart",
+    label: "Корзина",
+    icon: ShoppingBasket,
+    match: (p: string) =>
+      p.startsWith("/cart") ||
+      p.startsWith("/checkout") ||
+      p.startsWith("/favorites"),
   },
   {
     href: "/orders",
@@ -51,7 +55,10 @@ const items = [
     href: "/profile",
     label: "Профиль",
     icon: User,
-    match: (p: string) => p.startsWith("/profile") || p.startsWith("/auth"),
+    match: (p: string) =>
+      p.startsWith("/profile") ||
+      p.startsWith("/auth") ||
+      p.startsWith("/feedback"),
   },
 ] as const;
 
@@ -68,51 +75,44 @@ export function BottomNav() {
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <>
-      {mounted && hydrated && cartCount > 0 && !pathname.startsWith("/cart") && (
-        <Link
-          href="/cart"
-          aria-label="Корзина"
-          className="fixed right-4 z-40 flex items-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-white shadow-lg shadow-brand-600/40 hover:bg-brand-700"
-          style={{
-            bottom: "calc(76px + env(safe-area-inset-bottom, 0px))",
-          }}
-        >
-          <ShoppingBasket size={18} />
-          <span className="text-[13px] font-bold">{cartCount}</span>
-        </Link>
-      )}
-
-      <nav
-        aria-label="Главная навигация"
-        className="fixed bottom-0 inset-x-0 z-40 border-t border-ink-200 bg-white"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <ul className="mx-auto grid max-w-md grid-cols-5">
-          {items.map((it) => {
-            const active = it.match(pathname);
-            const Icon = it.icon;
-            return (
-              <li key={it.href} className="flex">
-                <Link
-                  href={it.href}
-                  className={cn(
-                    "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
-                    active ? "text-brand-600" : "text-ink-400 hover:text-ink-700"
-                  )}
-                >
+    <nav
+      aria-label="Главная навигация"
+      className="fixed bottom-0 inset-x-0 z-40 border-t border-ink-200 bg-white"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <ul className="mx-auto grid max-w-md grid-cols-5">
+        {items.map((it) => {
+          const active = it.match(pathname);
+          const Icon = it.icon;
+          const showBadge =
+            it.href === "/cart" && mounted && hydrated && cartCount > 0;
+          return (
+            <li key={it.href} className="flex">
+              <Link
+                href={it.href}
+                className={cn(
+                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
+                  active ? "text-brand-600" : "text-ink-400 hover:text-ink-700"
+                )}
+              >
+                <span className="relative">
                   <Icon
                     size={24}
                     strokeWidth={active ? 2.4 : 1.8}
                     className={cn(active ? "text-brand-600" : "text-ink-500")}
                   />
-                  <span>{it.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-    </>
+                  {showBadge && (
+                    <span className="absolute -right-2 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  )}
+                </span>
+                <span>{it.label}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
