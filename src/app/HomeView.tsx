@@ -6,20 +6,29 @@ import { ArrowRight } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { HomeHero } from "@/components/home/HomeHero";
 import { RecommendRail } from "@/components/home/RecommendRail";
-import { HighlightCards } from "@/components/home/HighlightCards";
 import { RepeatLastOrderCard } from "@/components/home/RepeatLastOrderCard";
+import { FeedbackHomeCard } from "@/components/home/FeedbackHomeCard";
 import { CategoryGrid } from "@/components/catalog/CategoryGrid";
 import { ProductGrid } from "@/components/catalog/ProductCard";
 import { sortCategoriesByGroup } from "@/lib/category-order";
 import type { Category, Product, Shop } from "@/lib/types";
 
+import type { ApprovedFeedback } from "@/server/feedback-store";
+
 type Props = {
   categories: Category[];
   shops: Shop[];
   products: Product[];
+  approvedFeedback: ApprovedFeedback[];
+  approvedFeedbackTotal: number;
 };
 
-export function HomeView({ categories, products }: Props) {
+export function HomeView({
+  categories,
+  products,
+  approvedFeedback,
+  approvedFeedbackTotal,
+}: Props) {
   const weekly = useMemo(
     () => products.filter((p) => p.isWeekly),
     [products]
@@ -44,8 +53,6 @@ export function HomeView({ categories, products }: Props) {
           weekly={weekly}
           popular={popularProducts.filter((p) => !p.isWeekly).slice(0, 4)}
         />
-
-        <HighlightCards />
 
         {homeCategories.length > 0 && (
           <section>
@@ -77,6 +84,11 @@ export function HomeView({ categories, products }: Props) {
             </div>
           </section>
         )}
+
+        <FeedbackHomeCard
+          items={approvedFeedback}
+          total={approvedFeedbackTotal}
+        />
       </div>
     </PageShell>
   );

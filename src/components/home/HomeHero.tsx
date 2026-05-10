@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Apple, Pizza, Store, Bike, Search, MapPin } from "lucide-react";
+
 import { CITY_NAME } from "@/lib/constants";
 import { BrandPill } from "@/components/layout/Logo";
 
@@ -66,26 +67,11 @@ export function HomeHero() {
             <HeroTile key={t.href} tile={t} />
           ))}
         </div>
-        <div className="mt-2.5 grid grid-cols-3 gap-2.5">
+        <div className="mt-2.5 mb-5 grid grid-cols-3 gap-2.5">
           {BOTTOM_TILES.map((t) => (
             <HeroTile key={t.href} tile={t} />
           ))}
         </div>
-
-        <Link
-          href="/cart"
-          className="mt-3 mb-5 flex items-center justify-between rounded-2xl bg-white/15 px-4 py-3 text-[14px] font-semibold text-white backdrop-blur-md hover:bg-white/25"
-        >
-          <span className="flex items-center gap-2.5">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/20">
-              <Bike size={16} />
-            </span>
-            Доставка от 500 ₽
-          </span>
-          <span className="text-[12px] font-medium text-white/80">
-            от 60 минут
-          </span>
-        </Link>
       </div>
     </header>
   );

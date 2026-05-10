@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   ClipboardList,
   Home,
+  MessageSquare,
   Package,
   Sparkles,
   Store,
@@ -69,6 +70,12 @@ const items: Item[] = [
     label: "Клиенты",
     icon: Users,
     match: (p) => p.startsWith("/admin/users"),
+  },
+  {
+    href: "/admin/feedback",
+    label: "Отзывы",
+    icon: MessageSquare,
+    match: (p) => p.startsWith("/admin/feedback"),
   },
 ];
 

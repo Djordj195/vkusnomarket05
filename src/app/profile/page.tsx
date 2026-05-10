@@ -17,7 +17,6 @@ import {
   User as UserIcon,
   Info,
   MessageSquare,
-  Gift,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -29,17 +28,8 @@ export default function ProfilePage() {
   return (
     <PageShell className="bg-white">
       <div className="px-4 pt-3">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/profile"
-            aria-label="Бонус за друга"
-            className="inline-flex items-center gap-2 rounded-full bg-ink-900 px-3.5 py-1.5 text-[12px] font-semibold text-white"
-          >
-            <Gift size={14} className="text-accent-300" />
-            Бонус за друга
-          </Link>
+        <div className="flex items-center justify-center">
           <BrandPill />
-          <span className="w-9" />
         </div>
       </div>
 

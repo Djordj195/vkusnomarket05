@@ -3,6 +3,7 @@ import {
   Bell,
   ChevronRight,
   ClipboardList,
+  MessageSquare,
   Package,
   Sparkles,
   Tag,
@@ -16,18 +17,21 @@ import { listCouriers } from "@/server/couriers-store";
 import { listProducts } from "@/server/products-store";
 import { listCategories } from "@/server/categories-store";
 import { listShops } from "@/server/shops-store";
+import { countPendingFeedback } from "@/server/feedback-store";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 
 export default async function AdminDashboardPage() {
-  const [orders, couriers, products, categories, shops] = await Promise.all([
-    listOrders(),
-    listCouriers(),
-    listProducts(),
-    listCategories(),
-    listShops(),
-  ]);
+  const [orders, couriers, products, categories, shops, pendingFeedback] =
+    await Promise.all([
+      listOrders(),
+      listCouriers(),
+      listProducts(),
+      listCategories(),
+      listShops(),
+      countPendingFeedback(),
+    ]);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -161,6 +165,16 @@ export default async function AdminDashboardPage() {
             icon={<Users size={20} />}
             label="Клиенты"
             sub="0 шт"
+          />
+          <ServiceCard
+            href="/admin/feedback"
+            icon={<MessageSquare size={20} />}
+            label="Отзывы"
+            sub={
+              pendingFeedback > 0
+                ? `${pendingFeedback} на модерации`
+                : "всё разобрано"
+            }
           />
         </div>
       </section>
