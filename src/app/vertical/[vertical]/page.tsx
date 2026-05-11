@@ -124,11 +124,19 @@ export default async function VerticalPage({ params }: PageProps) {
             ))}
           </ul>
         ) : (
-          <EmptyState
-            icon={Sparkles}
-            title={`Пока нет продавцов · ${VERTICAL_LABELS[v]}`}
-            description={`В ${city.name} мы ещё подключаем партнёров в эту вертикаль. Если у вас есть подходящий бизнес — напишите нам.`}
-          />
+          <div className="space-y-3">
+            <EmptyState
+              icon={Sparkles}
+              title={`Пока нет продавцов · ${VERTICAL_LABELS[v]}`}
+              description={`В ${city.name} мы ещё подключаем партнёров в эту вертикаль. Если у вас есть подходящий бизнес — оставьте заявку.`}
+            />
+            <Link
+              href="/vendor/signup"
+              className="block rounded-2xl bg-brand-600 px-4 py-3 text-center text-[14px] font-semibold text-white hover:bg-brand-700"
+            >
+              Стать продавцом
+            </Link>
+          </div>
         )}
       </div>
     </PageShell>
