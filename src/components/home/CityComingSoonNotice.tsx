@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import type { City } from "@/lib/types";
 
@@ -19,9 +20,14 @@ export function CityComingSoonNotice({ city }: { city: City }) {
             </h3>
             <p className="mt-1 text-[13px] leading-snug text-brand-800/90">
               Пока в этом городе нет подключённых продавцов. Мы выбираем
-              партнёров: кафе, магазины, аптеки и хозтовары. Если вы предприниматель —
-              напишите нам, и мы запустим ВКУСНОМАРКЕТ здесь раньше.
+              партнёров: кафе, магазины, аптеки и хозтовары.
             </p>
+            <Link
+              href="/vendor/signup"
+              className="mt-3 inline-flex items-center rounded-xl bg-brand-600 px-3 py-2 text-[13px] font-semibold text-white hover:bg-brand-700"
+            >
+              Стать продавцом в {city.name}
+            </Link>
           </div>
         </div>
       </div>

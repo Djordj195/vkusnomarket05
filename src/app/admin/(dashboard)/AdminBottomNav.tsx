@@ -54,6 +54,12 @@ const items: Item[] = [
     match: (p) => p.startsWith("/admin/categories"),
   },
   {
+    href: "/admin/vendors",
+    label: "Продавцы",
+    icon: Store,
+    match: (p) => p.startsWith("/admin/vendors"),
+  },
+  {
     href: "/admin/shops",
     label: "Магазины",
     icon: Store,

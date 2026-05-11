@@ -155,3 +155,122 @@ export async function getVendorBySlug(
   }
   return STATIC_VENDORS.find((v) => v.slug === slug);
 }
+
+export type CreateVendorInput = {
+  id: string;
+  slug: string;
+  brandName: string;
+  verticalPrimary: Vertical;
+  verticals: Vertical[];
+  cityId: string;
+  shortDescription?: string;
+  description?: string;
+  legalEntityType?: LegalEntityType;
+  legalName?: string;
+  inn?: string;
+  kpp?: string;
+  ogrn?: string;
+  legalAddress?: string;
+  licenseNumber?: string;
+  licenseExpiresAt?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactTelegram?: string;
+  contactWhatsapp?: string;
+};
+
+export async function createVendorApplication(
+  input: CreateVendorInput
+): Promise<Vendor> {
+  if (!isSupabaseConfigured()) {
+    throw new Error(
+      "createVendorApplication: Supabase не настроен. Применить миграцию 0005."
+    );
+  }
+  const sb = getSupabaseAdmin()!;
+  const row = {
+    id: input.id,
+    slug: input.slug,
+    brand_name: input.brandName,
+    vertical_primary: input.verticalPrimary,
+    verticals: input.verticals,
+    city_id: input.cityId,
+    status: "pending" as VendorStatus,
+    short_description: input.shortDescription ?? null,
+    description: input.description ?? null,
+    legal_entity_type: input.legalEntityType ?? null,
+    legal_name: input.legalName ?? null,
+    inn: input.inn ?? null,
+    kpp: input.kpp ?? null,
+    ogrn: input.ogrn ?? null,
+    legal_address: input.legalAddress ?? null,
+    license_number: input.licenseNumber ?? null,
+    license_expires_at: input.licenseExpiresAt ?? null,
+    contact_phone: input.contactPhone ?? null,
+    contact_email: input.contactEmail ?? null,
+    contact_telegram: input.contactTelegram ?? null,
+    contact_whatsapp: input.contactWhatsapp ?? null,
+    rating_avg: 0,
+    rating_count: 0,
+    featured: false,
+    subscription_tier: "free",
+    sort_order: 999,
+  };
+  const { data, error } = await sb
+    .from("vendors")
+    .insert(row)
+    .select(VENDOR_COLS)
+    .single();
+  if (error) {
+    throw new Error(`createVendorApplication: ${error.message}`);
+  }
+  return rowToVendor(data as VendorRow);
+}
+
+export async function updateVendorStatus(
+  id: string,
+  status: VendorStatus
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("updateVendorStatus: Supabase не настроен.");
+  }
+  const sb = getSupabaseAdmin()!;
+  const { error } = await sb
+    .from("vendors")
+    .update({ status })
+    .eq("id", id);
+  if (error) throw new Error(`updateVendorStatus: ${error.message}`);
+}
+
+export async function updateVendorFeatured(
+  id: string,
+  featured: boolean
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("updateVendorFeatured: Supabase не настроен.");
+  }
+  const sb = getSupabaseAdmin()!;
+  const { error } = await sb
+    .from("vendors")
+    .update({ featured })
+    .eq("id", id);
+  if (error) throw new Error(`updateVendorFeatured: ${error.message}`);
+}
+
+export async function isSlugAvailable(slug: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    return !STATIC_VENDORS.some((v) => v.slug === slug);
+  }
+  const sb = getSupabaseAdmin()!;
+  const { data, error } = await sb
+    .from("vendors")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) {
+    if (isMissingTableError(error))
+      return !STATIC_VENDORS.some((v) => v.slug === slug);
+    throw new Error(`isSlugAvailable: ${error.message}`);
+  }
+  return !data;
+}
