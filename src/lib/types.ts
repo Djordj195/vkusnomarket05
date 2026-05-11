@@ -12,6 +12,90 @@ export const SOURCE_SHORT_LABELS: Record<SourceType, string> = {
   food: "Готовая еда",
 };
 
+// Платформенные вертикали (Phase 1+). Каждый продавец работает в одной
+// из четырёх вертикалей — это определяет вкладку на главной у клиента.
+export type Vertical = "food" | "grocery" | "pharmacy" | "chemistry";
+
+export const VERTICAL_LABELS: Record<Vertical, string> = {
+  food: "Готовая еда",
+  grocery: "Продукты",
+  pharmacy: "Аптека",
+  chemistry: "Бытовая химия",
+};
+
+export const VERTICAL_SHORT_LABELS: Record<Vertical, string> = {
+  food: "Еда",
+  grocery: "Продукты",
+  pharmacy: "Аптека",
+  chemistry: "Дом",
+};
+
+export const VERTICAL_EMOJIS: Record<Vertical, string> = {
+  food: "🍱",
+  grocery: "🛒",
+  pharmacy: "💊",
+  chemistry: "🧴",
+};
+
+// Город платформы (Phase 1).
+export type CityStatus = "active" | "coming_soon" | "disabled";
+
+export type City = {
+  id: string;
+  slug: string;
+  name: string;
+  region: string;
+  regionType: string;
+  federalDistrict: string;
+  timezone: string;
+  lat: number;
+  lng: number;
+  population?: number;
+  status: CityStatus;
+  sortOrder: number;
+};
+
+// Продавец платформы (Phase 1).
+export type VendorStatus =
+  | "draft"
+  | "pending"
+  | "approved"
+  | "suspended"
+  | "blocked";
+
+export type LegalEntityType = "IP" | "OOO" | "SAMOZ" | "NONE";
+
+export type VendorContacts = {
+  phone?: string;
+  email?: string;
+  telegram?: string;
+  whatsapp?: string;
+};
+
+export type Vendor = {
+  id: string;
+  slug: string;
+  brandName: string;
+  verticalPrimary: Vertical;
+  verticals: Vertical[];
+  cityId: string;
+  ownerUserId?: string;
+  status: VendorStatus;
+  logoUrl?: string;
+  bannerUrl?: string;
+  shortDescription?: string;
+  description?: string;
+  legalEntityType?: LegalEntityType;
+  legalName?: string;
+  inn?: string;
+  contacts: VendorContacts;
+  ratingAvg: number;
+  ratingCount: number;
+  featured: boolean;
+  subscriptionTier: "free" | "basic" | "premium";
+  sortOrder: number;
+};
+
 export type Category = {
   id: string;
   slug: string;

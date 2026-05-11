@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Apple, Pizza, Store, Bike, Search, MapPin } from "lucide-react";
+import { Apple, Pizza, Store, Bike, Search } from "lucide-react";
 
-import { CITY_NAME } from "@/lib/constants";
 import { BrandPill } from "@/components/layout/Logo";
 
 const HERO_IMAGE =
@@ -27,7 +26,15 @@ const BOTTOM_TILES: Tile[] = [
   { href: "/search", label: "Поиск", icon: Search },
 ];
 
-export function HomeHero() {
+type HomeHeroProps = {
+  /**
+   * Слот для CityPicker — рендерится server-компонентом (страница /),
+   * чтобы пробросить текущий город из куки.
+   */
+  citySlot?: React.ReactNode;
+};
+
+export function HomeHero({ citySlot }: HomeHeroProps) {
   return (
     <header className="relative isolate overflow-hidden">
       {/* Background image with food theme */}
@@ -53,13 +60,7 @@ export function HomeHero() {
             </span>
           </Link>
           <BrandPill />
-          <Link
-            href="/profile"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-medium text-white backdrop-blur-md hover:bg-white/25"
-          >
-            <MapPin size={14} />
-            <span>{CITY_NAME}</span>
-          </Link>
+          {citySlot}
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-2.5">
