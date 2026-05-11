@@ -8,12 +8,13 @@ import { HomeHero } from "@/components/home/HomeHero";
 import { RecommendRail } from "@/components/home/RecommendRail";
 import { RepeatLastOrderCard } from "@/components/home/RepeatLastOrderCard";
 import { FeedbackHomeCard } from "@/components/home/FeedbackHomeCard";
+import { VendorsRail } from "@/components/home/VendorsRail";
 import { CategoryGrid } from "@/components/catalog/CategoryGrid";
 import { ProductGrid } from "@/components/catalog/ProductCard";
 import { CityPicker } from "@/components/layout/CityPicker";
 import { CityComingSoonNotice } from "@/components/home/CityComingSoonNotice";
 import { sortCategoriesByGroup } from "@/lib/category-order";
-import type { Category, City, Product, Shop } from "@/lib/types";
+import type { Category, City, Product, Shop, Vendor } from "@/lib/types";
 
 import type { ApprovedFeedback } from "@/server/feedback-store";
 
@@ -21,6 +22,7 @@ type Props = {
   categories: Category[];
   shops: Shop[];
   products: Product[];
+  vendors: Vendor[];
   approvedFeedback: ApprovedFeedback[];
   approvedFeedbackTotal: number;
   currentCity: City;
@@ -30,6 +32,7 @@ type Props = {
 export function HomeView({
   categories,
   products,
+  vendors,
   approvedFeedback,
   approvedFeedbackTotal,
   currentCity,
@@ -60,6 +63,10 @@ export function HomeView({
         {isComingSoon && <CityComingSoonNotice city={currentCity} />}
 
         <RepeatLastOrderCard />
+
+        {!isComingSoon && vendors.length > 0 && (
+          <VendorsRail vendors={vendors} cityName={currentCity.name} />
+        )}
 
         <RecommendRail
           weekly={weekly}
