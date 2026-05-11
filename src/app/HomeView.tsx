@@ -10,8 +10,10 @@ import { RepeatLastOrderCard } from "@/components/home/RepeatLastOrderCard";
 import { FeedbackHomeCard } from "@/components/home/FeedbackHomeCard";
 import { CategoryGrid } from "@/components/catalog/CategoryGrid";
 import { ProductGrid } from "@/components/catalog/ProductCard";
+import { CityPicker } from "@/components/layout/CityPicker";
+import { CityComingSoonNotice } from "@/components/home/CityComingSoonNotice";
 import { sortCategoriesByGroup } from "@/lib/category-order";
-import type { Category, Product, Shop } from "@/lib/types";
+import type { Category, City, Product, Shop } from "@/lib/types";
 
 import type { ApprovedFeedback } from "@/server/feedback-store";
 
@@ -21,6 +23,8 @@ type Props = {
   products: Product[];
   approvedFeedback: ApprovedFeedback[];
   approvedFeedbackTotal: number;
+  currentCity: City;
+  cities: City[];
 };
 
 export function HomeView({
@@ -28,6 +32,8 @@ export function HomeView({
   products,
   approvedFeedback,
   approvedFeedbackTotal,
+  currentCity,
+  cities,
 }: Props) {
   const weekly = useMemo(
     () => products.filter((p) => p.isWeekly),
@@ -42,10 +48,16 @@ export function HomeView({
     [products]
   );
 
+  const isComingSoon = currentCity.status !== "active";
+
   return (
     <PageShell className="bg-white" noBottomPadding>
       <div className="pb-bottom-nav space-y-6">
-        <HomeHero />
+        <HomeHero
+          citySlot={<CityPicker currentCity={currentCity} cities={cities} tone="hero" />}
+        />
+
+        {isComingSoon && <CityComingSoonNotice city={currentCity} />}
 
         <RepeatLastOrderCard />
 

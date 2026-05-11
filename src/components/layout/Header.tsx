@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, MapPin } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Logo } from "./Logo";
-import { CITY_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 type HeaderProps = {
@@ -12,6 +11,11 @@ type HeaderProps = {
   title?: string;
   showBack?: boolean;
   rightSlot?: React.ReactNode;
+  /**
+   * Кнопка выбора города (CityPicker) — рендерится server-компонентом и
+   * прокидывается сюда, чтобы Header оставался client-ом.
+   */
+  citySlot?: React.ReactNode;
   className?: string;
 };
 
@@ -20,6 +24,7 @@ export function Header({
   title,
   showBack,
   rightSlot,
+  citySlot,
   className,
 }: HeaderProps) {
   const router = useRouter();
@@ -37,13 +42,7 @@ export function Header({
             <Link href="/" className="block">
               <Logo size={32} />
             </Link>
-            <Link
-              href="/profile"
-              className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-[12px] font-medium text-brand-700"
-            >
-              <MapPin size={14} />
-              <span>{CITY_NAME}</span>
-            </Link>
+            {citySlot}
           </div>
         </div>
       </header>
