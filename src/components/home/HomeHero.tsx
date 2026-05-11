@@ -1,29 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { Apple, Pizza, Store, Bike, Search } from "lucide-react";
+import { Pizza, ShoppingBasket, Pill, SprayCan } from "lucide-react";
 
 import { BrandPill } from "@/components/layout/Logo";
+import type { Vertical } from "@/lib/types";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1080&q=80";
 
-type Tile = {
-  href: string;
+type VerticalTile = {
+  vertical: Vertical;
   label: string;
+  hint: string;
   icon: React.ComponentType<{ size?: number; strokeWidth?: number }>;
-  big?: boolean;
+  gradient: string;
 };
 
-const TOP_TILES: Tile[] = [
-  { href: "/section/market", label: "Рынок", icon: Apple, big: true },
-  { href: "/section/food", label: "Готовая еда", icon: Pizza, big: true },
-];
-
-const BOTTOM_TILES: Tile[] = [
-  { href: "/shops", label: "Лавки", icon: Store },
-  { href: "/orders", label: "Доставка", icon: Bike },
-  { href: "/search", label: "Поиск", icon: Search },
+const VERTICALS: VerticalTile[] = [
+  {
+    vertical: "food",
+    label: "Готовая еда",
+    hint: "Кафе, рестораны, доставка блюд",
+    icon: Pizza,
+    gradient: "from-amber-500/30 to-rose-500/30",
+  },
+  {
+    vertical: "grocery",
+    label: "Продукты",
+    hint: "Овощи, фрукты, мясо, выпечка",
+    icon: ShoppingBasket,
+    gradient: "from-emerald-500/30 to-lime-500/30",
+  },
+  {
+    vertical: "pharmacy",
+    label: "Аптека",
+    hint: "OTC-препараты и БАДы",
+    icon: Pill,
+    gradient: "from-sky-500/30 to-cyan-400/30",
+  },
+  {
+    vertical: "chemistry",
+    label: "Бытовая химия",
+    hint: "Уборка, гигиена, для дома",
+    icon: SprayCan,
+    gradient: "from-violet-500/30 to-fuchsia-500/30",
+  },
 ];
 
 type HomeHeroProps = {
@@ -44,7 +66,7 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
         aria-hidden="true"
       />
       <div
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/30 via-black/45 to-black/65"
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/40 via-black/55 to-black/75"
         aria-hidden="true"
       />
 
@@ -63,14 +85,18 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
           {citySlot}
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2.5">
-          {TOP_TILES.map((t) => (
-            <HeroTile key={t.href} tile={t} />
-          ))}
+        <div className="mt-4 mb-1">
+          <h1 className="text-[20px] font-extrabold leading-tight text-white drop-shadow-sm">
+            ВКУСНОМАРКЕТ
+          </h1>
+          <p className="text-[12px] font-medium leading-tight text-white/80">
+            Еда. Продукты. Аптека. Дом — в одном приложении
+          </p>
         </div>
-        <div className="mt-2.5 mb-5 grid grid-cols-3 gap-2.5">
-          {BOTTOM_TILES.map((t) => (
-            <HeroTile key={t.href} tile={t} />
+
+        <div className="mt-3 mb-5 grid grid-cols-2 gap-2.5">
+          {VERTICALS.map((t) => (
+            <VerticalHeroTile key={t.vertical} tile={t} />
           ))}
         </div>
       </div>
@@ -78,23 +104,20 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
   );
 }
 
-function HeroTile({ tile }: { tile: Tile }) {
+function VerticalHeroTile({ tile }: { tile: VerticalTile }) {
   const Icon = tile.icon;
   return (
     <Link
-      href={tile.href}
-      className={`glass-tile relative flex ${
-        tile.big ? "h-24 flex-col justify-between" : "h-20 flex-col justify-between"
-      } rounded-2xl p-3 text-white transition active:scale-[0.98]`}
+      href={`/vertical/${tile.vertical}`}
+      className={`glass-tile relative flex h-[104px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br ${tile.gradient} p-3 text-white transition active:scale-[0.98]`}
     >
-      <Icon size={tile.big ? 24 : 20} strokeWidth={2} />
-      <span
-        className={`font-semibold leading-tight ${
-          tile.big ? "text-[15px]" : "text-[13px]"
-        }`}
-      >
-        {tile.label}
-      </span>
+      <Icon size={26} strokeWidth={2} />
+      <div className="leading-tight">
+        <div className="text-[15px] font-bold">{tile.label}</div>
+        <div className="mt-0.5 text-[11px] font-medium text-white/85 line-clamp-1">
+          {tile.hint}
+        </div>
+      </div>
     </Link>
   );
 }

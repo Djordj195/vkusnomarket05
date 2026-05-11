@@ -1,6 +1,7 @@
 import "server-only";
-import type { Product, SourceType } from "@/lib/types";
+import type { Product, SourceType, Vertical } from "@/lib/types";
 import { PRODUCTS as STATIC_PRODUCTS } from "@/data/products";
+import { DEFAULT_VENDOR_ID } from "@/data/vendors";
 import {
   getSupabaseAdmin,
   isMissingTableError,
@@ -14,6 +15,8 @@ type ProductRow = {
   source: SourceType;
   category_id: string;
   shop_id: string | null;
+  vendor_id: string | null;
+  vertical: Vertical | null;
   price: number;
   old_price: number | null;
   unit: string;
@@ -25,6 +28,10 @@ type ProductRow = {
   sort_order: number;
 };
 
+function defaultVerticalForSource(s: SourceType): Vertical {
+  return s === "food" ? "food" : "grocery";
+}
+
 function rowToProduct(r: ProductRow): Product {
   return {
     id: r.id,
@@ -33,6 +40,8 @@ function rowToProduct(r: ProductRow): Product {
     source: r.source,
     categoryId: r.category_id,
     shopId: r.shop_id ?? undefined,
+    vendorId: r.vendor_id ?? DEFAULT_VENDOR_ID,
+    vertical: r.vertical ?? defaultVerticalForSource(r.source),
     price: r.price,
     oldPrice: r.old_price ?? undefined,
     unit: r.unit,
@@ -42,6 +51,14 @@ function rowToProduct(r: ProductRow): Product {
     weight: r.weight ?? undefined,
     isWeekly: r.is_weekly,
   };
+}
+
+function staticProductsHydrated(): Product[] {
+  return STATIC_PRODUCTS.map((p) => ({
+    ...p,
+    vendorId: p.vendorId ?? DEFAULT_VENDOR_ID,
+    vertical: p.vertical ?? defaultVerticalForSource(p.source),
+  }));
 }
 
 function productToRow(
@@ -76,12 +93,12 @@ export async function listProducts(): Promise<Product[]> {
       .select("*")
       .order("sort_order", { ascending: true });
     if (error) {
-      if (isMissingTableError(error)) return [...STATIC_PRODUCTS];
+      if (isMissingTableError(error)) return staticProductsHydrated();
       throw new Error(`listProducts: ${error.message}`);
     }
     return (data as ProductRow[]).map(rowToProduct);
   }
-  return [...STATIC_PRODUCTS];
+  return staticProductsHydrated();
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
@@ -94,12 +111,12 @@ export async function getProductById(id: string): Promise<Product | undefined> {
       .maybeSingle();
     if (error) {
       if (isMissingTableError(error))
-        return STATIC_PRODUCTS.find((p) => p.id === id);
+        return staticProductsHydrated().find((p) => p.id === id);
       throw new Error(`getProductById: ${error.message}`);
     }
     return data ? rowToProduct(data as ProductRow) : undefined;
   }
-  return STATIC_PRODUCTS.find((p) => p.id === id);
+  return staticProductsHydrated().find((p) => p.id === id);
 }
 
 export async function getProductBySlug(
@@ -114,12 +131,12 @@ export async function getProductBySlug(
       .maybeSingle();
     if (error) {
       if (isMissingTableError(error))
-        return STATIC_PRODUCTS.find((p) => p.slug === slug);
+        return staticProductsHydrated().find((p) => p.slug === slug);
       throw new Error(`getProductBySlug: ${error.message}`);
     }
     return data ? rowToProduct(data as ProductRow) : undefined;
   }
-  return STATIC_PRODUCTS.find((p) => p.slug === slug);
+  return staticProductsHydrated().find((p) => p.slug === slug);
 }
 
 export async function getProductsByCategory(
@@ -139,6 +156,20 @@ export async function getProductsBySource(
 ): Promise<Product[]> {
   const all = await listProducts();
   return all.filter((p) => p.source === source);
+}
+
+export async function getProductsByVendor(
+  vendorId: string
+): Promise<Product[]> {
+  const all = await listProducts();
+  return all.filter((p) => p.vendorId === vendorId);
+}
+
+export async function getProductsByVertical(
+  vertical: Vertical
+): Promise<Product[]> {
+  const all = await listProducts();
+  return all.filter((p) => p.vertical === vertical);
 }
 
 export async function getWeeklyProducts(): Promise<Product[]> {

@@ -126,6 +126,9 @@ export type Product = {
   source: SourceType;
   categoryId: string;
   shopId?: string;
+  // Phase 1: продавец и вертикаль (необязательны для статического fallback)
+  vendorId?: string;
+  vertical?: Vertical;
   price: number;
   oldPrice?: number;
   unit: string;
