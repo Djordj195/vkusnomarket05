@@ -5,7 +5,7 @@ Food/grocery delivery PWA for Кизляр. Next.js 16 (App Router) + React 19 +
 - **Repo:** `Djordj195/vkusnomarket05`
 - **Production:** https://vkusnomarket05.vercel.app/
 - **Default branch:** `main` (Vercel auto-deploys to prod on merge)
-- **Owner / language:** ВКУСНОМАРКЕТ owner uses Russian, has limited English. All user-facing copy and PR/chat communication is in Russian.
+- **Owner / language:** ВкусМаркет owner uses Russian, has limited English. All user-facing copy and PR/chat communication is in Russian.
 
 ## Tech stack quick reference
 - `next@16.2.4` (App Router; **breaking changes from older Next** — read `node_modules/next/dist/docs/` before guessing APIs).
@@ -165,7 +165,7 @@ On the **owner's phone** the native file picker works correctly — he gets "С�
 - The cart **must not** be a nav tab. It's a floating purple pill (`bg-brand-600`) with the basket icon + count, fixed bottom-right, only visible when `cartCount > 0 && pathname !== "/cart"`.
 - Hearts (favorite icons) use `rose-500`, not yellow — yellow is reserved for the BrandPill and accents.
 - City is hardcoded to "Кизляр" via `CITY_NAME` in `src/lib/constants.ts`.
-- The yellow `BrandPill` reads "ВКУСНОМАРКЕТ" — if you find yourself writing the brand name as plain text anywhere, prefer `<BrandPill />` from `src/components/layout/Logo.tsx`.
+- The yellow `BrandPill` reads "ВкусМаркет" — if you find yourself writing the brand name as plain text anywhere, prefer `<BrandPill />` from `src/components/layout/Logo.tsx`.
 
 ## Forbidden / be careful
 

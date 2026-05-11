@@ -4,7 +4,7 @@ import type { City } from "@/lib/types";
 
 /**
  * Карточка-заглушка для городов со статусом coming_soon — показывается, если
- * пользователь выбрал город, где ВКУСНОМАРКЕТ ещё не запустился.
+ * пользователь выбрал город, где ВкусМаркет ещё не запустился.
  */
 export function CityComingSoonNotice({ city }: { city: City }) {
   return (

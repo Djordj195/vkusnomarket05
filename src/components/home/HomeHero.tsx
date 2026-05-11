@@ -74,7 +74,7 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            aria-label="ВКУСНОМАРКЕТ — на главную"
+            aria-label="ВкусМаркет — на главную"
             className="block"
           >
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-ink-900 text-[10px] font-extrabold leading-none text-accent-300 shadow-md shadow-black/30">
@@ -87,7 +87,7 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
 
         <div className="mt-4 mb-1">
           <h1 className="text-[20px] font-extrabold leading-tight text-white drop-shadow-sm">
-            ВКУСНОМАРКЕТ
+            ВкусМаркет
           </h1>
           <p className="text-[12px] font-medium leading-tight text-white/80">
             Еда. Продукты. Аптека. Дом — в одном приложении

@@ -203,7 +203,7 @@ export function SignupForm({ cities }: Props) {
           <div className="space-y-3">
             <Input
               label="Название бренда"
-              placeholder="Например: ВКУСНОМАРКЕТ Кизляр"
+              placeholder="Например: ВкусМаркет Кизляр"
               value={state.brandName}
               onChange={(e) => update("brandName", e.target.value)}
               maxLength={64}

@@ -1,4 +1,4 @@
-export const APP_NAME = "ВКУСНОМАРКЕТ";
+export const APP_NAME = "ВкусМаркет";
 export const APP_TAGLINE = "Доставка по Кизляру и району";
 export const CITY_NAME = "Кизляр";
 

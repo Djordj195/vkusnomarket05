@@ -7,9 +7,9 @@ import { SignupForm } from "./SignupForm";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Стать продавцом · ВКУСНОМАРКЕТ",
+  title: "Стать продавцом · ВкусМаркет",
   description:
-    "Подключите свой бизнес к платформе ВКУСНОМАРКЕТ — кафе, магазин, аптека или хозтовары.",
+    "Подключите свой бизнес к платформе ВкусМаркет — кафе, магазин, аптека или хозтовары.",
 };
 
 export default async function VendorSignupPage() {
@@ -25,7 +25,7 @@ export default async function VendorSignupPage() {
       <div className="px-4 pt-4 pb-8 space-y-5">
         <div className="rounded-2xl bg-brand-50 p-4">
           <h1 className="text-[20px] font-extrabold leading-tight text-ink-900">
-            Подключите бизнес к ВКУСНОМАРКЕТ
+            Подключите бизнес к ВкусМаркет
           </h1>
           <p className="mt-2 text-[13px] leading-relaxed text-ink-700">
             Заявка займёт 5 минут. После модерации мы пришлём ссылку для
@@ -38,7 +38,7 @@ export default async function VendorSignupPage() {
 
         <div className="rounded-2xl border border-ink-200 p-4 text-[12px] text-ink-500">
           Отправляя заявку, вы соглашаетесь с обработкой персональных данных и
-          публичной офертой ВКУСНОМАРКЕТ.
+          публичной офертой ВкусМаркет.
         </div>
       </div>
     </PageShell>

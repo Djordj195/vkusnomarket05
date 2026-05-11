@@ -10,7 +10,7 @@ export const VENDORS: Vendor[] = [
   {
     id: DEFAULT_VENDOR_ID,
     slug: "vkusnomarket-kizlyar",
-    brandName: "ВКУСНОМАРКЕТ Кизляр",
+    brandName: "ВкусМаркет Кизляр",
     verticalPrimary: "food",
     verticals: ["food", "grocery"],
     cityId: "city-kizlyar",
@@ -18,7 +18,7 @@ export const VENDORS: Vendor[] = [
     shortDescription:
       "Готовая еда, продукты с рынка и из лавок Кизляра",
     description:
-      "Первый продавец платформы ВКУСНОМАРКЕТ — собственный магазин с готовой едой, свежими овощами и фруктами с местного рынка, мясом, выпечкой и товарами с лавок.",
+      "Первый продавец платформы ВкусМаркет — собственный магазин с готовой едой, свежими овощами и фруктами с местного рынка, мясом, выпечкой и товарами с лавок.",
     contacts: {
       phone: "+79375021100",
       telegram: "@vkusnomarket05_bot",

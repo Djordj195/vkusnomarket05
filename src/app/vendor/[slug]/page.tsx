@@ -40,7 +40,7 @@ export async function generateMetadata({
     title: vendor.brandName,
     description:
       vendor.shortDescription ??
-      `${VERTICAL_LABELS[vendor.verticalPrimary]} · ВКУСНОМАРКЕТ`,
+      `${VERTICAL_LABELS[vendor.verticalPrimary]} · ВкусМаркет`,
   };
 }
 
