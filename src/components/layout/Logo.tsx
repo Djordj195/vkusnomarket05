@@ -12,8 +12,8 @@ export function Logo({ size = 36, withText = true, className }: LogoProps) {
       <LogoMark size={size} />
       {withText && (
         <span className="text-[18px] font-extrabold leading-none tracking-tight">
-          <span className="text-brand-600">ВКУСНО</span>
-          <span className="text-ink-900">МАРКЕТ</span>
+          <span className="text-brand-600">Вкус</span>
+          <span className="text-ink-900">Маркет</span>
         </span>
       )}
     </div>
@@ -27,7 +27,7 @@ export function LogoMark({ size = 36 }: { size?: number }) {
       height={size}
       viewBox="0 0 64 64"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="ВКУСНОМАРКЕТ"
+      aria-label="ВкусМаркет"
     >
       <defs>
         <linearGradient id="vmPurple" x1="0" y1="0" x2="1" y2="1">
@@ -64,7 +64,7 @@ export function BrandPill({ className }: { className?: string }) {
         className
       )}
     >
-      ВКУСНОМАРКЕТ
+      ВкусМаркет
     </span>
   );
 }

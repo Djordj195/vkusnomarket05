@@ -86,7 +86,7 @@ const ogSvg = `
     <path d="M24 26 v -4 a 8 8 0 0 1 16 0 v 4" fill="none" stroke="url(#g1)" stroke-width="3" stroke-linecap="round"/>
     <circle cx="32" cy="40" r="6" fill="url(#g2)"/>
   </g>
-  <text x="80" y="240" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="76" font-weight="900" fill="#ffffff" letter-spacing="-3">ВКУСНОМАРКЕТ</text>
+  <text x="80" y="240" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="76" font-weight="900" fill="#ffffff" letter-spacing="-3">ВкусМаркет</text>
   <text x="80" y="320" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="34" font-weight="600" fill="#dcfce7">Доставка свежих продуктов</text>
   <text x="80" y="368" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="34" font-weight="600" fill="#dcfce7">и готовой еды по г. Кизляр</text>
   <rect x="80" y="440" width="320" height="84" rx="42" fill="#fb923c"/>
