@@ -3,6 +3,7 @@ import {
   Bell,
   ChevronRight,
   ClipboardList,
+  MapPin,
   MessageSquare,
   Package,
   Sparkles,
@@ -17,21 +18,33 @@ import { listCouriers } from "@/server/couriers-store";
 import { listProducts } from "@/server/products-store";
 import { listCategories } from "@/server/categories-store";
 import { listShops } from "@/server/shops-store";
+import { listAllCities } from "@/server/cities-store";
+import { listVendors } from "@/server/vendors-store";
 import { countPendingFeedback } from "@/server/feedback-store";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 
 export default async function AdminDashboardPage() {
-  const [orders, couriers, products, categories, shops, pendingFeedback] =
-    await Promise.all([
-      listOrders(),
-      listCouriers(),
-      listProducts(),
-      listCategories(),
-      listShops(),
-      countPendingFeedback(),
-    ]);
+  const [
+    orders,
+    couriers,
+    products,
+    categories,
+    shops,
+    pendingFeedback,
+    cities,
+    vendors,
+  ] = await Promise.all([
+    listOrders(),
+    listCouriers(),
+    listProducts(),
+    listCategories(),
+    listShops(),
+    countPendingFeedback(),
+    listAllCities(),
+    listVendors(),
+  ]);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -179,6 +192,18 @@ export default async function AdminDashboardPage() {
                 ? `${pendingFeedback} на модерации`
                 : "всё разобрано"
             }
+          />
+          <ServiceCard
+            href="/admin/vendors"
+            icon={<Store size={20} />}
+            label="Продавцы"
+            sub={`${vendors.length} всего`}
+          />
+          <ServiceCard
+            href="/admin/cities"
+            icon={<MapPin size={20} />}
+            label="Города"
+            sub={`${cities.filter((c) => c.status === "active").length} активных`}
           />
         </div>
       </section>

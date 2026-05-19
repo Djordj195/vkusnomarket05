@@ -56,6 +56,42 @@ export async function listCities(): Promise<City[]> {
   return [...STATIC_CITIES];
 }
 
+/**
+ * Полный список городов (включая `disabled`). Используется только в админке.
+ */
+export async function listAllCities(): Promise<City[]> {
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("cities")
+      .select("*")
+      .order("sort_order", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error)) return [...STATIC_CITIES];
+      throw new Error(`listAllCities: ${error.message}`);
+    }
+    return (data as CityRow[]).map(rowToCity);
+  }
+  return [...STATIC_CITIES];
+}
+
+export async function updateCityStatus(
+  id: string,
+  status: CityStatus
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error(
+      "updateCityStatus: Supabase не настроен. Применить миграцию 0005."
+    );
+  }
+  const sb = getSupabaseAdmin()!;
+  const { error } = await sb
+    .from("cities")
+    .update({ status })
+    .eq("id", id);
+  if (error) throw new Error(`updateCityStatus: ${error.message}`);
+}
+
 export async function getCityById(id: string): Promise<City | undefined> {
   const all = await listCities();
   return all.find((c) => c.id === id);
