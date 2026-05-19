@@ -3,9 +3,15 @@ import {
   Bell,
   ChevronRight,
   ClipboardList,
+  FileText,
+  Image as ImageIcon,
+  LifeBuoy,
+  Map,
   MapPin,
   MessageSquare,
   Package,
+  Percent,
+  Shield,
   Sparkles,
   Tag,
   Truck,
@@ -204,6 +210,42 @@ export default async function AdminDashboardPage() {
             icon={<MapPin size={20} />}
             label="Города"
             sub={`${cities.filter((c) => c.status === "active").length} активных`}
+          />
+          <ServiceCard
+            href="/admin/zones"
+            icon={<Map size={20} />}
+            label="Зоны доставки"
+            sub="в разработке"
+          />
+          <ServiceCard
+            href="/admin/tariffs"
+            icon={<Percent size={20} />}
+            label="Тарифы"
+            sub="комиссии платформы"
+          />
+          <ServiceCard
+            href="/admin/banners"
+            icon={<ImageIcon size={20} />}
+            label="Баннеры"
+            sub="промо"
+          />
+          <ServiceCard
+            href="/admin/tickets"
+            icon={<LifeBuoy size={20} />}
+            label="Тикеты"
+            sub="поддержка"
+          />
+          <ServiceCard
+            href="/admin/roles"
+            icon={<Shield size={20} />}
+            label="Роли"
+            sub="и права"
+          />
+          <ServiceCard
+            href="/admin/legal-docs"
+            icon={<FileText size={20} />}
+            label="Юр.документы"
+            sub="версии"
           />
         </div>
       </section>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PageShell } from "@/components/layout/PageShell";
 import { BrandPill } from "@/components/layout/Logo";
-import { Phone, MessageCircle, Send, Mail, HelpCircle, FileText } from "lucide-react";
+import { Phone, MessageCircle, Send, Mail, HelpCircle, FileText, ClipboardList } from "lucide-react";
 import { DEFAULT_CONTACTS } from "@/lib/constants";
 
 export default function SupportPage() {
@@ -75,6 +75,13 @@ export default function SupportPage() {
           subtitle="Оферта, политики, реквизиты"
           avatarBg="bg-brand-600"
           icon={<FileText size={22} />}
+        />
+        <ChatRow
+          href="/support/tickets"
+          title="Мои обращения"
+          subtitle="Статусы и история"
+          avatarBg="bg-amber-500"
+          icon={<ClipboardList size={22} />}
         />
       </ul>
     </PageShell>
