@@ -17,6 +17,8 @@ import {
   User as UserIcon,
   FileText,
   MessageSquare,
+  Store,
+  Bike,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -100,6 +102,22 @@ export default function ProfilePage() {
             href="/legal"
             icon={<FileText size={20} />}
             title="Юридическая информация"
+          />
+        </ul>
+
+        <div className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-ink-400 px-2">
+          Для партнёров
+        </div>
+        <ul className="mt-2 overflow-hidden rounded-2xl bg-ink-50">
+          <Item
+            href="/vendor/login"
+            icon={<Store size={20} />}
+            title="Кабинет продавца"
+          />
+          <Item
+            href="/courier/login"
+            icon={<Bike size={20} />}
+            title="Курьерское приложение"
           />
         </ul>
       </div>

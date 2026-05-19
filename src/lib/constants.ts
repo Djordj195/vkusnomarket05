@@ -19,5 +19,5 @@ export const ADMIN_DEFAULT_LOGIN = "admin";
 // иначе используется значение ниже (поменяйте перед запуском в продакшн).
 export const ADMIN_DEFAULT_PASSWORD = "vkusno2025";
 
-// Демо-режим: код подтверждения по СМС всегда 1234, пока не подключим SMS.ru
-export const DEMO_SMS_CODE = "1234";
+// Демо-режим: код подтверждения по СМС всегда 123456, пока не подключим SMS-провайдер
+export const DEMO_SMS_CODE = "123456";
