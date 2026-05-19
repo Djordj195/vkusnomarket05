@@ -52,24 +52,28 @@ export default async function AdminDashboardPage() {
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard
+          href="/admin/orders?range=today"
           icon={<ClipboardList size={18} />}
           label="Заказы сегодня"
           value={todayOrders.length.toString()}
           tone="brand"
         />
         <StatCard
+          href="/admin/orders?range=today"
           icon={<Wallet size={18} />}
           label="Выручка сегодня"
           value={formatPrice(revenue)}
           tone="accent"
         />
         <StatCard
+          href="/admin/orders?status=active"
           icon={<Bell size={18} />}
           label="Активные"
           value={activeOrders.length.toString()}
           tone="amber"
         />
         <StatCard
+          href="/admin/couriers"
           icon={<Truck size={18} />}
           label="Курьеры"
           value={`${activeCouriers} / ${couriers.length}`}
@@ -191,18 +195,20 @@ const STAT_TONES: Record<string, string> = {
 };
 
 function StatCard({
+  href,
   icon,
   label,
   value,
   tone,
 }: {
+  href?: string;
   icon: React.ReactNode;
   label: string;
   value: string;
   tone: keyof typeof STAT_TONES | string;
 }) {
-  return (
-    <div className="rounded-2xl border border-ink-200 bg-white p-3">
+  const inner = (
+    <>
       <div
         className={`flex h-8 w-8 items-center justify-center rounded-lg ${
           STAT_TONES[tone] ?? STAT_TONES.brand
@@ -216,7 +222,16 @@ function StatCard({
       <div className="mt-0.5 text-[18px] font-extrabold text-ink-900">
         {value}
       </div>
-    </div>
+    </>
+  );
+  const className =
+    "block rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-brand-300 hover:bg-brand-50";
+  return href ? (
+    <Link href={href} className={className}>
+      {inner}
+    </Link>
+  ) : (
+    <div className="rounded-2xl border border-ink-200 bg-white p-3">{inner}</div>
   );
 }
 

@@ -15,7 +15,7 @@ import {
   ShoppingBag,
   ChevronRight,
   User as UserIcon,
-  Info,
+  FileText,
   MessageSquare,
 } from "lucide-react";
 
@@ -87,14 +87,19 @@ export default function ProfilePage() {
             title="Поддержка"
           />
           <Item
+            href="/faq"
+            icon={<HelpCircle size={20} />}
+            title="Частые вопросы"
+          />
+          <Item
             href="/feedback"
             icon={<MessageSquare size={20} />}
             title="Отзывы и предложения"
           />
           <Item
-            href="/support"
-            icon={<Info size={20} />}
-            title="О приложении"
+            href="/legal"
+            icon={<FileText size={20} />}
+            title="Юридическая информация"
           />
         </ul>
       </div>
