@@ -257,6 +257,39 @@ export async function updateVendorFeatured(
   if (error) throw new Error(`updateVendorFeatured: ${error.message}`);
 }
 
+export type VendorStorefrontPatch = {
+  logoUrl?: string | null;
+  bannerUrl?: string | null;
+  brandName?: string;
+  shortDescription?: string | null;
+  description?: string | null;
+};
+
+/**
+ * Partial update for fields the vendor can edit themselves in their dashboard
+ * (logo / banner / short bio / full description / brand name). Only sent
+ * fields are written. Pass `null` to clear a string column.
+ */
+export async function updateVendorStorefront(
+  id: string,
+  patch: VendorStorefrontPatch
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("updateVendorStorefront: Supabase не настроен.");
+  }
+  const row: Record<string, string | null> = {};
+  if (patch.logoUrl !== undefined) row.logo_url = patch.logoUrl;
+  if (patch.bannerUrl !== undefined) row.banner_url = patch.bannerUrl;
+  if (patch.brandName !== undefined) row.brand_name = patch.brandName;
+  if (patch.shortDescription !== undefined)
+    row.short_description = patch.shortDescription;
+  if (patch.description !== undefined) row.description = patch.description;
+  if (Object.keys(row).length === 0) return;
+  const sb = getSupabaseAdmin()!;
+  const { error } = await sb.from("vendors").update(row).eq("id", id);
+  if (error) throw new Error(`updateVendorStorefront: ${error.message}`);
+}
+
 export async function isSlugAvailable(slug: string): Promise<boolean> {
   if (!isSupabaseConfigured()) {
     return !STATIC_VENDORS.some((v) => v.slug === slug);

@@ -1,4 +1,5 @@
-import { PlaceholderCard, SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { CourierDocumentsEditor } from "./CourierDocumentsEditor";
 
 export default function CourierDocumentsPage() {
   return (
@@ -7,10 +8,11 @@ export default function CourierDocumentsPage() {
         title="Документы"
         backHref="/courier/dashboard/profile"
       />
-      <PlaceholderCard
-        title="Загрузка документов появится после Phase 3.3"
-        description="Готовится универсальный MediaUploader — он позволит сфотографировать паспорт, ИНН и мед.книжку прямо из приложения. Документы проверяются модератором перед допуском к смене."
-      />
+      <p className="text-[13px] text-ink-500">
+        Загрузите документы для допуска к сменам. Можно сфотографировать прямо
+        с камеры или прикрепить из галереи.
+      </p>
+      <CourierDocumentsEditor />
     </div>
   );
 }

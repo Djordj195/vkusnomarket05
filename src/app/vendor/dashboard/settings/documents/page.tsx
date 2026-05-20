@@ -1,4 +1,5 @@
-import { PlaceholderCard, SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { VendorDocumentsUploader } from "./VendorDocumentsUploader";
 
 export default function VendorDocumentsPage() {
   return (
@@ -9,10 +10,7 @@ export default function VendorDocumentsPage() {
         в зашифрованном хранилище.
       </p>
 
-      <PlaceholderCard
-        title="Загрузка документов появится после Phase 3.3"
-        description="Готовится универсальный MediaUploader: загрузка с камеры/галереи, drag&drop на вебе, проверка формата и размера, кроп. Применим его для лого, баннеров, лицензий и сертификатов."
-      />
+      <VendorDocumentsUploader />
     </div>
   );
 }
