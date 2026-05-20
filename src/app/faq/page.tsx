@@ -1,0 +1,168 @@
+import Link from "next/link";
+import { PageShell } from "@/components/layout/PageShell";
+import { BrandPill } from "@/components/layout/Logo";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  ShoppingBag,
+  CreditCard,
+  Truck,
+  Heart,
+  MessageSquare,
+  ShieldCheck,
+  User,
+} from "lucide-react";
+
+export const metadata = {
+  title: "Частые вопросы · ВкусМаркет",
+  description: "Ответы на самые частые вопросы клиентов ВкусМаркет",
+};
+
+type FaqCategory = {
+  slug: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ size?: number }>;
+};
+
+const CATEGORIES: FaqCategory[] = [
+  {
+    slug: "ordering",
+    title: "Заказы и оформление",
+    description: "Как оформить, изменить или отменить заказ",
+    icon: ShoppingBag,
+  },
+  {
+    slug: "payment",
+    title: "Оплата",
+    description: "Способы оплаты, чеки, возврат средств",
+    icon: CreditCard,
+  },
+  {
+    slug: "delivery",
+    title: "Доставка",
+    description: "Сроки, зоны, самовывоз",
+    icon: Truck,
+  },
+  {
+    slug: "loyalty",
+    title: "Бонусы и промокоды",
+    description: "Как работают скидки и программа лояльности",
+    icon: Heart,
+  },
+  {
+    slug: "account",
+    title: "Аккаунт",
+    description: "Регистрация, вход, личные данные",
+    icon: User,
+  },
+  {
+    slug: "feedback",
+    title: "Отзывы и поддержка",
+    description: "Как связаться с поддержкой и оставить отзыв",
+    icon: MessageSquare,
+  },
+  {
+    slug: "safety",
+    title: "Безопасность и приватность",
+    description: "Защита данных, согласия, политика",
+    icon: ShieldCheck,
+  },
+];
+
+export default function FaqPage() {
+  return (
+    <PageShell className="bg-white">
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-ink-100">
+        <div className="mx-auto max-w-md px-2 py-3 flex items-center gap-1.5">
+          <Link
+            href="/support"
+            aria-label="Назад"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-ink-700 hover:bg-ink-100"
+          >
+            <ChevronLeft size={22} />
+          </Link>
+          <h1 className="flex-1 truncate text-[16px] font-semibold text-ink-900">
+            Частые вопросы
+          </h1>
+          <BrandPill />
+        </div>
+      </header>
+
+      <div className="px-4 pt-4">
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"
+          />
+          <input
+            type="text"
+            placeholder="Найти ответ..."
+            disabled
+            className="w-full rounded-xl bg-ink-100 pl-9 pr-3 py-2.5 text-[14px] text-ink-900 placeholder:text-ink-400"
+          />
+        </div>
+        <p className="mt-1.5 text-[11px] text-ink-400">
+          Поиск появится после добавления статей.
+        </p>
+      </div>
+
+      <section className="px-4 pt-4 pb-6">
+        <h2 className="text-[15px] font-bold text-ink-900">Категории</h2>
+        <ul className="mt-3 space-y-2">
+          {CATEGORIES.map((c) => {
+            const Icon = c.icon;
+            return (
+              <li key={c.slug}>
+                <Link
+                  href={`/faq/${c.slug}`}
+                  className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3 hover:border-brand-300 hover:bg-brand-50/30"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                    <Icon size={20} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-bold text-ink-900">
+                      {c.title}
+                    </div>
+                    <div className="truncate text-[12px] text-ink-500">
+                      {c.description}
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-ink-400" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section className="px-4 pb-8">
+        <div className="rounded-2xl border border-brand-200 bg-brand-50 p-4">
+          <h3 className="text-[14px] font-bold text-brand-900">
+            Не нашли ответ?
+          </h3>
+          <p className="mt-1 text-[12px] text-brand-800/90">
+            Напишите нам через раздел поддержки или оставьте обращение в форме
+            «Отзывы и предложения».
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Link
+              href="/support"
+              className="rounded-xl bg-brand-600 px-3 py-2 text-[12px] font-semibold text-white hover:bg-brand-700"
+            >
+              Поддержка
+            </Link>
+            <Link
+              href="/feedback"
+              className="rounded-xl bg-white px-3 py-2 text-[12px] font-semibold text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50"
+            >
+              Отзывы и предложения
+            </Link>
+          </div>
+        </div>
+      </section>
+    </PageShell>
+  );
+}

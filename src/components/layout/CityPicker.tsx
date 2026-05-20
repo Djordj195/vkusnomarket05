@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { MapPin, Search, X, Loader2 } from "lucide-react";
 import { selectCityAction } from "@/server/cities-actions";
 import type { City } from "@/lib/types";
@@ -32,7 +33,19 @@ export function CityPicker({ currentCity, cities, tone = "brand" }: Props) {
     if (!open) return;
     // фокус на поиске при открытии
     const t = setTimeout(() => inputRef.current?.focus(), 50);
-    return () => clearTimeout(t);
+    // блокируем прокрутку фона, чтобы модалка не «уезжала» с подложкой
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    // закрытие по Esc
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      clearTimeout(t);
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   function close() {
@@ -85,16 +98,20 @@ export function CityPicker({ currentCity, cities, tone = "brand" }: Props) {
         <span>{currentCity.name}</span>
       </button>
 
-      {open && (
+      {open && typeof document !== "undefined" &&
+        createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink-900/60 px-0 sm:px-4"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-ink-900/60 px-0 sm:px-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) close();
           }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="city-picker-title"
         >
           <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <h2 className="text-[18px] font-bold text-ink-900">Выбор города</h2>
+              <h2 id="city-picker-title" className="text-[18px] font-bold text-ink-900">Выбор города</h2>
               <button
                 type="button"
                 onClick={close}
@@ -171,7 +188,8 @@ export function CityPicker({ currentCity, cities, tone = "brand" }: Props) {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

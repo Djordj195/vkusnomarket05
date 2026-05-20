@@ -3,8 +3,15 @@ import {
   Bell,
   ChevronRight,
   ClipboardList,
+  FileText,
+  Image as ImageIcon,
+  LifeBuoy,
+  Map,
+  MapPin,
   MessageSquare,
   Package,
+  Percent,
+  Shield,
   Sparkles,
   Tag,
   Truck,
@@ -17,21 +24,33 @@ import { listCouriers } from "@/server/couriers-store";
 import { listProducts } from "@/server/products-store";
 import { listCategories } from "@/server/categories-store";
 import { listShops } from "@/server/shops-store";
+import { listAllCities } from "@/server/cities-store";
+import { listVendors } from "@/server/vendors-store";
 import { countPendingFeedback } from "@/server/feedback-store";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 
 export default async function AdminDashboardPage() {
-  const [orders, couriers, products, categories, shops, pendingFeedback] =
-    await Promise.all([
-      listOrders(),
-      listCouriers(),
-      listProducts(),
-      listCategories(),
-      listShops(),
-      countPendingFeedback(),
-    ]);
+  const [
+    orders,
+    couriers,
+    products,
+    categories,
+    shops,
+    pendingFeedback,
+    cities,
+    vendors,
+  ] = await Promise.all([
+    listOrders(),
+    listCouriers(),
+    listProducts(),
+    listCategories(),
+    listShops(),
+    countPendingFeedback(),
+    listAllCities(),
+    listVendors(),
+  ]);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -52,24 +71,28 @@ export default async function AdminDashboardPage() {
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard
+          href="/admin/orders?range=today"
           icon={<ClipboardList size={18} />}
           label="Заказы сегодня"
           value={todayOrders.length.toString()}
           tone="brand"
         />
         <StatCard
+          href="/admin/orders?range=today"
           icon={<Wallet size={18} />}
           label="Выручка сегодня"
           value={formatPrice(revenue)}
           tone="accent"
         />
         <StatCard
+          href="/admin/orders?status=active"
           icon={<Bell size={18} />}
           label="Активные"
           value={activeOrders.length.toString()}
           tone="amber"
         />
         <StatCard
+          href="/admin/couriers"
           icon={<Truck size={18} />}
           label="Курьеры"
           value={`${activeCouriers} / ${couriers.length}`}
@@ -176,6 +199,54 @@ export default async function AdminDashboardPage() {
                 : "всё разобрано"
             }
           />
+          <ServiceCard
+            href="/admin/vendors"
+            icon={<Store size={20} />}
+            label="Продавцы"
+            sub={`${vendors.length} всего`}
+          />
+          <ServiceCard
+            href="/admin/cities"
+            icon={<MapPin size={20} />}
+            label="Города"
+            sub={`${cities.filter((c) => c.status === "active").length} активных`}
+          />
+          <ServiceCard
+            href="/admin/zones"
+            icon={<Map size={20} />}
+            label="Зоны доставки"
+            sub="в разработке"
+          />
+          <ServiceCard
+            href="/admin/tariffs"
+            icon={<Percent size={20} />}
+            label="Тарифы"
+            sub="комиссии платформы"
+          />
+          <ServiceCard
+            href="/admin/banners"
+            icon={<ImageIcon size={20} />}
+            label="Баннеры"
+            sub="промо"
+          />
+          <ServiceCard
+            href="/admin/tickets"
+            icon={<LifeBuoy size={20} />}
+            label="Тикеты"
+            sub="поддержка"
+          />
+          <ServiceCard
+            href="/admin/roles"
+            icon={<Shield size={20} />}
+            label="Роли"
+            sub="и права"
+          />
+          <ServiceCard
+            href="/admin/legal-docs"
+            icon={<FileText size={20} />}
+            label="Юр.документы"
+            sub="версии"
+          />
         </div>
       </section>
 
@@ -191,18 +262,20 @@ const STAT_TONES: Record<string, string> = {
 };
 
 function StatCard({
+  href,
   icon,
   label,
   value,
   tone,
 }: {
+  href?: string;
   icon: React.ReactNode;
   label: string;
   value: string;
   tone: keyof typeof STAT_TONES | string;
 }) {
-  return (
-    <div className="rounded-2xl border border-ink-200 bg-white p-3">
+  const inner = (
+    <>
       <div
         className={`flex h-8 w-8 items-center justify-center rounded-lg ${
           STAT_TONES[tone] ?? STAT_TONES.brand
@@ -216,7 +289,16 @@ function StatCard({
       <div className="mt-0.5 text-[18px] font-extrabold text-ink-900">
         {value}
       </div>
-    </div>
+    </>
+  );
+  const className =
+    "block rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-brand-300 hover:bg-brand-50";
+  return href ? (
+    <Link href={href} className={className}>
+      {inner}
+    </Link>
+  ) : (
+    <div className="rounded-2xl border border-ink-200 bg-white p-3">{inner}</div>
   );
 }
 

@@ -8,10 +8,43 @@ import { Badge } from "@/components/ui/Badge";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminOrdersPage() {
-  const orders = await listOrders();
+type SearchParams = Promise<{ status?: string; range?: string }>;
+
+const FILTER_TABS: { key: string; label: string; href: string }[] = [
+  { key: "all", label: "Все", href: "/admin/orders" },
+  { key: "today", label: "Сегодня", href: "/admin/orders?range=today" },
+  { key: "active", label: "Активные", href: "/admin/orders?status=active" },
+];
+
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const sp = await searchParams;
+  const all = await listOrders();
   const couriers = await listCouriers();
   const courierMap = new Map(couriers.map((c) => [c.id, c]));
+
+  let orders = all;
+  let activeKey = "all";
+  let emptyLabel = "Заказов пока нет";
+
+  if (sp.range === "today") {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    orders = all.filter(
+      (o) => new Date(o.createdAt).getTime() >= start.getTime()
+    );
+    activeKey = "today";
+    emptyLabel = "Сегодня заказов ещё не было";
+  } else if (sp.status === "active") {
+    orders = all.filter(
+      (o) => o.status !== "delivered" && o.status !== "cancelled"
+    );
+    activeKey = "active";
+    emptyLabel = "Сейчас активных заказов нет";
+  }
 
   return (
     <div className="space-y-4">
@@ -22,11 +55,30 @@ export default async function AdminOrdersPage() {
         </p>
       </header>
 
+      <nav className="flex gap-2 overflow-x-auto" aria-label="Фильтр заказов">
+        {FILTER_TABS.map((tab) => {
+          const isActive = tab.key === activeKey;
+          return (
+            <Link
+              key={tab.key}
+              href={tab.href}
+              className={
+                isActive
+                  ? "rounded-full bg-brand-600 px-3 py-1.5 text-[12px] font-semibold text-white"
+                  : "rounded-full bg-ink-100 px-3 py-1.5 text-[12px] font-semibold text-ink-700 hover:bg-ink-200"
+              }
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
+
       {orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-ink-300 bg-white py-12 text-center">
           <ClipboardList size={28} className="text-ink-400" />
           <h2 className="mt-3 text-[15px] font-bold text-ink-900">
-            Заказов пока нет
+            {emptyLabel}
           </h2>
           <p className="mt-1 max-w-xs px-4 text-[12px] text-ink-500">
             Когда клиент оформит заказ, он появится здесь, и вы получите
