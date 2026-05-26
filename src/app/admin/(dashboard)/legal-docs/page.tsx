@@ -1,16 +1,6 @@
 import Link from "next/link";
-import { FileText, History } from "lucide-react";
-
-const DOCS = [
-  { id: "about", title: "О компании", slug: "/legal/about" },
-  { id: "details", title: "Реквизиты", slug: "/legal/details" },
-  { id: "offer", title: "Пользовательская оферта", slug: "/legal/offer" },
-  { id: "privacy", title: "Политика конфиденциальности", slug: "/legal/privacy" },
-  { id: "consent", title: "Согласие на обработку ПДн", slug: "/legal/consent" },
-  { id: "delivery", title: "Правила доставки и возврата", slug: "/legal/delivery" },
-  { id: "pharmacy", title: "Информация по аптечному разделу", slug: "/legal/pharmacy" },
-  { id: "contacts", title: "Контакты поддержки", slug: "/legal/contacts" },
-];
+import { FileText, History, Download } from "lucide-react";
+import { LEGAL_DOCS } from "@/data/legal";
 
 export default function AdminLegalDocsPage() {
   return (
@@ -20,15 +10,15 @@ export default function AdminLegalDocsPage() {
           Юр.документы
         </h1>
         <p className="text-[12px] text-ink-500">
-          Версии и редакции документов. Согласия пользователей сохраняются
-          вместе с версией документа, IP и устройством.
+          Опубликовано {LEGAL_DOCS.length} документов. Согласия пользователей
+          сохраняются вместе с версией документа, IP-адресом и устройством.
         </p>
       </header>
 
       <ul className="space-y-2">
-        {DOCS.map((d) => (
+        {LEGAL_DOCS.map((d) => (
           <li
-            key={d.id}
+            key={d.slug}
             className="flex items-start justify-between gap-3 rounded-2xl border border-ink-200 bg-white p-3"
           >
             <div className="flex min-w-0 items-start gap-3">
@@ -37,18 +27,34 @@ export default function AdminLegalDocsPage() {
               </span>
               <div className="min-w-0">
                 <div className="truncate text-[13px] font-bold text-ink-900">
-                  {d.title}
+                  {d.number ? `${d.number}. ` : ""}
+                  {d.shortTitle}
                 </div>
-                <Link
-                  href={d.slug}
-                  className="text-[11px] text-brand-600 hover:underline"
-                >
-                  Просмотр публичной версии →
-                </Link>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-ink-500">
+                  {d.effectiveDate && (
+                    <span>от {d.effectiveDate}</span>
+                  )}
+                  <Link
+                    href={`/legal/${d.slug}`}
+                    className="text-brand-600 hover:underline"
+                  >
+                    Открыть публично →
+                  </Link>
+                  {d.pdf && (
+                    <a
+                      href={d.pdf}
+                      target="_blank"
+                      rel="noopener"
+                      className="inline-flex items-center gap-0.5 text-ink-600 hover:underline"
+                    >
+                      <Download size={11} /> PDF
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
-            <span className="shrink-0 rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-500">
-              v0
+            <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+              {d.revision ?? "v1"}
             </span>
           </li>
         ))}

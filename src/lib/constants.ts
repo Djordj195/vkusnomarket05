@@ -5,13 +5,13 @@ export const CITY_NAME = "Кизляр";
 // Минимальной суммы заказа нет — клиент может заказать на любую сумму.
 export const DELIVERY_FEE = 150;
 
-// Контакты — заполните позже в админке или здесь напрямую.
+// Контакты Оператора — синхронизированы с /src/data/legal.ts (COMPANY).
 // Эти значения используются по умолчанию, если в админке ничего не задано.
 export const DEFAULT_CONTACTS = {
-  whatsapp: "+79375021100", // Например: "+79280000000"
-  telegram: "@vkusnomarket05_bot", // Например: "@vkusnomarket"
-  phone: "+79375021100", // Например: "+78720000000"
-  email: "",
+  whatsapp: "+79375021100",
+  telegram: "@vkusnomarket05_bot",
+  phone: "+79375021100",
+  email: "vkusmarket05@list.ru",
 };
 
 export const ADMIN_DEFAULT_LOGIN = "admin";

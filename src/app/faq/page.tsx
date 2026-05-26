@@ -4,7 +4,6 @@ import { BrandPill } from "@/components/layout/Logo";
 import {
   ChevronLeft,
   ChevronRight,
-  Search,
   ShoppingBag,
   CreditCard,
   Truck,
@@ -13,63 +12,22 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
+import { FAQ_CATEGORIES } from "@/data/faq";
 
 export const metadata = {
   title: "Частые вопросы · ВкусМаркет",
   description: "Ответы на самые частые вопросы клиентов ВкусМаркет",
 };
 
-type FaqCategory = {
-  slug: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ size?: number }>;
+const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
+  ordering: ShoppingBag,
+  payment: CreditCard,
+  delivery: Truck,
+  loyalty: Heart,
+  account: User,
+  feedback: MessageSquare,
+  safety: ShieldCheck,
 };
-
-const CATEGORIES: FaqCategory[] = [
-  {
-    slug: "ordering",
-    title: "Заказы и оформление",
-    description: "Как оформить, изменить или отменить заказ",
-    icon: ShoppingBag,
-  },
-  {
-    slug: "payment",
-    title: "Оплата",
-    description: "Способы оплаты, чеки, возврат средств",
-    icon: CreditCard,
-  },
-  {
-    slug: "delivery",
-    title: "Доставка",
-    description: "Сроки, зоны, самовывоз",
-    icon: Truck,
-  },
-  {
-    slug: "loyalty",
-    title: "Бонусы и промокоды",
-    description: "Как работают скидки и программа лояльности",
-    icon: Heart,
-  },
-  {
-    slug: "account",
-    title: "Аккаунт",
-    description: "Регистрация, вход, личные данные",
-    icon: User,
-  },
-  {
-    slug: "feedback",
-    title: "Отзывы и поддержка",
-    description: "Как связаться с поддержкой и оставить отзыв",
-    icon: MessageSquare,
-  },
-  {
-    slug: "safety",
-    title: "Безопасность и приватность",
-    description: "Защита данных, согласия, политика",
-    icon: ShieldCheck,
-  },
-];
 
 export default function FaqPage() {
   return (
@@ -90,29 +48,18 @@ export default function FaqPage() {
         </div>
       </header>
 
-      <div className="px-4 pt-4">
-        <div className="relative">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"
-          />
-          <input
-            type="text"
-            placeholder="Найти ответ..."
-            disabled
-            className="w-full rounded-xl bg-ink-100 pl-9 pr-3 py-2.5 text-[14px] text-ink-900 placeholder:text-ink-400"
-          />
-        </div>
-        <p className="mt-1.5 text-[11px] text-ink-400">
-          Поиск появится после добавления статей.
+      <section className="px-4 pt-4">
+        <p className="text-[13px] text-ink-600">
+          Выберите категорию, чтобы посмотреть ответы. Если ответа нет —
+          напишите в поддержку.
         </p>
-      </div>
+      </section>
 
       <section className="px-4 pt-4 pb-6">
         <h2 className="text-[15px] font-bold text-ink-900">Категории</h2>
         <ul className="mt-3 space-y-2">
-          {CATEGORIES.map((c) => {
-            const Icon = c.icon;
+          {FAQ_CATEGORIES.map((c) => {
+            const Icon = ICONS[c.slug] ?? MessageSquare;
             return (
               <li key={c.slug}>
                 <Link
@@ -127,7 +74,13 @@ export default function FaqPage() {
                       {c.title}
                     </div>
                     <div className="truncate text-[12px] text-ink-500">
-                      {c.description}
+                      {c.questions.length}{" "}
+                      {c.questions.length === 1
+                        ? "вопрос"
+                        : c.questions.length < 5
+                        ? "вопроса"
+                        : "вопросов"}{" "}
+                      · {c.description}
                     </div>
                   </div>
                   <ChevronRight size={16} className="text-ink-400" />
@@ -158,7 +111,7 @@ export default function FaqPage() {
               href="/feedback"
               className="rounded-xl bg-white px-3 py-2 text-[12px] font-semibold text-brand-700 ring-1 ring-brand-200 hover:bg-brand-50"
             >
-              Отзывы и предложения
+              Оставить отзыв
             </Link>
           </div>
         </div>
