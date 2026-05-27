@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Package,
   Percent,
+  ScrollText,
   Shield,
   Sparkles,
   Tag,
@@ -215,7 +216,13 @@ export default async function AdminDashboardPage() {
             href="/admin/zones"
             icon={<Map size={20} />}
             label="Зоны доставки"
-            sub="в разработке"
+            sub="полигоны и тарифы"
+          />
+          <ServiceCard
+            href="/admin/audit"
+            icon={<ScrollText size={20} />}
+            label="Audit-логи"
+            sub="журнал действий"
           />
           <ServiceCard
             href="/admin/tariffs"

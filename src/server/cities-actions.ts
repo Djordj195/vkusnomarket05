@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { setCurrentCity } from "./current-city";
 import { isAdminAuthenticated } from "./admin-auth";
+import { logAudit } from "./audit-store";
 import { updateCityStatus } from "./cities-store";
 import type { CityStatus } from "@/lib/types";
 
@@ -49,6 +50,13 @@ export async function updateCityStatusAction(
       error: e instanceof Error ? e.message : "Ошибка БД.",
     };
   }
+  await logAudit({
+    actorType: "admin",
+    action: "city.status_change",
+    targetType: "city",
+    targetId: cityId,
+    payload: { status },
+  });
   revalidatePath("/admin/cities");
   revalidatePath("/", "layout");
   return { ok: true };

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "./admin-auth";
+import { logAudit } from "./audit-store";
 import {
   saveOrder,
   updateOrderStatus as updateOrderStatusInStore,
@@ -161,6 +162,13 @@ export async function updateOrderStatus(
   }
   const updated = await updateOrderStatusInStore(orderId, status);
   if (!updated) return { ok: false, error: "Заказ не найден" };
+  await logAudit({
+    actorType: "admin",
+    action: "order.status_change",
+    targetType: "order",
+    targetId: orderId,
+    payload: { status },
+  });
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
   return { ok: true };
@@ -175,6 +183,13 @@ export async function assignCourier(
   }
   const updated = await assignCourierInStore(orderId, courierId);
   if (!updated) return { ok: false, error: "Заказ не найден" };
+  await logAudit({
+    actorType: "admin",
+    action: "order.assign_courier",
+    targetType: "order",
+    targetId: orderId,
+    payload: { courierId },
+  });
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
   return { ok: true };
