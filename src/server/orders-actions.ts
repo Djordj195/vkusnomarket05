@@ -11,7 +11,13 @@ import { getProductById } from "./products-store";
 import { notifyAdminNewOrder } from "./telegram";
 import { generateOrderNumber } from "@/lib/utils";
 import { DELIVERY_FEE } from "@/lib/constants";
-import type { Order, OrderItem, OrderStatus, PaymentMethod } from "@/lib/types";
+import type {
+  DeliveryKind,
+  Order,
+  OrderItem,
+  OrderStatus,
+  PaymentMethod,
+} from "@/lib/types";
 
 export type CreateOrderInput = {
   customerName: string;
@@ -20,13 +26,36 @@ export type CreateOrderInput = {
   comment?: string;
   payment: PaymentMethod;
   geo?: { lat: number; lng: number };
+  /** Phase 4: тип доставки (доставка курьером или самовывоз). */
+  deliveryKind?: DeliveryKind;
+  /** Phase 4: желаемое время. ISO-строка; null/undefined = «как можно скорее». */
+  desiredAt?: string | null;
   items: Array<{ productId: string; quantity: number }>;
 };
 
 export type CreateOrderResult =
+  | { ok: true; orders: Order[]; groupId: string }
+  | { ok: false; error: string };
+
+/** Backwards-compatible helper for legacy single-order code paths. */
+export type LegacyCreateOrderResult =
   | { ok: true; order: Order }
   | { ok: false; error: string };
 
+/**
+ * Phase 4: чек-аут продюсирует **по одному заказу на каждого продавца**.
+ *
+ * 1. Резолвим каждую позицию через products-store — берём актуальную цену,
+ *    название и фото на момент покупки (snapshot).
+ * 2. Группируем по `product.vendorId`. Если у позиции нет vendorId
+ *    (статический seed, легаси), кладём в группу `__unknown__` — такая
+ *    группа создаст один общий заказ без vendor_id.
+ * 3. Доставка считается на каждый заказ отдельно: для самовывоза 0, для
+ *    доставки — фиксированная DELIVERY_FEE из конфига (Phase 6 переедет
+ *    в тарифы продавца).
+ * 4. Все заказы получают общий `checkoutGroupId`, чтобы UI мог их
+ *    группировать на странице подтверждения.
+ */
 export async function createOrder(
   input: CreateOrderInput
 ): Promise<CreateOrderResult> {
@@ -37,42 +66,13 @@ export async function createOrder(
   if (phoneDigits.length < 11) {
     return { ok: false, error: "Укажите корректный номер телефона." };
   }
-  if (!input.address.trim()) {
+  const deliveryKind: DeliveryKind = input.deliveryKind ?? "delivery";
+  if (deliveryKind === "delivery" && !input.address.trim()) {
     return { ok: false, error: "Укажите адрес доставки." };
   }
   if (input.items.length === 0) {
     return { ok: false, error: "Корзина пуста." };
   }
-
-  const orderItems: OrderItem[] = [];
-  for (const it of input.items) {
-    const product = await getProductById(it.productId);
-    if (!product) {
-      return {
-        ok: false,
-        error: `Товар не найден: ${it.productId}`,
-      };
-    }
-    if (it.quantity <= 0) continue;
-    orderItems.push({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: it.quantity,
-      unit: product.unit,
-      image: product.image,
-    });
-  }
-
-  if (orderItems.length === 0) {
-    return { ok: false, error: "Корзина пуста." };
-  }
-
-  const subtotal = orderItems.reduce(
-    (s, i) => s + i.price * i.quantity,
-    0
-  );
-
   if (input.payment === "card") {
     return {
       ok: false,
@@ -80,28 +80,76 @@ export async function createOrder(
     };
   }
 
-  const order: Order = {
-    id: `o-${Date.now()}-${Math.floor(Math.random() * 1e6)}`,
-    number: generateOrderNumber(),
-    createdAt: new Date().toISOString(),
-    customerName: input.customerName.trim(),
-    customerPhone: input.customerPhone.trim(),
-    address: input.address.trim(),
-    comment: input.comment?.trim() || undefined,
-    geo: input.geo,
-    payment: input.payment,
-    items: orderItems,
-    subtotal,
-    deliveryFee: DELIVERY_FEE,
-    total: subtotal + DELIVERY_FEE,
-    status: "accepted",
-  };
+  // Группируем позиции по vendorId, попутно резолвя каждую через store.
+  const buckets = new Map<string, OrderItem[]>();
+  for (const it of input.items) {
+    if (it.quantity <= 0) continue;
+    const product = await getProductById(it.productId);
+    if (!product) {
+      return {
+        ok: false,
+        error: `Товар не найден: ${it.productId}`,
+      };
+    }
+    const key = product.vendorId ?? "__unknown__";
+    const bucket = buckets.get(key) ?? [];
+    bucket.push({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: it.quantity,
+      unit: product.unit,
+      image: product.image,
+    });
+    buckets.set(key, bucket);
+  }
 
-  await saveOrder(order);
-  await notifyAdminNewOrder(order);
+  if (buckets.size === 0) {
+    return { ok: false, error: "Корзина пуста." };
+  }
+
+  const groupId = `cg-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  const now = Date.now();
+  const orders: Order[] = [];
+
+  let idx = 0;
+  for (const [vendorKey, items] of buckets.entries()) {
+    const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const deliveryFee = deliveryKind === "pickup" ? 0 : DELIVERY_FEE;
+    const order: Order = {
+      id: `o-${now}-${idx}-${Math.floor(Math.random() * 1e6)}`,
+      number: generateOrderNumber(),
+      createdAt: new Date().toISOString(),
+      customerName: input.customerName.trim(),
+      customerPhone: input.customerPhone.trim(),
+      address:
+        deliveryKind === "pickup"
+          ? ""
+          : input.address.trim(),
+      comment: input.comment?.trim() || undefined,
+      geo: input.geo,
+      payment: input.payment,
+      items,
+      subtotal,
+      deliveryFee,
+      total: subtotal + deliveryFee,
+      status: "accepted",
+      vendorId: vendorKey === "__unknown__" ? undefined : vendorKey,
+      deliveryKind,
+      desiredAt: input.desiredAt ?? undefined,
+      checkoutGroupId: groupId,
+    };
+    await saveOrder(order);
+    await notifyAdminNewOrder(order);
+    orders.push(order);
+    idx += 1;
+  }
+
   revalidatePath("/admin/orders");
+  revalidatePath("/vendor/dashboard/orders");
+  revalidatePath("/orders");
 
-  return { ok: true, order };
+  return { ok: true, orders, groupId };
 }
 
 export async function updateOrderStatus(

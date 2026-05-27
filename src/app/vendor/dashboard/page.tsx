@@ -13,7 +13,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { getCurrentVendor } from "@/server/vendor-auth";
+import { listOrdersByVendor } from "@/server/orders-store";
 import { Badge } from "@/components/ui/Badge";
+import { formatPrice } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 const STATUS_LABELS: Record<string, { label: string; tone: string }> = {
   pending: { label: "На модерации", tone: "amber" },
@@ -32,6 +36,20 @@ export default async function VendorDashboardOverview() {
     tone: "ink",
   };
 
+  const orders = await listOrdersByVendor(vendor.id);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayMs = todayStart.getTime();
+  const ordersToday = orders.filter(
+    (o) => new Date(o.createdAt).getTime() >= todayMs
+  );
+  const revenueToday = ordersToday
+    .filter((o) => o.status !== "cancelled")
+    .reduce((s, o) => s + o.total, 0);
+  const activeCount = orders.filter(
+    (o) => o.status === "accepted" || o.status === "preparing" || o.status === "courier"
+  ).length;
+
   return (
     <div className="space-y-5">
       <header className="flex items-start justify-between gap-3">
@@ -49,25 +67,25 @@ export default async function VendorDashboardOverview() {
           href="/vendor/dashboard/orders"
           icon={<ClipboardList size={18} />}
           label="Заказы сегодня"
-          value="—"
+          value={String(ordersToday.length)}
           tone="brand"
-          hint="Данные в обработке"
+          hint={ordersToday.length ? "Из них активные ниже" : "Пока тихо"}
         />
         <StatTile
           href="/vendor/dashboard/finances"
           icon={<Wallet size={18} />}
-          label="Выручка"
-          value="—"
+          label="Выручка сегодня"
+          value={revenueToday ? formatPrice(revenueToday) : "—"}
           tone="accent"
-          hint="Данные в обработке"
+          hint="Готовые заказы без отмен"
         />
         <StatTile
-          href="/vendor/dashboard/orders?status=active"
+          href="/vendor/dashboard/orders?status=preparing"
           icon={<Bell size={18} />}
           label="Активные"
-          value="—"
+          value={String(activeCount)}
           tone="amber"
-          hint="Данные в обработке"
+          hint="В сборке и доставке"
         />
         <StatTile
           href="/vendor/dashboard/reviews"

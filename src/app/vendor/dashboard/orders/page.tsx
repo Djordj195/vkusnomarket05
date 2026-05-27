@@ -1,28 +1,66 @@
 import Link from "next/link";
-import { PlaceholderCard, SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { redirect } from "next/navigation";
+import { Badge } from "@/components/ui/Badge";
+import {
+  PlaceholderCard,
+  SubpageHeader,
+} from "@/components/vendor/PlaceholderCard";
+import { getCurrentVendor } from "@/server/vendor-auth";
+import { listOrdersByVendor } from "@/server/orders-store";
+import {
+  DELIVERY_KIND_LABELS,
+  ORDER_STATUS_LABELS,
+  type Order,
+  type OrderStatus,
+} from "@/lib/types";
+import { formatDate, formatPrice } from "@/lib/utils";
 
-type Tab = { key: string; label: string };
+type Tab = { key: string; label: string; statuses: OrderStatus[] | null };
 
+// Маппим внутренние статусы Order (5 значений) на 8 вкладок-фильтров,
+// чтобы UX матчился со словарём ТЗ. Группировка отдельных статусов
+// сделана внутри statuses: null = все, иначе пересечение.
 const TABS: Tab[] = [
-  { key: "all", label: "Все" },
-  { key: "new", label: "Новые" },
-  { key: "confirmed", label: "Подтв." },
-  { key: "preparing", label: "В сборке" },
-  { key: "ready", label: "Готовы" },
-  { key: "delivering", label: "В доставке" },
-  { key: "done", label: "Завершено" },
-  { key: "cancelled", label: "Отмены" },
+  { key: "all", label: "Все", statuses: null },
+  { key: "new", label: "Новые", statuses: ["accepted"] },
+  { key: "preparing", label: "В сборке", statuses: ["preparing"] },
+  { key: "delivering", label: "В доставке", statuses: ["courier"] },
+  { key: "done", label: "Завершено", statuses: ["delivered"] },
+  { key: "cancelled", label: "Отмены", statuses: ["cancelled"] },
 ];
 
+const statusTone: Record<
+  OrderStatus,
+  "warn" | "info" | "accent" | "success" | "danger"
+> = {
+  accepted: "info",
+  preparing: "warn",
+  courier: "accent",
+  delivered: "success",
+  cancelled: "danger",
+};
+
 type SearchParams = Promise<{ status?: string }>;
+
+export const dynamic = "force-dynamic";
 
 export default async function VendorOrdersPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
+  const vendor = await getCurrentVendor();
+  if (!vendor) redirect("/vendor/login");
+
   const sp = await searchParams;
-  const active = sp.status ?? "all";
+  const activeKey = sp.status ?? "all";
+  const activeTab = TABS.find((t) => t.key === activeKey) ?? TABS[0];
+
+  const all = await listOrdersByVendor(vendor.id);
+  const orders =
+    activeTab.statuses === null
+      ? all
+      : all.filter((o) => activeTab.statuses!.includes(o.status));
 
   return (
     <div className="space-y-4">
@@ -33,7 +71,7 @@ export default async function VendorOrdersPage({
         aria-label="Фильтр статусов"
       >
         {TABS.map((tab) => {
-          const isActive = tab.key === active;
+          const isActive = tab.key === activeKey;
           return (
             <Link
               key={tab.key}
@@ -54,10 +92,60 @@ export default async function VendorOrdersPage({
         })}
       </nav>
 
-      <PlaceholderCard
-        title="Заказов пока нет"
-        description="Когда клиент оформит заказ в вашем магазине, он появится здесь. Жизненный цикл: новый → подтверждён → в сборке → готов → передан курьеру → завершён."
-      />
+      {orders.length === 0 ? (
+        <PlaceholderCard
+          title={
+            activeTab.key === "all"
+              ? "Заказов пока нет"
+              : "Нет заказов с этим статусом"
+          }
+          description={
+            activeTab.key === "all"
+              ? "Когда клиент оформит заказ в вашем магазине, он появится здесь. Жизненный цикл: новый → подтверждён → в сборке → готов → передан курьеру → завершён."
+              : "Попробуйте другую вкладку — например, «Все»."
+          }
+        />
+      ) : (
+        <ul className="space-y-2">
+          {orders.map((order) => (
+            <OrderRow key={order.id} order={order} />
+          ))}
+        </ul>
+      )}
     </div>
+  );
+}
+
+function OrderRow({ order }: { order: Order }) {
+  const deliveryLabel = order.deliveryKind
+    ? DELIVERY_KIND_LABELS[order.deliveryKind]
+    : "Доставка";
+  return (
+    <li className="rounded-2xl border border-ink-200 bg-white p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[11px] text-ink-500">№ {order.number}</div>
+          <div className="text-[13px] font-semibold text-ink-900">
+            {formatDate(order.createdAt)}
+          </div>
+        </div>
+        <Badge tone={statusTone[order.status]}>
+          {ORDER_STATUS_LABELS[order.status]}
+        </Badge>
+      </div>
+      <div className="mt-2 flex items-center justify-between text-[12px] text-ink-600">
+        <span>
+          {order.items.length} позиции · {deliveryLabel}
+        </span>
+        <span className="text-[14px] font-bold text-ink-900">
+          {formatPrice(order.total)}
+        </span>
+      </div>
+      {order.address && (
+        <div className="mt-1 truncate text-[11px] text-ink-500">
+          {order.address}
+        </div>
+      )}
+    </li>
   );
 }

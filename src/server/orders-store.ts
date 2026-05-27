@@ -1,5 +1,11 @@
 import "server-only";
-import type { Order, OrderItem, OrderStatus, PaymentMethod } from "@/lib/types";
+import type {
+  DeliveryKind,
+  Order,
+  OrderItem,
+  OrderStatus,
+  PaymentMethod,
+} from "@/lib/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 
 // Двухрежимное хранилище заказов:
@@ -44,6 +50,11 @@ type OrderRow = {
   total: number;
   status: OrderStatus;
   courier_id: string | null;
+  // Phase 4 columns (nullable for rows created before migration 0008)
+  vendor_id: string | null;
+  delivery_kind: DeliveryKind | null;
+  desired_at: string | null;
+  checkout_group_id: string | null;
 };
 
 function rowToOrder(row: OrderRow): Order {
@@ -66,6 +77,10 @@ function rowToOrder(row: OrderRow): Order {
     total: row.total,
     status: row.status,
     courierId: row.courier_id ?? undefined,
+    vendorId: row.vendor_id ?? undefined,
+    deliveryKind: row.delivery_kind ?? undefined,
+    desiredAt: row.desired_at ?? undefined,
+    checkoutGroupId: row.checkout_group_id ?? undefined,
   };
 }
 
@@ -87,6 +102,10 @@ function orderToRow(o: Order): OrderRow {
     total: o.total,
     status: o.status,
     courier_id: o.courierId ?? null,
+    vendor_id: o.vendorId ?? null,
+    delivery_kind: o.deliveryKind ?? null,
+    desired_at: o.desiredAt ?? null,
+    checkout_group_id: o.checkoutGroupId ?? null,
   };
 }
 
@@ -108,6 +127,56 @@ export async function listOrders(): Promise<Order[]> {
     (a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+}
+
+/**
+ * Заказы конкретного продавца — используется в кабинете продавца.
+ * Phase 4: возвращает только заказы с заполненным `vendor_id`. Старые
+ * (до миграции 0008) сюда не попадают.
+ */
+export async function listOrdersByVendor(vendorId: string): Promise<Order[]> {
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("orders")
+      .select("*")
+      .eq("vendor_id", vendorId)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(`listOrdersByVendor: ${error.message}`);
+    return (data as OrderRow[]).map(rowToOrder);
+  }
+  return [...getMemoryStore().orders]
+    .filter((o) => o.vendorId === vendorId)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+}
+
+/**
+ * Все заказы из одной checkout-группы (multi-vendor split). Используется
+ * на странице подтверждения, чтобы показать все созданные заказы скопом.
+ */
+export async function listOrdersByCheckoutGroup(
+  groupId: string
+): Promise<Order[]> {
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("orders")
+      .select("*")
+      .eq("checkout_group_id", groupId)
+      .order("created_at", { ascending: true });
+    if (error)
+      throw new Error(`listOrdersByCheckoutGroup: ${error.message}`);
+    return (data as OrderRow[]).map(rowToOrder);
+  }
+  return [...getMemoryStore().orders]
+    .filter((o) => o.checkoutGroupId === groupId)
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
 }
 
 export async function getOrderById(id: string): Promise<Order | undefined> {
