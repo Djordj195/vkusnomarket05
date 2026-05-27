@@ -1,13 +1,6 @@
-import { PlaceholderCard, SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { redirect } from "next/navigation";
 
-export default function CourierHistoryPage() {
-  return (
-    <div className="space-y-4">
-      <SubpageHeader title="История доставок" backHref="/courier/dashboard" />
-      <PlaceholderCard
-        title="История пуста"
-        description="Завершённые заказы и пройденные маршруты появятся здесь после первой смены."
-      />
-    </div>
-  );
+// Keep a redirect alias so an old bookmark to /orders/history still works.
+export default function CourierOrdersHistoryAlias() {
+  redirect("/courier/dashboard/history");
 }

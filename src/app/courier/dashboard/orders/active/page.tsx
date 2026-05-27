@@ -1,43 +1,50 @@
-import { PlaceholderCard, SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { redirect } from "next/navigation";
+import { getCurrentCourier } from "@/server/courier-auth";
+import { listActiveOrdersByCourier } from "@/server/orders-store";
+import { getVendorById } from "@/server/vendors-store";
+import { listCities } from "@/server/cities-store";
+import { SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { CourierActiveOrders } from "./CourierActiveOrders";
 
-const STATUSES = [
-  "Направляюсь в точку",
-  "Прибыл в точку",
-  "Забрал заказ",
-  "В пути к клиенту",
-  "Прибыл к клиенту",
-  "Доставлено",
-  "Не удалось доставить",
-];
+export const dynamic = "force-dynamic";
 
-export default function CourierActiveOrdersPage() {
+export default async function CourierActiveOrdersPage() {
+  const courier = await getCurrentCourier();
+  if (!courier) redirect("/courier/login");
+
+  const [orders, cities] = await Promise.all([
+    listActiveOrdersByCourier(courier.id),
+    listCities(),
+  ]);
+  const cityById = new Map(cities.map((c) => [c.id, c]));
+
+  const initial = await Promise.all(
+    orders.map(async (o) => {
+      const vendor = o.vendorId ? await getVendorById(o.vendorId) : null;
+      const city = vendor ? cityById.get(vendor.cityId) : null;
+      return {
+        order: o,
+        vendor: vendor
+          ? {
+              id: vendor.id,
+              brandName: vendor.brandName,
+              slug: vendor.slug,
+              phone: vendor.contacts?.phone ?? null,
+              logoUrl: vendor.logoUrl ?? null,
+            }
+          : null,
+        pickup:
+          city != null
+            ? { lat: city.lat, lng: city.lng, label: city.name }
+            : null,
+      };
+    })
+  );
+
   return (
     <div className="space-y-4">
       <SubpageHeader title="Активные заказы" backHref="/courier/dashboard" />
-
-      <PlaceholderCard
-        title="Сейчас активных заказов нет"
-        description="Когда вы возьмёте заказ, он появится здесь с кнопками смены статуса и кнопкой 'Открыть в навигаторе'."
-      />
-
-      <section className="rounded-2xl border border-ink-200 bg-white p-4">
-        <h2 className="text-[13px] font-bold text-ink-900">
-          Статусы доставки
-        </h2>
-        <ol className="mt-2 space-y-1.5">
-          {STATUSES.map((s, i) => (
-            <li
-              key={s}
-              className="flex items-center gap-2 text-[12px] text-ink-700"
-            >
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink-100 text-[10px] font-bold text-ink-500">
-                {i + 1}
-              </span>
-              <span>{s}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <CourierActiveOrders initial={initial} />
     </div>
   );
 }

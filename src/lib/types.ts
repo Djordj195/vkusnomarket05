@@ -181,6 +181,39 @@ export const DELIVERY_KIND_LABELS: Record<DeliveryKind, string> = {
   pickup: "Самовывоз",
 };
 
+// Phase 5: sub-status, отчитываемый курьером пока заказ в макро-статусе
+// "courier". Опционален: старые заказы без этого поля рендерятся как
+// "Передан курьеру" в обычной шкале статусов.
+export type CourierStage =
+  | "dispatching"
+  | "arrived_pickup"
+  | "picked_up"
+  | "in_transit"
+  | "arrived_dropoff"
+  | "completed"
+  | "failed";
+
+export const COURIER_STAGE_LABELS: Record<CourierStage, string> = {
+  dispatching: "Направляюсь в магазин",
+  arrived_pickup: "Прибыл в магазин",
+  picked_up: "Забрал заказ",
+  in_transit: "В пути к клиенту",
+  arrived_dropoff: "Прибыл к клиенту",
+  completed: "Доставлено",
+  failed: "Не удалось доставить",
+};
+
+// Порядок шагов курьера. completed/failed — терминальные, не часть
+// последовательности и должны вызываться отдельно из UI.
+export const COURIER_STAGE_FLOW: CourierStage[] = [
+  "dispatching",
+  "arrived_pickup",
+  "picked_up",
+  "in_transit",
+  "arrived_dropoff",
+  "completed",
+];
+
 export type Courier = {
   id: string;
   name: string;
@@ -219,6 +252,8 @@ export type Order = {
   deliveryKind?: DeliveryKind;
   desiredAt?: string;
   checkoutGroupId?: string;
+  // Phase 5: курьерский саб-статус (см. CourierStage).
+  courierStage?: CourierStage;
 };
 
 export type User = {
