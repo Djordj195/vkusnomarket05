@@ -12,7 +12,9 @@ import {
   Truck,
   Pill,
   Phone,
+  Megaphone,
 } from "lucide-react";
+import { LEGAL_DOCS } from "@/data/legal";
 
 export const metadata = {
   title: "Юридическая информация · ВкусМаркет",
@@ -20,64 +22,17 @@ export const metadata = {
     "Документы, реквизиты и правовые акты, регулирующие работу маркетплейса ВкусМаркет.",
 };
 
-type LegalItem = {
-  slug: string;
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ size?: number }>;
+const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
+  company: Building2,
+  requisites: Receipt,
+  offer: ScrollText,
+  privacy: ShieldCheck,
+  consent: FileText,
+  "marketing-consent": Megaphone,
+  delivery: Truck,
+  pharmacy: Pill,
+  contacts: Phone,
 };
-
-export const LEGAL_ITEMS: LegalItem[] = [
-  {
-    slug: "company",
-    title: "О компании",
-    description: "Информация об операторе платформы",
-    icon: Building2,
-  },
-  {
-    slug: "requisites",
-    title: "Реквизиты",
-    description: "ИНН, ОГРНИП и юридический адрес",
-    icon: Receipt,
-  },
-  {
-    slug: "offer",
-    title: "Пользовательская оферта",
-    description: "Договор оказания услуг маркетплейса",
-    icon: ScrollText,
-  },
-  {
-    slug: "privacy",
-    title: "Политика конфиденциальности",
-    description: "Как мы обрабатываем персональные данные",
-    icon: ShieldCheck,
-  },
-  {
-    slug: "consent",
-    title: "Согласие на обработку данных",
-    description: "Текст согласия и список целей обработки",
-    icon: FileText,
-  },
-  {
-    slug: "delivery",
-    title: "Правила доставки и возврата",
-    description: "Условия доставки заказов и возврат товаров",
-    icon: Truck,
-  },
-  {
-    slug: "pharmacy",
-    title: "Информация по аптечному разделу",
-    description:
-      "Только безрецептурные препараты и БАД, лицензии партнёров",
-    icon: Pill,
-  },
-  {
-    slug: "contacts",
-    title: "Контакты поддержки",
-    description: "Телефон, email и режим работы клиентского сервиса",
-    icon: Phone,
-  },
-];
 
 export default function LegalPage() {
   return (
@@ -101,13 +56,14 @@ export default function LegalPage() {
       <section className="px-4 pt-4 pb-2">
         <p className="text-[13px] text-ink-600">
           Документы, регулирующие работу маркетплейса ВкусМаркет, отношения с
-          клиентами, продавцами и партнёрами.
+          клиентами, продавцами и партнёрами. Все документы доступны для чтения
+          в приложении и для скачивания в PDF.
         </p>
       </section>
 
       <ul className="px-4 pt-2 pb-8 space-y-2">
-        {LEGAL_ITEMS.map((item) => {
-          const Icon = item.icon;
+        {LEGAL_DOCS.map((item) => {
+          const Icon = ICONS[item.slug] ?? FileText;
           return (
             <li key={item.slug}>
               <Link
@@ -119,9 +75,10 @@ export default function LegalPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="text-[14px] font-bold text-ink-900">
-                    {item.title}
+                    {item.number ? `${item.number}. ` : ""}
+                    {item.shortTitle}
                   </div>
-                  <div className="truncate text-[12px] text-ink-500">
+                  <div className="line-clamp-2 text-[12px] text-ink-500">
                     {item.description}
                   </div>
                 </div>
