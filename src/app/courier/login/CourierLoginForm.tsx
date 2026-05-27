@@ -22,6 +22,7 @@ export function CourierLoginForm() {
   const [courierType, setCourierType] = useState<CourierType>("platform");
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [demoCode, setDemoCode] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function onSendCode(e: React.FormEvent) {
@@ -39,6 +40,7 @@ export function CourierLoginForm() {
         setError(res.error);
         return;
       }
+      setDemoCode(res.demoCode);
       setStep("code");
     });
   }
@@ -151,9 +153,15 @@ export function CourierLoginForm() {
           Тип: {courierType === "platform" ? "Курьер платформы" : "Курьер магазина"}
         </div>
       </div>
+      {demoCode && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
+          Демо-режим: SMS-провайдер не подключён, используйте код{" "}
+          <strong>{demoCode}</strong>.
+        </div>
+      )}
       <Input
         label="Код из SMS"
-        placeholder="123456"
+        placeholder="••••••"
         inputMode="numeric"
         value={code}
         onChange={(e) =>

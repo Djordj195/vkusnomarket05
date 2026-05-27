@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/store/auth";
 import { isValidPhone, maskPhoneInput } from "@/lib/utils";
-import { DEMO_SMS_CODE } from "@/lib/constants";
+import {
+  sendClientCodeAction,
+  verifyClientCodeAction,
+} from "@/server/client-login-actions";
 
 type Step = "phone" | "code";
 
@@ -24,6 +27,7 @@ export default function AuthPage() {
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [demoCode, setDemoCode] = useState<string | null>(null);
 
   const sendCode = async () => {
     setError(null);
@@ -37,10 +41,14 @@ export default function AuthPage() {
     }
     setLoading(true);
     try {
-      // Демо-режим: код всегда 123456. После подключения SMS-провайдера
-      // здесь будет вызов /api/auth/send-code, который реально отправит SMS.
-      // Факт согласия сохраняется в БД вместе с версией документа, IP и устройством.
-      await new Promise((r) => setTimeout(r, 600));
+      const fd = new FormData();
+      fd.set("phone", phone);
+      const res = await sendClientCodeAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setDemoCode(res.demoCode);
       setStep("code");
     } finally {
       setLoading(false);
@@ -49,20 +57,28 @@ export default function AuthPage() {
 
   const verify = async () => {
     setError(null);
-    if (code !== DEMO_SMS_CODE) {
-      setError(`Неверный код. В демо-режиме используйте код ${DEMO_SMS_CODE}.`);
-      return;
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.set("phone", phone);
+      fd.set("code", code);
+      const res = await verifyClientCodeAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setUser({
+        id: `u-${res.phone}`,
+        phone: res.phone,
+        name: name.trim() || undefined,
+      });
+      router.replace("/profile");
+    } finally {
+      setLoading(false);
     }
-    const phoneDigits = phone.replace(/\D/g, "");
-    setUser({
-      id: `u-${phoneDigits}`,
-      phone: phoneDigits,
-      name: name.trim() || undefined,
-    });
-    router.replace("/profile");
   };
 
-  const codeLength = DEMO_SMS_CODE.length;
+  const codeLength = 6;
 
   return (
     <PageShell>
@@ -135,9 +151,15 @@ export default function AuthPage() {
             <div className="rounded-xl bg-brand-50 p-3 text-[13px] text-brand-800">
               Код отправлен на номер <strong>{phone}</strong>
             </div>
+            {demoCode && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
+                Демо-режим: SMS-провайдер не подключён, используйте код{" "}
+                <strong>{demoCode}</strong>.
+              </div>
+            )}
             <Input
               label="Код из SMS"
-              placeholder={DEMO_SMS_CODE}
+              placeholder="••••••"
               inputMode="numeric"
               value={code}
               onChange={(e) =>
@@ -146,8 +168,8 @@ export default function AuthPage() {
               maxLength={codeLength}
               error={error ?? undefined}
             />
-            <Button fullWidth size="lg" onClick={verify}>
-              Войти
+            <Button fullWidth size="lg" onClick={verify} disabled={loading}>
+              {loading ? "Проверяем..." : "Войти"}
             </Button>
             <button
               type="button"

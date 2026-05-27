@@ -49,6 +49,9 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "feedback.resolve": "Закрытие обратной связи",
   "admin.login": "Вход админа",
   "admin.logout": "Выход админа",
+  "auth.code_sent": "Отправка OTP-кода",
+  "auth.code_verified": "Успешный вход",
+  "auth.code_failed": "Неверный код при входе",
 };
 
 export function actionLabel(code: string): string {
