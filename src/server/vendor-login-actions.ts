@@ -2,14 +2,14 @@
 
 import { redirect } from "next/navigation";
 import {
-  VENDOR_DEMO_CODE,
   clearVendorSession,
   findVendorByPhone,
   setVendorSession,
 } from "./vendor-auth";
+import { sendOtp, verifyAndConsume } from "./sms-auth";
 
 export type SendCodeResult =
-  | { ok: true; brandName: string }
+  | { ok: true; brandName: string; demoCode: string | null }
   | { ok: false; error: string };
 
 export async function sendVendorCodeAction(
@@ -29,19 +29,15 @@ export async function sendVendorCodeAction(
     };
   }
   if (vendor.status === "blocked") {
-    return {
-      ok: false,
-      error: "Доступ заблокирован. Обратитесь в поддержку.",
-    };
+    return { ok: false, error: "Доступ заблокирован. Обратитесь в поддержку." };
   }
   if (vendor.status === "suspended") {
-    return {
-      ok: false,
-      error: "Аккаунт приостановлен. Обратитесь в поддержку.",
-    };
+    return { ok: false, error: "Аккаунт приостановлен. Обратитесь в поддержку." };
   }
-  // TODO: вызов SMS-провайдера. Пока — демо-режим, код фиксированный.
-  return { ok: true, brandName: vendor.brandName };
+
+  const sent = await sendOtp(phone, "vendor_login");
+  if (!sent.ok) return { ok: false, error: sent.error };
+  return { ok: true, brandName: vendor.brandName, demoCode: sent.demoCode };
 }
 
 export type VerifyCodeResult = { ok: true } | { ok: false; error: string };
@@ -51,12 +47,9 @@ export async function verifyVendorCodeAction(
 ): Promise<VerifyCodeResult> {
   const phone = String(formData.get("phone") ?? "");
   const code = String(formData.get("code") ?? "").trim();
-  if (code !== VENDOR_DEMO_CODE) {
-    return {
-      ok: false,
-      error: `Неверный код. В демо-режиме используйте ${VENDOR_DEMO_CODE}.`,
-    };
-  }
+  const verified = await verifyAndConsume(phone, "vendor_login", code);
+  if (!verified.ok) return { ok: false, error: verified.error };
+
   const vendor = await findVendorByPhone(phone);
   if (!vendor) {
     return { ok: false, error: "Сессия истекла. Попробуйте снова." };
