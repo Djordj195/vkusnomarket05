@@ -1,9 +1,13 @@
 import { CheckoutView } from "./CheckoutView";
 import { listProducts } from "@/server/products-store";
+import { listVendors } from "@/server/vendors-store";
 
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
-  const products = await listProducts();
-  return <CheckoutView products={products} />;
+  const [products, vendors] = await Promise.all([
+    listProducts(),
+    listVendors(),
+  ]);
+  return <CheckoutView products={products} vendors={vendors} />;
 }

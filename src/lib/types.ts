@@ -173,6 +173,14 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   card: "Картой (скоро)",
 };
 
+// Тип доставки заказа. Phase 4 — добавили самовывоз.
+export type DeliveryKind = "delivery" | "pickup";
+
+export const DELIVERY_KIND_LABELS: Record<DeliveryKind, string> = {
+  delivery: "Доставка курьером",
+  pickup: "Самовывоз",
+};
+
 export type Courier = {
   id: string;
   name: string;
@@ -205,6 +213,12 @@ export type Order = {
   total: number;
   status: OrderStatus;
   courierId?: string;
+  // Phase 4: продавец, тип доставки, желаемое время и группа multi-vendor чек-аута.
+  // Все поля опциональны — старые записи (до миграции 0008) их не имеют.
+  vendorId?: string;
+  deliveryKind?: DeliveryKind;
+  desiredAt?: string;
+  checkoutGroupId?: string;
 };
 
 export type User = {

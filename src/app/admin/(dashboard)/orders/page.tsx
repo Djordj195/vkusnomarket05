@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listOrders } from "@/server/orders-store";
 import { listCouriers } from "@/server/couriers-store";
+import { listVendors } from "@/server/vendors-store";
 import { ChevronRight, ClipboardList } from "lucide-react";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
@@ -22,9 +23,13 @@ export default async function AdminOrdersPage({
   searchParams: SearchParams;
 }) {
   const sp = await searchParams;
-  const all = await listOrders();
-  const couriers = await listCouriers();
+  const [all, couriers, vendors] = await Promise.all([
+    listOrders(),
+    listCouriers(),
+    listVendors(),
+  ]);
   const courierMap = new Map(couriers.map((c) => [c.id, c]));
+  const vendorMap = new Map(vendors.map((v) => [v.id, v]));
 
   let orders = all;
   let activeKey = "all";
@@ -89,6 +94,7 @@ export default async function AdminOrdersPage({
         <ul className="space-y-2">
           {orders.map((o) => {
             const courier = o.courierId ? courierMap.get(o.courierId) : null;
+            const vendor = o.vendorId ? vendorMap.get(o.vendorId) : null;
             return (
               <li key={o.id}>
                 <Link
@@ -103,6 +109,11 @@ export default async function AdminOrdersPage({
                       <Badge tone="brand">
                         {ORDER_STATUS_LABELS[o.status]}
                       </Badge>
+                      {vendor && (
+                        <span className="truncate rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-semibold text-ink-700">
+                          {vendor.brandName}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-1 truncate text-[12px] text-ink-700">
                       {o.customerName} · {o.customerPhone}
