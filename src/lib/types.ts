@@ -261,3 +261,24 @@ export type User = {
   phone: string;
   name?: string;
 };
+
+// Phase 6: зона доставки продавца. polygon — массив точек {lat, lng};
+// внутри Supabase сохраняется как GeoJSON-совместимый JSON (см. миграцию
+// 0005, поле `polygon jsonb`). Полигон должен быть замкнут логически —
+// первая точка повторяется в конце автоматически на стороне сервера.
+export type DeliveryZonePoint = { lat: number; lng: number };
+
+export type DeliveryZone = {
+  id: string;
+  vendorId: string;
+  name: string;
+  polygon: DeliveryZonePoint[];
+  minOrder: number;
+  deliveryFee: number;
+  // null = бесплатной доставки не предусмотрено
+  freeFrom: number | null;
+  etaMin: number;
+  etaMax: number;
+  isActive: boolean;
+  createdAt: string;
+};

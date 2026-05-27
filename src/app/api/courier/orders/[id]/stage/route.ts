@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentCourier } from "@/server/courier-auth";
+import { logAudit } from "@/server/audit-store";
 import {
   getOrderById,
   updateCourierStage,
@@ -50,5 +51,14 @@ export async function POST(
   if (!updated) {
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
+  await logAudit({
+    actorType: "courier",
+    actorId: courier.id,
+    actorLabel: courier.phone,
+    action: "order.courier_stage",
+    targetType: "order",
+    targetId: id,
+    payload: { stage, status: updated.status },
+  });
   return NextResponse.json({ ok: true, order: updated });
 }

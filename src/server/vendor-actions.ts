@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "./admin-auth";
+import { logAudit } from "./audit-store";
 import {
   createVendorApplication,
   isSlugAvailable,
@@ -169,6 +170,13 @@ export async function updateVendorStatusAction(
   const status = String(formData.get("status") ?? "") as VendorStatus;
   if (!id || !VALID_STATUSES.includes(status)) return;
   await updateVendorStatus(id, status);
+  await logAudit({
+    actorType: "admin",
+    action: "vendor.status_change",
+    targetType: "vendor",
+    targetId: id,
+    payload: { status },
+  });
   revalidatePath("/admin/vendors");
   revalidatePath(`/admin/vendors/${id}`);
   revalidatePath("/", "layout");
@@ -182,6 +190,13 @@ export async function toggleVendorFeaturedAction(
   const featured = formData.get("featured") === "true";
   if (!id) return;
   await updateVendorFeatured(id, featured);
+  await logAudit({
+    actorType: "admin",
+    action: "vendor.feature_toggle",
+    targetType: "vendor",
+    targetId: id,
+    payload: { featured },
+  });
   revalidatePath("/admin/vendors");
   revalidatePath(`/admin/vendors/${id}`);
   revalidatePath("/", "layout");
