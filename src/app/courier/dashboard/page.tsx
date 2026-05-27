@@ -1,31 +1,65 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ClipboardList, Map, History, Wallet, ChevronRight } from "lucide-react";
+import { ClipboardList, History, Map, Wallet, ChevronRight } from "lucide-react";
 import { getCurrentCourier } from "@/server/courier-auth";
-import { PlaceholderCard } from "@/components/vendor/PlaceholderCard";
+import {
+  listActiveOrdersByCourier,
+  listOrderHistoryByCourier,
+} from "@/server/orders-store";
+import { CourierActiveSummary } from "./CourierActiveSummary";
+
+export const dynamic = "force-dynamic";
 
 export default async function CourierDashboardPage() {
   const courier = await getCurrentCourier();
-  if (!courier) return null;
+  if (!courier) redirect("/courier/login");
+
+  const [active, history] = await Promise.all([
+    listActiveOrdersByCourier(courier.id),
+    listOrderHistoryByCourier(courier.id),
+  ]);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startOfToday = today.toISOString();
+
+  const deliveredToday = history.filter(
+    (o) => o.status === "delivered" && o.createdAt >= startOfToday
+  );
+  const todayEarnings = deliveredToday.reduce(
+    (s, o) => s + (o.deliveryFee ?? 0),
+    0
+  );
 
   return (
     <div className="space-y-5">
       <header>
         <h1 className="text-[22px] font-extrabold text-ink-900">Заказы</h1>
         <p className="text-[12px] text-ink-500">
-          Назначенные вам доставки появятся ниже.
+          Назначенные вам доставки появятся ниже. Страница обновляется
+          автоматически.
         </p>
       </header>
 
       <section className="grid grid-cols-3 gap-3">
-        <Tile label="Сегодня" value="0" hint="заказов" />
-        <Tile label="В работе" value="0" hint="активных" />
-        <Tile label="Заработок" value="—" hint="за смену" />
+        <Tile
+          label="Сегодня"
+          value={String(deliveredToday.length)}
+          hint="доставлено"
+        />
+        <Tile
+          label="В работе"
+          value={String(active.length)}
+          hint="активных"
+        />
+        <Tile
+          label="Заработок"
+          value={todayEarnings > 0 ? `${todayEarnings} ₽` : "—"}
+          hint="за сегодня"
+        />
       </section>
 
-      <PlaceholderCard
-        title="Активных заказов нет"
-        description="Когда появится новый заказ в вашей зоне, вы получите push-уведомление. Принять заказ можно из этого экрана."
-      />
+      <CourierActiveSummary initialCount={active.length} />
 
       <section>
         <h2 className="mb-2 text-[14px] font-bold text-ink-900">Разделы</h2>
@@ -34,19 +68,27 @@ export default async function CourierDashboardPage() {
             href="/courier/dashboard/orders/active"
             icon={<ClipboardList size={20} />}
             label="Активные заказы"
-            sub="Со статусами в работе"
+            sub={
+              active.length > 0
+                ? `${active.length} в работе`
+                : "Со статусами в работе"
+            }
           />
           <Row
             href="/courier/dashboard/map"
             icon={<Map size={20} />}
             label="Карта и маршрут"
-            sub="Оптимальный путь по точкам"
+            sub="Маршрут «магазин → клиент»"
           />
           <Row
             href="/courier/dashboard/history"
             icon={<History size={20} />}
             label="История доставок"
-            sub="Выполненные заказы"
+            sub={
+              history.length > 0
+                ? `${history.length} выполненных`
+                : "Выполненные заказы"
+            }
           />
           <Row
             href="/courier/dashboard/profile"

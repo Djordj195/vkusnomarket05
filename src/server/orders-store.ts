@@ -1,5 +1,6 @@
 import "server-only";
 import type {
+  CourierStage,
   DeliveryKind,
   Order,
   OrderItem,
@@ -55,6 +56,8 @@ type OrderRow = {
   delivery_kind: DeliveryKind | null;
   desired_at: string | null;
   checkout_group_id: string | null;
+  // Phase 5 column (nullable for rows created before migration 0009)
+  courier_stage: CourierStage | null;
 };
 
 function rowToOrder(row: OrderRow): Order {
@@ -81,6 +84,7 @@ function rowToOrder(row: OrderRow): Order {
     deliveryKind: row.delivery_kind ?? undefined,
     desiredAt: row.desired_at ?? undefined,
     checkoutGroupId: row.checkout_group_id ?? undefined,
+    courierStage: row.courier_stage ?? undefined,
   };
 }
 
@@ -106,6 +110,7 @@ function orderToRow(o: Order): OrderRow {
     delivery_kind: o.deliveryKind ?? null,
     desired_at: o.desiredAt ?? null,
     checkout_group_id: o.checkoutGroupId ?? null,
+    courier_stage: o.courierStage ?? null,
   };
 }
 
@@ -231,6 +236,104 @@ export async function updateOrderStatus(
   if (!order) return undefined;
   order.status = status;
   if (courierId !== undefined) order.courierId = courierId;
+  return order;
+}
+
+/**
+ * Phase 5: активные заказы курьера. Статус заказа на платформе — `courier`
+ * (то есть передан курьеру). Терминальные courier_stage (completed/failed)
+ * сюда не попадают — для них используется listOrderHistoryByCourier.
+ */
+export async function listActiveOrdersByCourier(
+  courierId: string
+): Promise<Order[]> {
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("orders")
+      .select("*")
+      .eq("courier_id", courierId)
+      .eq("status", "courier")
+      .order("created_at", { ascending: false });
+    if (error)
+      throw new Error(`listActiveOrdersByCourier: ${error.message}`);
+    return (data as OrderRow[]).map(rowToOrder);
+  }
+  return [...getMemoryStore().orders]
+    .filter((o) => o.courierId === courierId && o.status === "courier")
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+}
+
+/**
+ * Phase 5: история курьера — доставленные и отменённые заказы, на которые
+ * он был назначен.
+ */
+export async function listOrderHistoryByCourier(
+  courierId: string
+): Promise<Order[]> {
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("orders")
+      .select("*")
+      .eq("courier_id", courierId)
+      .in("status", ["delivered", "cancelled"])
+      .order("created_at", { ascending: false });
+    if (error)
+      throw new Error(`listOrderHistoryByCourier: ${error.message}`);
+    return (data as OrderRow[]).map(rowToOrder);
+  }
+  return [...getMemoryStore().orders]
+    .filter(
+      (o) =>
+        o.courierId === courierId &&
+        (o.status === "delivered" || o.status === "cancelled")
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+}
+
+/**
+ * Phase 5: курьер сообщает о новом этапе доставки. completed → переводит
+ * макро-статус заказа в `delivered`. failed → `cancelled`. Остальные этапы
+ * не трогают макро-статус.
+ */
+export async function updateCourierStage(
+  id: string,
+  stage: CourierStage
+): Promise<Order | undefined> {
+  const nextMacroStatus: OrderStatus | null =
+    stage === "completed"
+      ? "delivered"
+      : stage === "failed"
+        ? "cancelled"
+        : null;
+
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const patch: {
+      courier_stage: CourierStage;
+      status?: OrderStatus;
+    } = { courier_stage: stage };
+    if (nextMacroStatus) patch.status = nextMacroStatus;
+    const { data, error } = await sb
+      .from("orders")
+      .update(patch)
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(`updateCourierStage: ${error.message}`);
+    return data ? rowToOrder(data as OrderRow) : undefined;
+  }
+  const order = getMemoryStore().orders.find((o) => o.id === id);
+  if (!order) return undefined;
+  order.courierStage = stage;
+  if (nextMacroStatus) order.status = nextMacroStatus;
   return order;
 }
 
