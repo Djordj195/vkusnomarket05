@@ -6,6 +6,7 @@ import type {
   OrderItem,
   OrderStatus,
   PaymentMethod,
+  PaymentStatus,
 } from "@/lib/types";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 
@@ -58,6 +59,9 @@ type OrderRow = {
   checkout_group_id: string | null;
   // Phase 5 column (nullable for rows created before migration 0009)
   courier_stage: CourierStage | null;
+  // Phase 8 columns (nullable for rows created before migration 0012)
+  payment_id: string | null;
+  payment_status: PaymentStatus | null;
 };
 
 function rowToOrder(row: OrderRow): Order {
@@ -85,6 +89,8 @@ function rowToOrder(row: OrderRow): Order {
     desiredAt: row.desired_at ?? undefined,
     checkoutGroupId: row.checkout_group_id ?? undefined,
     courierStage: row.courier_stage ?? undefined,
+    paymentId: row.payment_id ?? undefined,
+    paymentStatus: row.payment_status ?? undefined,
   };
 }
 
@@ -111,6 +117,8 @@ function orderToRow(o: Order): OrderRow {
     desired_at: o.desiredAt ?? null,
     checkout_group_id: o.checkoutGroupId ?? null,
     courier_stage: o.courierStage ?? null,
+    payment_id: o.paymentId ?? null,
+    payment_status: o.paymentStatus ?? null,
   };
 }
 

@@ -37,6 +37,7 @@ import {
 } from "@/lib/utils";
 import { DELIVERY_FEE } from "@/lib/constants";
 import { createOrder } from "@/server/orders-actions";
+import { createPaymentForCheckoutGroup } from "@/server/payments/payments-actions";
 
 type Props = { products: Product[]; vendors: Vendor[] };
 
@@ -249,8 +250,29 @@ export function CheckoutView({ products, vendors }: Props) {
       }
       clearCart();
 
-      // Если один заказ — открываем его. Если несколько — общий список с
-      // отметкой группы (страница /orders уже умеет их показывать).
+      // Phase 8: для card-оплаты создаём платёж в ЮKassa и редиректим
+      // клиента на confirmation_url. После оплаты он вернётся на /orders
+      // с ?pay=return — там покажется статус.
+      if (payment === "card") {
+        const pay = await createPaymentForCheckoutGroup({
+          checkoutGroupId: result.groupId,
+          customerPhone: phone,
+        });
+        if (!pay.ok) {
+          setError(`Платёж не создан: ${pay.error}`);
+          setSubmitting(false);
+          return;
+        }
+        if (pay.payment.confirmationUrl) {
+          window.location.href = pay.payment.confirmationUrl;
+          return;
+        }
+        // Фолбэк: confirmation_url не пришёл — отправляем на /orders.
+        router.replace(`/orders?group=${result.groupId}&pay=pending`);
+        return;
+      }
+
+      // Cash: сразу на страницу заказа.
       if (result.orders.length === 1) {
         router.replace(`/orders/${result.orders[0].id}?new=1`);
       } else {
@@ -661,12 +683,12 @@ function PaymentStep({
             checked={payment === "card"}
             onClick={() => setPayment("card")}
             label={PAYMENT_LABELS.card}
-            disabled
             icon={<ShieldCheck size={20} />}
           />
         </div>
         <p className="text-[11px] text-ink-500">
-          Картой можно будет заплатить после интеграции ЮKassa.{" "}
+          После подтверждения вас перенаправит на защищённую страницу ЮKassa
+          для ввода данных карты. Чек 54-ФЗ выдаётся автоматически.{" "}
           <Link href="/legal" className="underline">
             54-ФЗ / реквизиты
           </Link>
