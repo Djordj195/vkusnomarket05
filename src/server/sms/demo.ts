@@ -20,4 +20,9 @@ export class DemoSmsProvider implements SmsProvider {
     );
     return { ok: true, providerMessageId: `demo-${Date.now()}` };
   }
+
+  async sendText(phone: string, text: string): Promise<SendCodeResult> {
+    console.info(`[sms:demo] would send to +${phone}: ${text}`);
+    return { ok: true, providerMessageId: `demo-${Date.now()}` };
+  }
 }

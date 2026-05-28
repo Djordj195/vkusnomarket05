@@ -260,6 +260,12 @@ export default async function AdminDashboardPage() {
             label="Платежи"
             sub="ЮKassa · 54-ФЗ"
           />
+          <ServiceCard
+            href="/admin/notifications"
+            icon={<Bell size={20} />}
+            label="Уведомления"
+            sub="push · email · sms"
+          />
         </div>
       </section>
 

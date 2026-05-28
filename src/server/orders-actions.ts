@@ -10,6 +10,11 @@ import {
 } from "./orders-store";
 import { getProductById } from "./products-store";
 import { notifyAdminNewOrder } from "./telegram";
+import {
+  notifyCourierAssigned,
+  notifyOrderCreated,
+  notifyOrderStatusChanged,
+} from "./notifications/events";
 import { generateOrderNumber } from "@/lib/utils";
 import { DELIVERY_FEE } from "@/lib/constants";
 import type {
@@ -137,6 +142,7 @@ export async function createOrder(
     };
     await saveOrder(order);
     await notifyAdminNewOrder(order);
+    await notifyOrderCreated(order);
     orders.push(order);
     idx += 1;
   }
@@ -164,6 +170,7 @@ export async function updateOrderStatus(
     targetId: orderId,
     payload: { status },
   });
+  await notifyOrderStatusChanged(updated);
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
   return { ok: true };
@@ -185,6 +192,7 @@ export async function assignCourier(
     targetId: orderId,
     payload: { courierId },
   });
+  await notifyCourierAssigned(updated);
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
   return { ok: true };

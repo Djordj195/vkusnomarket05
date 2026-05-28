@@ -13,6 +13,8 @@ export interface SmsProvider {
   readonly name: string;
   readonly isDemo: boolean;
   sendCode(phone: string, code: string, purpose: SmsPurpose): Promise<SendCodeResult>;
+  // Phase 9: произвольный текст для уведомлений.
+  sendText(phone: string, text: string): Promise<SendCodeResult>;
 }
 
 export type SmsPurpose = "client_login" | "vendor_login" | "courier_login";

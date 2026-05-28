@@ -335,6 +335,69 @@ export type User = {
 // первая точка повторяется в конце автоматически на стороне сервера.
 export type DeliveryZonePoint = { lat: number; lng: number };
 
+// Phase 9: уведомления.
+export type NotificationRecipientType = "client" | "vendor" | "courier" | "admin";
+export type NotificationChannel = "push" | "email" | "sms";
+export type NotificationEvent =
+  | "order.new"
+  | "order.status"
+  | "order.assigned_courier"
+  | "payment.succeeded"
+  | "payment.refunded";
+
+export const NOTIFICATION_EVENT_LABELS: Record<NotificationEvent, string> = {
+  "order.new": "Новый заказ",
+  "order.status": "Изменение статуса заказа",
+  "order.assigned_courier": "Назначен курьер",
+  "payment.succeeded": "Оплата прошла",
+  "payment.refunded": "Возврат оформлен",
+};
+
+export const NOTIFICATION_CHANNEL_LABELS: Record<NotificationChannel, string> = {
+  push: "Push",
+  email: "E-mail",
+  sms: "SMS",
+};
+
+export type StoredPushSubscription = {
+  id: string;
+  recipientType: NotificationRecipientType;
+  recipientId: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent: string | null;
+  enabled: boolean;
+  createdAt: string;
+  lastSeenAt: string;
+};
+
+export type NotificationPreference = {
+  id: string;
+  recipientType: NotificationRecipientType;
+  recipientId: string;
+  channel: NotificationChannel;
+  event: NotificationEvent;
+  enabled: boolean;
+  updatedAt: string;
+};
+
+export type NotificationLogStatus = "queued" | "sent" | "failed" | "skipped";
+
+export type NotificationLogEntry = {
+  id: string;
+  recipientType: NotificationRecipientType;
+  recipientId: string;
+  channel: NotificationChannel;
+  event: NotificationEvent;
+  status: NotificationLogStatus;
+  title: string | null;
+  body: string | null;
+  payload: Record<string, unknown> | null;
+  error: string | null;
+  createdAt: string;
+};
+
 export type DeliveryZone = {
   id: string;
   vendorId: string;
