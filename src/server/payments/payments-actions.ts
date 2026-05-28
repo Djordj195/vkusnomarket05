@@ -24,6 +24,10 @@ import type {
   PaymentProvider,
   PaymentStatus,
 } from "@/lib/types";
+import {
+  notifyPaymentRefunded,
+  notifyPaymentSucceeded,
+} from "../notifications/events";
 
 function newPaymentId(): string {
   return `pmt-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -224,11 +228,16 @@ export async function applyPaymentStatus(
   status: PaymentStatus,
   raw?: unknown
 ): Promise<Payment | undefined> {
+  const prev = await getPaymentById(paymentId);
   const updated = await updatePaymentStatus(paymentId, status, raw);
   if (!updated) return undefined;
   const orders = await listOrdersByCheckoutGroup(updated.checkoutGroupId);
   for (const o of orders) {
     await saveOrder({ ...o, paymentId: updated.id, paymentStatus: status });
+  }
+  // При переходе pending→succeeded уведомляем клиента и продавца.
+  if (status === "succeeded" && prev?.status !== "succeeded") {
+    await notifyPaymentSucceeded(updated, orders);
   }
   revalidatePath("/admin/orders");
   revalidatePath("/admin/payments");
@@ -322,6 +331,8 @@ export async function refundPaymentAction(input: {
   for (const o of orders) {
     await saveOrder({ ...o, paymentStatus: updated.status });
   }
+
+  await notifyPaymentRefunded(updated, amountKop, orders);
 
   await logAudit({
     actorType: "admin",

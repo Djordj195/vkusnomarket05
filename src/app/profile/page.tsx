@@ -9,6 +9,7 @@ import { useOrders } from "@/store/orders";
 import { useFavorites } from "@/store/favorites";
 import { formatPhone } from "@/lib/utils";
 import {
+  Bell,
   Heart,
   HelpCircle,
   LogOut,
@@ -82,6 +83,11 @@ export default function ProfilePage() {
             icon={<Heart size={20} />}
             title="Избранное"
             right={favCount > 0 ? favCount.toString() : undefined}
+          />
+          <Item
+            href="/profile/notifications"
+            icon={<Bell size={20} />}
+            title="Уведомления"
           />
           <Item
             href="/support"
