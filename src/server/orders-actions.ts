@@ -74,12 +74,6 @@ export async function createOrder(
   if (input.items.length === 0) {
     return { ok: false, error: "Корзина пуста." };
   }
-  if (input.payment === "card") {
-    return {
-      ok: false,
-      error: "Оплата картой временно недоступна. Выберите оплату наличными.",
-    };
-  }
 
   // Группируем позиции по vendorId, попутно резолвя каждую через store.
   const buckets = new Map<string, OrderItem[]>();
@@ -139,6 +133,7 @@ export async function createOrder(
       deliveryKind,
       desiredAt: input.desiredAt ?? undefined,
       checkoutGroupId: groupId,
+      paymentStatus: input.payment === "card" ? "pending" : undefined,
     };
     await saveOrder(order);
     await notifyAdminNewOrder(order);

@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, ClipboardList } from "lucide-react";
+import { CheckCircle2, ClipboardList, CreditCard, Loader2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -14,9 +14,14 @@ import { useOrders } from "@/store/orders";
 import { formatDate, formatPrice } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
+  PAYMENT_STATUS_LABELS,
   type Order,
   type OrderStatus,
+  type PaymentStatus,
 } from "@/lib/types";
+import {
+  refreshPaymentForGroupAction,
+} from "@/server/payments/payments-client-actions";
 
 const statusTone: Record<OrderStatus, "warn" | "info" | "accent" | "success" | "danger"> = {
   accepted: "info",
@@ -28,15 +33,48 @@ const statusTone: Record<OrderStatus, "warn" | "info" | "accent" | "success" | "
 
 export function OrdersView() {
   const orders = useOrders((s) => s.orders);
+  const upsertOrder = useOrders((s) => s.upsert);
   const params = useSearchParams();
   const groupId = params?.get("group") ?? null;
   const isNew = params?.get("new") === "1";
+  const payReturn = params?.get("pay") === "return";
 
   // Если пришли с чек-аута и в URL есть group — показываем сводку «Создано N заказов»
   const groupOrders = useMemo<Order[] | null>(() => {
     if (!groupId) return null;
     return orders.filter((o) => o.checkoutGroupId === groupId);
   }, [groupId, orders]);
+
+  // Phase 8: после возврата с ЮKassa подтягиваем статус платежа и
+  // обновляем зеркальный paymentStatus у локальных заказов.
+  const [payStatus, setPayStatus] = useState<PaymentStatus | null>(null);
+  useEffect(() => {
+    if (!payReturn || !groupId) return;
+    let cancelled = false;
+    let attempts = 0;
+    const poll = async () => {
+      attempts += 1;
+      const res = await refreshPaymentForGroupAction(groupId);
+      if (cancelled) return;
+      if (res.ok && res.payment) {
+        setPayStatus(res.payment.status);
+        for (const o of res.orders ?? []) {
+          upsertOrder(o);
+        }
+        if (
+          res.payment.status === "succeeded" ||
+          res.payment.status === "canceled" ||
+          attempts >= 10
+        )
+          return;
+      }
+      setTimeout(poll, 2000);
+    };
+    poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [payReturn, groupId, upsertOrder]);
 
   if (orders.length === 0) {
     return (
@@ -59,6 +97,39 @@ export function OrdersView() {
   return (
     <PageShell>
       <Header variant="page" title="Мои заказы" showBack={false} />
+
+      {payReturn && (
+        <div className="mx-4 mt-3 rounded-2xl border border-brand-200 bg-brand-50 p-4">
+          <div className="flex items-start gap-2">
+            {payStatus === "succeeded" ? (
+              <CheckCircle2 size={20} className="mt-0.5 shrink-0 text-brand-600" />
+            ) : payStatus === "canceled" ? (
+              <CreditCard size={20} className="mt-0.5 shrink-0 text-rose-600" />
+            ) : (
+              <Loader2
+                size={20}
+                className="mt-0.5 shrink-0 animate-spin text-brand-600"
+              />
+            )}
+            <div>
+              <div className="text-[14px] font-bold text-ink-900">
+                {payStatus === "succeeded"
+                  ? "Оплата прошла"
+                  : payStatus === "canceled"
+                    ? "Оплата отменена"
+                    : "Подтверждаем оплату…"}
+              </div>
+              <div className="mt-0.5 text-[12px] text-ink-700">
+                {payStatus === "succeeded"
+                  ? "Чек 54-ФЗ отправлен на ваш телефон. Заказ передан продавцу."
+                  : payStatus === "canceled"
+                    ? "Платёж не прошёл. Заказ можно оплатить наличными при доставке или повторить попытку."
+                    : "Это может занять до 30 секунд."}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isNew && groupOrders && groupOrders.length > 0 && (
         <div className="mx-4 mt-3 rounded-2xl border border-brand-200 bg-brand-50 p-4">
@@ -103,9 +174,25 @@ export function OrdersView() {
                       {formatDate(order.createdAt)}
                     </div>
                   </div>
-                  <Badge tone={statusTone[order.status]}>
-                    {ORDER_STATUS_LABELS[order.status]}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge tone={statusTone[order.status]}>
+                      {ORDER_STATUS_LABELS[order.status]}
+                    </Badge>
+                    {order.paymentStatus && (
+                      <Badge
+                        tone={
+                          order.paymentStatus === "succeeded"
+                            ? "success"
+                            : order.paymentStatus === "canceled" ||
+                                order.paymentStatus === "refunded"
+                              ? "danger"
+                              : "warn"
+                        }
+                      >
+                        {PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-[13px] text-ink-500">

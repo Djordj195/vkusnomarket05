@@ -254,6 +254,12 @@ export default async function AdminDashboardPage() {
             label="Юр.документы"
             sub="версии"
           />
+          <ServiceCard
+            href="/admin/payments"
+            icon={<Wallet size={20} />}
+            label="Платежи"
+            sub="ЮKassa · 54-ФЗ"
+          />
         </div>
       </section>
 

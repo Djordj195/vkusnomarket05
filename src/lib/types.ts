@@ -170,7 +170,7 @@ export type PaymentMethod = "cash" | "card";
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   cash: "Наличными курьеру",
-  card: "Картой (скоро)",
+  card: "Картой онлайн (ЮKassa)",
 };
 
 // Тип доставки заказа. Phase 4 — добавили самовывоз.
@@ -254,6 +254,73 @@ export type Order = {
   checkoutGroupId?: string;
   // Phase 5: курьерский саб-статус (см. CourierStage).
   courierStage?: CourierStage;
+  // Phase 8: ссылка на платёж и зеркало его статуса.
+  paymentId?: string;
+  paymentStatus?: PaymentStatus;
+};
+
+// Phase 8: ЮKassa-платёж — покрывает все split-orders одного checkout-group.
+export type PaymentStatus =
+  | "pending"
+  | "waiting_for_capture"
+  | "succeeded"
+  | "canceled"
+  | "refunded"
+  | "partially_refunded";
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: "Ожидает оплаты",
+  waiting_for_capture: "Подтверждается",
+  succeeded: "Оплачен",
+  canceled: "Отменён",
+  refunded: "Возврат",
+  partially_refunded: "Частичный возврат",
+};
+
+export type PaymentProvider = "yookassa" | "cash" | "manual";
+
+export type PaymentRefund = {
+  id: string;
+  amountKop: number;
+  reason: string | null;
+  createdAt: string;
+};
+
+export type Payment = {
+  id: string;
+  checkoutGroupId: string;
+  amountKop: number;
+  currency: string;
+  provider: PaymentProvider;
+  providerPaymentId: string | null;
+  status: PaymentStatus;
+  idempotencyKey: string | null;
+  confirmationUrl: string | null;
+  customerPhone: string | null;
+  customerEmail: string | null;
+  receipt: PaymentReceipt | null;
+  refundedKop: number;
+  refunds: PaymentRefund[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+// 54-ФЗ чек: каждый item должен содержать описание, цену, количество,
+// налог и предмет расчёта. Мы храним полный чек и в наш store, и
+// отправляем его в ЮKassa, которая, в свою очередь, передаёт его в
+// ОФД (оператор фискальных данных) — это закрывает обязательство по 54-ФЗ.
+export type PaymentReceiptItem = {
+  description: string;
+  quantity: number;
+  amountKop: number; // цена за единицу
+  vatCode: 1 | 2 | 3 | 4 | 5 | 6; // ЮKassa: 1=без НДС, 2=0%, 3=10%, 4=20%, 5=10/110, 6=20/120
+  paymentMode: "full_payment" | "full_prepayment" | "advance";
+  paymentSubject: "commodity" | "service" | "another";
+};
+
+export type PaymentReceipt = {
+  customer: { phone?: string; email?: string };
+  items: PaymentReceiptItem[];
 };
 
 export type User = {
