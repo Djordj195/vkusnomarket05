@@ -17,12 +17,19 @@ import {
 } from "./notifications/events";
 import { generateOrderNumber } from "@/lib/utils";
 import { DELIVERY_FEE } from "@/lib/constants";
+import { validatePromoCode } from "./promo/validate";
+import {
+  appendRedemption,
+  getPromoById,
+  savePromo,
+} from "./promo/promo-store";
 import type {
   DeliveryKind,
   Order,
   OrderItem,
   OrderStatus,
   PaymentMethod,
+  PromoDiscountBreakdown,
 } from "@/lib/types";
 
 export type CreateOrderInput = {
@@ -37,6 +44,8 @@ export type CreateOrderInput = {
   /** Phase 4: желаемое время. ISO-строка; null/undefined = «как можно скорее». */
   desiredAt?: string | null;
   items: Array<{ productId: string; quantity: number }>;
+  /** Phase 11: применённый промокод (опционально). Валидируется на сервере перед сохранением. */
+  promoCode?: string | null;
 };
 
 export type CreateOrderResult =
@@ -108,6 +117,34 @@ export async function createOrder(
     return { ok: false, error: "Корзина пуста." };
   }
 
+  // Phase 11: если передан промокод — пере-валидируем его на сервере, чтобы
+  // клиент не мог подсунуть произвольную скидку. Если промокод невалиден —
+  // возвращаем ошибку, заказ не создаём.
+  let promoBreakdown: PromoDiscountBreakdown[] = [];
+  let promoCodeApplied: { id: string; code: string } | null = null;
+  if (input.promoCode && input.promoCode.trim()) {
+    const validation = await validatePromoCode({
+      code: input.promoCode,
+      customerPhone: input.customerPhone,
+      items: input.items,
+      deliveryFee: deliveryKind === "pickup" ? 0 : DELIVERY_FEE,
+      deliveryKind,
+    });
+    if (!validation.ok) {
+      return { ok: false, error: validation.error };
+    }
+    promoBreakdown = validation.breakdown;
+    promoCodeApplied = {
+      id: validation.promo.id,
+      code: validation.promo.code,
+    };
+  }
+
+  const breakdownByVendor = new Map<string, PromoDiscountBreakdown>();
+  for (const b of promoBreakdown) {
+    breakdownByVendor.set(b.vendorKey, b);
+  }
+
   const groupId = `cg-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   const now = Date.now();
   const orders: Order[] = [];
@@ -115,7 +152,12 @@ export async function createOrder(
   let idx = 0;
   for (const [vendorKey, items] of buckets.entries()) {
     const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
-    const deliveryFee = deliveryKind === "pickup" ? 0 : DELIVERY_FEE;
+    const baseDeliveryFee = deliveryKind === "pickup" ? 0 : DELIVERY_FEE;
+    const b = breakdownByVendor.get(vendorKey);
+    const discountSubtotal = b?.discountSubtotal ?? 0;
+    const discountShipping = b?.discountShipping ?? 0;
+    const deliveryFee = Math.max(0, baseDeliveryFee - discountShipping);
+    const discountTotal = discountSubtotal + discountShipping;
     const order: Order = {
       id: `o-${now}-${idx}-${Math.floor(Math.random() * 1e6)}`,
       number: generateOrderNumber(),
@@ -132,19 +174,76 @@ export async function createOrder(
       items,
       subtotal,
       deliveryFee,
-      total: subtotal + deliveryFee,
+      total: Math.max(0, subtotal - discountSubtotal) + deliveryFee,
       status: "accepted",
       vendorId: vendorKey === "__unknown__" ? undefined : vendorKey,
       deliveryKind,
       desiredAt: input.desiredAt ?? undefined,
       checkoutGroupId: groupId,
       paymentStatus: input.payment === "card" ? "pending" : undefined,
+      discountTotal: discountTotal > 0 ? discountTotal : undefined,
+      promoCodeId: promoCodeApplied && discountTotal > 0 ? promoCodeApplied.id : undefined,
+      promoCode: promoCodeApplied && discountTotal > 0 ? promoCodeApplied.code : undefined,
     };
     await saveOrder(order);
     await notifyAdminNewOrder(order);
     await notifyOrderCreated(order);
+
+    // Phase 11: фиксируем применение промокода на split-order'е.
+    if (promoCodeApplied && discountTotal > 0) {
+      try {
+        await appendRedemption({
+          id: `pr-${now}-${idx}-${Math.floor(Math.random() * 1e6)}`,
+          promoCodeId: promoCodeApplied.id,
+          promoCode: promoCodeApplied.code,
+          orderId: order.id,
+          customerPhone: input.customerPhone.trim(),
+          customerName: input.customerName.trim() || null,
+          vendorId: vendorKey === "__unknown__" ? null : vendorKey,
+          discountAmount: discountTotal,
+          subtotal,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error("[promo] failed to record redemption", err);
+      }
+    }
+
     orders.push(order);
     idx += 1;
+  }
+
+  // Phase 11: после создания всех заказов один раз обновляем счётчики промокода.
+  if (promoCodeApplied) {
+    try {
+      const totalDiscount = orders.reduce(
+        (s, o) => s + (o.discountTotal ?? 0),
+        0
+      );
+      const existing = await getPromoById(promoCodeApplied.id);
+      if (existing) {
+        await savePromo({
+          ...existing,
+          usedCount: existing.usedCount + 1,
+          totalDiscount: existing.totalDiscount + totalDiscount,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      await logAudit({
+        actorType: "client",
+        actorLabel: input.customerPhone.trim(),
+        action: "promo.redeemed",
+        targetType: "promo",
+        targetId: promoCodeApplied.id,
+        payload: {
+          code: promoCodeApplied.code,
+          groupId,
+          discount: totalDiscount,
+        },
+      });
+    } catch (err) {
+      console.error("[promo] failed to update counters", err);
+    }
   }
 
   revalidatePath("/admin/orders");

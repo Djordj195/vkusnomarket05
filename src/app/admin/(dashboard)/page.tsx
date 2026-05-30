@@ -266,6 +266,12 @@ export default async function AdminDashboardPage() {
             label="Уведомления"
             sub="push · email · sms"
           />
+          <ServiceCard
+            href="/admin/promo"
+            icon={<Tag size={20} />}
+            label="Промокоды"
+            sub="скидки и купоны"
+          />
         </div>
       </section>
 

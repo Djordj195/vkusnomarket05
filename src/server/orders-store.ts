@@ -62,6 +62,10 @@ type OrderRow = {
   // Phase 8 columns (nullable for rows created before migration 0012)
   payment_id: string | null;
   payment_status: PaymentStatus | null;
+  // Phase 11 columns (nullable for rows created before migration 0015)
+  discount_total: number | null;
+  promo_code_id: string | null;
+  promo_code: string | null;
 };
 
 function rowToOrder(row: OrderRow): Order {
@@ -91,6 +95,9 @@ function rowToOrder(row: OrderRow): Order {
     courierStage: row.courier_stage ?? undefined,
     paymentId: row.payment_id ?? undefined,
     paymentStatus: row.payment_status ?? undefined,
+    discountTotal: row.discount_total ?? undefined,
+    promoCodeId: row.promo_code_id ?? undefined,
+    promoCode: row.promo_code ?? undefined,
   };
 }
 
@@ -119,6 +126,9 @@ function orderToRow(o: Order): OrderRow {
     courier_stage: o.courierStage ?? null,
     payment_id: o.paymentId ?? null,
     payment_status: o.paymentStatus ?? null,
+    discount_total: o.discountTotal ?? null,
+    promo_code_id: o.promoCodeId ?? null,
+    promo_code: o.promoCode ?? null,
   };
 }
 
