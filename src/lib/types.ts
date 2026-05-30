@@ -343,7 +343,9 @@ export type NotificationEvent =
   | "order.status"
   | "order.assigned_courier"
   | "payment.succeeded"
-  | "payment.refunded";
+  | "payment.refunded"
+  | "ticket.created"
+  | "ticket.replied";
 
 export const NOTIFICATION_EVENT_LABELS: Record<NotificationEvent, string> = {
   "order.new": "Новый заказ",
@@ -351,6 +353,8 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEvent, string> = {
   "order.assigned_courier": "Назначен курьер",
   "payment.succeeded": "Оплата прошла",
   "payment.refunded": "Возврат оформлен",
+  "ticket.created": "Новое обращение в поддержку",
+  "ticket.replied": "Ответ в обращении",
 };
 
 export const NOTIFICATION_CHANNEL_LABELS: Record<NotificationChannel, string> = {
@@ -396,6 +400,97 @@ export type NotificationLogEntry = {
   payload: Record<string, unknown> | null;
   error: string | null;
   createdAt: string;
+};
+
+// ─────────────────── Support tickets (Phase 10) ───────────────────
+
+export type TicketRequesterType = "client" | "vendor" | "courier" | "guest";
+
+export type TicketStatus =
+  | "open"
+  | "in_progress"
+  | "waiting_user"
+  | "resolved"
+  | "closed";
+
+export type TicketPriority = "low" | "normal" | "high" | "urgent";
+
+export type TicketCategory =
+  | "order" // вопрос по конкретному заказу
+  | "payment" // оплата, возврат, чек
+  | "delivery" // курьер, адрес, время
+  | "product" // качество товара, состав, срок
+  | "account" // вход, привязка телефона, профиль
+  | "vendor" // вопросы от продавцов
+  | "courier" // вопросы от курьеров
+  | "complaint" // жалоба на сервис/сотрудника
+  | "suggestion" // предложение по улучшению
+  | "other";
+
+export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {
+  open: "Открыт",
+  in_progress: "В работе",
+  waiting_user: "Ждём ответа",
+  resolved: "Решён",
+  closed: "Закрыт",
+};
+
+export const TICKET_PRIORITY_LABELS: Record<TicketPriority, string> = {
+  low: "Низкий",
+  normal: "Обычный",
+  high: "Высокий",
+  urgent: "Срочный",
+};
+
+export const TICKET_CATEGORY_LABELS: Record<TicketCategory, string> = {
+  order: "Заказ",
+  payment: "Оплата",
+  delivery: "Доставка",
+  product: "Товар",
+  account: "Аккаунт",
+  vendor: "Продавец",
+  courier: "Курьер",
+  complaint: "Жалоба",
+  suggestion: "Предложение",
+  other: "Другое",
+};
+
+export type TicketAuthorType = "requester" | "support" | "system";
+
+export type TicketMessage = {
+  id: string;
+  ticketId: string;
+  authorType: TicketAuthorType;
+  authorId: string | null;
+  authorName: string | null;
+  body: string;
+  attachments: string[]; // URL-ы из Storage (PDF/JPG)
+  isInternal: boolean; // внутренняя заметка, не видна клиенту
+  createdAt: string;
+};
+
+export type Ticket = {
+  id: string;
+  number: string; // короткий номер для отображения, например T-0042
+  requesterType: TicketRequesterType;
+  requesterId: string | null; // user.phone / vendor.id / courier.id / null для гостя
+  requesterName: string;
+  requesterContact: string; // телефон или email
+  category: TicketCategory;
+  subject: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  orderId: string | null; // привязка к заказу, если есть
+  assigneeId: string | null; // оператор поддержки
+  assigneeName: string | null;
+  lastMessageAt: string;
+  lastMessagePreview: string;
+  unreadForUser: number; // непрочитанные клиентом
+  unreadForSupport: number; // непрочитанные саппортом
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+  closedAt: string | null;
 };
 
 export type DeliveryZone = {
