@@ -9,8 +9,10 @@ import {
   MapPin,
   ShieldCheck,
   Store,
+  Tag,
   Truck,
   Wallet,
+  X,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
@@ -24,6 +26,7 @@ import type {
   DeliveryKind,
   PaymentMethod,
   Product,
+  PromoValidation,
   Vendor,
 } from "@/lib/types";
 import {
@@ -38,6 +41,7 @@ import {
 import { DELIVERY_FEE } from "@/lib/constants";
 import { createOrder } from "@/server/orders-actions";
 import { createPaymentForCheckoutGroup } from "@/server/payments/payments-actions";
+import { validatePromoCodeAction } from "@/server/promo/promo-actions";
 
 type Props = { products: Product[]; vendors: Vendor[] };
 
@@ -160,7 +164,76 @@ export function CheckoutView({ products, vendors }: Props) {
 
   const deliveryFeePerGroup = deliveryKind === "pickup" ? 0 : DELIVERY_FEE;
   const totalDelivery = deliveryFeePerGroup * groups.length;
-  const grandTotal = subtotal + totalDelivery;
+
+  // Phase 11: промокод. При изменении состава корзины / вида доставки предыдущая
+  // валидация устаревает, поэтому храним signature и сбрасываем promoApplied в
+  // рендере (паттерн «adjusting state during render» из доки React).
+  const cartSignature = useMemo(
+    () =>
+      `${deliveryKind}|${items
+        .map((i) => `${i.productId}:${i.quantity}`)
+        .sort()
+        .join(",")}`,
+    [items, deliveryKind]
+  );
+  const [promoInput, setPromoInput] = useState("");
+  const [promoApplied, setPromoApplied] = useState<
+    Extract<PromoValidation, { ok: true }> | null
+  >(null);
+  const [promoSignature, setPromoSignature] = useState<string | null>(null);
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  if (promoApplied && promoSignature !== null && promoSignature !== cartSignature) {
+    setPromoApplied(null);
+    setPromoSignature(null);
+    setPromoError(null);
+  }
+
+  const promoDiscount = promoApplied?.totalDiscount ?? 0;
+  const grandTotal = Math.max(0, subtotal + totalDelivery - promoDiscount);
+
+  const applyPromo = async () => {
+    setPromoError(null);
+    const code = promoInput.trim();
+    if (!code) {
+      setPromoError("Введите промокод.");
+      return;
+    }
+    setPromoBusy(true);
+    try {
+      const result = await validatePromoCodeAction({
+        code,
+        customerPhone: phone || (user?.phone ?? null),
+        items: items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+        })),
+        deliveryKind,
+      });
+      if (!result.ok) {
+        setPromoApplied(null);
+        setPromoSignature(null);
+        setPromoError(result.error);
+      } else {
+        setPromoApplied(result);
+        setPromoSignature(cartSignature);
+        setPromoError(null);
+      }
+    } catch (err) {
+      console.error(err);
+      setPromoError("Не удалось проверить промокод.");
+    } finally {
+      setPromoBusy(false);
+    }
+  };
+
+  const removePromo = () => {
+    setPromoApplied(null);
+    setPromoSignature(null);
+    setPromoError(null);
+    setPromoInput("");
+  };
 
   useEffect(() => {
     if (hydrated && items.length === 0 && !submitting) {
@@ -237,6 +310,7 @@ export function CheckoutView({ products, vendors }: Props) {
           productId: i.productId,
           quantity: i.quantity,
         })),
+        promoCode: promoApplied?.promo.code ?? null,
       });
 
       if (!result.ok) {
@@ -350,6 +424,13 @@ export function CheckoutView({ products, vendors }: Props) {
             subtotal={subtotal}
             totalDelivery={totalDelivery}
             grandTotal={grandTotal}
+            promoInput={promoInput}
+            setPromoInput={setPromoInput}
+            promoApplied={promoApplied}
+            promoError={promoError}
+            promoBusy={promoBusy}
+            applyPromo={applyPromo}
+            removePromo={removePromo}
           />
         )}
 
@@ -721,6 +802,13 @@ function ConfirmStep({
   subtotal,
   totalDelivery,
   grandTotal,
+  promoInput,
+  setPromoInput,
+  promoApplied,
+  promoError,
+  promoBusy,
+  applyPromo,
+  removePromo,
 }: {
   name: string;
   phone: string;
@@ -735,6 +823,13 @@ function ConfirmStep({
   subtotal: number;
   totalDelivery: number;
   grandTotal: number;
+  promoInput: string;
+  setPromoInput: (v: string) => void;
+  promoApplied: Extract<PromoValidation, { ok: true }> | null;
+  promoError: string | null;
+  promoBusy: boolean;
+  applyPromo: () => void;
+  removePromo: () => void;
 }) {
   const slotLabel =
     timeSlots.find((s) => s.value === desiredAt)?.label ?? desiredAt;
@@ -808,6 +903,70 @@ function ConfirmStep({
         </div>
       </Section>
 
+      <Section title="Промокод">
+        {promoApplied ? (
+          <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <Tag className="mt-0.5 size-4 text-emerald-600" />
+                <div>
+                  <div className="text-[14px] font-semibold text-emerald-900">
+                    {promoApplied.promo.code}
+                  </div>
+                  {promoApplied.promo.description ? (
+                    <div className="text-[12px] text-emerald-800">
+                      {promoApplied.promo.description}
+                    </div>
+                  ) : null}
+                  <div className="mt-1 text-[12px] font-semibold text-emerald-800">
+                    Скидка: −{formatPrice(promoApplied.totalDiscount)}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={removePromo}
+                aria-label="Убрать промокод"
+                className="rounded-full p-1.5 text-emerald-700 hover:bg-emerald-100"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Введите промокод"
+                value={promoInput}
+                onChange={(e) =>
+                  setPromoInput(e.target.value.toUpperCase())
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    applyPromo();
+                  }
+                }}
+                aria-label="Промокод"
+                disabled={promoBusy}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={applyPromo}
+                disabled={promoBusy || !promoInput.trim()}
+              >
+                {promoBusy ? "Проверяем…" : "Применить"}
+              </Button>
+            </div>
+            {promoError && (
+              <div className="mt-2 text-[12px] text-red-700">{promoError}</div>
+            )}
+          </div>
+        )}
+      </Section>
+
       <Section title="К оплате">
         <div className="rounded-2xl bg-brand-50 p-3 space-y-1 text-[14px]">
           <Row label="Товары" value={formatPrice(subtotal)} />
@@ -819,6 +978,12 @@ function ConfirmStep({
             }
             value={formatPrice(totalDelivery)}
           />
+          {promoApplied && promoApplied.totalDiscount > 0 ? (
+            <Row
+              label={`Скидка (${promoApplied.promo.code})`}
+              value={`−${formatPrice(promoApplied.totalDiscount)}`}
+            />
+          ) : null}
           <Row label="Итого" value={formatPrice(grandTotal)} bold />
         </div>
       </Section>

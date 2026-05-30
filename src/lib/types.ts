@@ -257,6 +257,10 @@ export type Order = {
   // Phase 8: ссылка на платёж и зеркало его статуса.
   paymentId?: string;
   paymentStatus?: PaymentStatus;
+  // Phase 11: скидка по промокоду (рубли, ≥ 0), идентификатор и сам код.
+  discountTotal?: number;
+  promoCodeId?: string;
+  promoCode?: string;
 };
 
 // Phase 8: ЮKassa-платёж — покрывает все split-orders одного checkout-group.
@@ -492,6 +496,73 @@ export type Ticket = {
   resolvedAt: string | null;
   closedAt: string | null;
 };
+
+// Phase 11: промокоды и купоны.
+export type PromoCodeKind = "percent" | "fixed" | "free_shipping";
+
+export const PROMO_CODE_KIND_LABELS: Record<PromoCodeKind, string> = {
+  percent: "Процент",
+  fixed: "Сумма",
+  free_shipping: "Бесплатная доставка",
+};
+
+export type PromoCode = {
+  id: string;
+  code: string;
+  description: string;
+  kind: PromoCodeKind;
+  /** Для percent — 1..100. Для fixed — сумма в рублях. Для free_shipping игнорируется. */
+  value: number;
+  /** Минимальная сумма подытога (без доставки), в рублях. 0 = без минимума. */
+  minSubtotal: number;
+  /** Максимальная сумма скидки (рубли). 0 = без потолка. */
+  maxDiscount: number;
+  validFrom: string | null;
+  validUntil: string | null;
+  /** Общий лимит использований. 0 = без лимита. */
+  usageLimit: number;
+  /** Лимит на одного клиента (по телефону). 0 = без лимита. */
+  perUserLimit: number;
+  vendorId: string | null;
+  categoryId: string | null;
+  active: boolean;
+  usedCount: number;
+  totalDiscount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PromoRedemption = {
+  id: string;
+  promoCodeId: string;
+  promoCode: string;
+  orderId: string | null;
+  customerPhone: string;
+  customerName: string | null;
+  vendorId: string | null;
+  discountAmount: number;
+  subtotal: number;
+  createdAt: string;
+};
+
+/** Расчёт скидки на конкретный split-order группы. */
+export type PromoDiscountBreakdown = {
+  vendorKey: string;
+  subtotal: number;
+  deliveryFee: number;
+  discountSubtotal: number;
+  discountShipping: number;
+};
+
+/** Итог валидации промокода для всего чек-аута (multi-vendor). */
+export type PromoValidation =
+  | {
+      ok: true;
+      promo: PromoCode;
+      totalDiscount: number;
+      breakdown: PromoDiscountBreakdown[];
+    }
+  | { ok: false; error: string };
 
 export type DeliveryZone = {
   id: string;
