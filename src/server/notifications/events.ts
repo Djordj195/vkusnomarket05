@@ -1,5 +1,5 @@
 import "server-only";
-import type { Order, Payment } from "@/lib/types";
+import type { Order, Payment, Ticket } from "@/lib/types";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import { getVendorById } from "../vendors-store";
@@ -178,5 +178,84 @@ export async function notifyPaymentRefunded(
     });
   } catch (e) {
     console.error("[notify:payment.refunded]", e);
+  }
+}
+
+/**
+ * Новое обращение в поддержку → уведомить админ-канал.
+ */
+export async function notifyTicketCreated(ticket: Ticket): Promise<void> {
+  try {
+    await notify({
+      recipientType: "admin",
+      recipientId: "platform",
+      event: "ticket.created",
+      title: `Новое обращение ${ticket.number}`,
+      body: `${ticket.subject} · ${ticket.requesterName}`,
+      url: `${siteBase()}/admin/tickets/${ticket.id}`,
+      payload: { ticketId: ticket.id, priority: ticket.priority },
+      channels: ["push"],
+    });
+  } catch (e) {
+    console.error("[notify:ticket.created]", e);
+  }
+}
+
+/**
+ * Ответ в обращении → уведомить противоположную сторону.
+ * fromSupport=true → уведомляем клиента; false → уведомляем админа.
+ */
+export async function notifyTicketReplied(
+  ticket: Ticket,
+  fromSupport: boolean
+): Promise<void> {
+  try {
+    if (fromSupport) {
+      if (!ticket.requesterId || ticket.requesterType === "guest") {
+        // Гость не подписан — отправим только по контакту-email, если есть.
+        const isEmail = ticket.requesterContact.includes("@");
+        await notify({
+          recipientType: "client",
+          recipientId: ticket.requesterContact,
+          event: "ticket.replied",
+          email: isEmail ? ticket.requesterContact : undefined,
+          phone: isEmail ? undefined : ticket.requesterContact,
+          title: `Ответ по обращению ${ticket.number}`,
+          body: ticket.subject,
+          url: `${siteBase()}/support/tickets/${ticket.id}`,
+          payload: { ticketId: ticket.id },
+        });
+        return;
+      }
+      await notify({
+        recipientType: ticket.requesterType,
+        recipientId: ticket.requesterId,
+        event: "ticket.replied",
+        phone:
+          ticket.requesterContact && !ticket.requesterContact.includes("@")
+            ? ticket.requesterContact
+            : undefined,
+        email: ticket.requesterContact.includes("@")
+          ? ticket.requesterContact
+          : undefined,
+        title: `Ответ по обращению ${ticket.number}`,
+        body: ticket.subject,
+        url: `${siteBase()}/support/tickets/${ticket.id}`,
+        payload: { ticketId: ticket.id },
+      });
+    } else {
+      await notify({
+        recipientType: "admin",
+        recipientId: "platform",
+        event: "ticket.replied",
+        title: `Ответ клиента в ${ticket.number}`,
+        body: ticket.subject,
+        url: `${siteBase()}/admin/tickets/${ticket.id}`,
+        payload: { ticketId: ticket.id },
+        channels: ["push"],
+      });
+    }
+  } catch (e) {
+    console.error("[notify:ticket.replied]", e);
   }
 }
