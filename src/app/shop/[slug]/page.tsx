@@ -1,12 +1,16 @@
 import { notFound } from "next/navigation";
-import { Star, Store } from "lucide-react";
+import { Store } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
 import { Badge } from "@/components/ui/Badge";
+import { StarRatingStatic } from "@/components/ui/StarRating";
 import { ProductGrid } from "@/components/catalog/ProductCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ReviewsList } from "@/components/catalog/ReviewsList";
+import { ReviewForm } from "@/components/catalog/ReviewForm";
 import { getShopBySlug } from "@/server/shops-store";
 import { getProductsByShop } from "@/server/products-store";
+import { listApprovedReviews, getRatingStats } from "@/server/reviews-store";
 import { SOURCE_SHORT_LABELS } from "@/lib/types";
 import type { Metadata } from "next";
 
@@ -32,7 +36,11 @@ export default async function ShopPage({ params }: PageProps) {
   const shop = await getShopBySlug(slug);
   if (!shop) notFound();
 
-  const products = await getProductsByShop(shop.id);
+  const [products, reviews, stats] = await Promise.all([
+    getProductsByShop(shop.id),
+    listApprovedReviews("shop", shop.id),
+    getRatingStats("shop", shop.id),
+  ]);
 
   return (
     <PageShell>
@@ -67,17 +75,11 @@ export default async function ShopPage({ params }: PageProps) {
               {shop.name}
             </h1>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-500">
-              {typeof shop.rating === "number" && (
-                <span className="inline-flex items-center gap-1 text-ink-700">
-                  <Star
-                    size={14}
-                    className="fill-amber-400 text-amber-400"
-                  />
-                  <span className="font-semibold">
-                    {shop.rating.toFixed(1)}
-                  </span>
-                </span>
-              )}
+              {stats.count > 0 ? (
+                <StarRatingStatic rating={stats.avg} count={stats.count} size={12} />
+              ) : typeof shop.rating === "number" ? (
+                <StarRatingStatic rating={shop.rating} size={12} />
+              ) : null}
               <span>
                 {products.length}{" "}
                 {pluralize(products.length, ["товар", "товара", "товаров"])}
@@ -102,6 +104,26 @@ export default async function ShopPage({ params }: PageProps) {
                 description="Товары добавляются через админ-панель."
               />
             )}
+          </section>
+
+          {/* Reviews section */}
+          <section className="pt-3">
+            <h2 className="mb-3 text-[16px] font-bold text-ink-900">
+              Отзывы
+              {stats.count > 0 && (
+                <span className="ml-1.5 text-[13px] font-normal text-ink-500">
+                  ({stats.count})
+                </span>
+              )}
+            </h2>
+            <ReviewsList reviews={reviews} />
+            <div className="mt-4">
+              <ReviewForm
+                targetType="shop"
+                targetId={shop.id}
+                targetName={shop.name}
+              />
+            </div>
           </section>
         </div>
       </div>

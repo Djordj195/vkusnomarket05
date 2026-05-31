@@ -14,6 +14,7 @@ import {
   ScrollText,
   Shield,
   Sparkles,
+  Star,
   Tag,
   Truck,
   Users,
@@ -28,6 +29,7 @@ import { listShops } from "@/server/shops-store";
 import { listAllCities } from "@/server/cities-store";
 import { listVendors } from "@/server/vendors-store";
 import { countPendingFeedback } from "@/server/feedback-store";
+import { countPendingReviews } from "@/server/reviews-store";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
@@ -40,6 +42,7 @@ export default async function AdminDashboardPage() {
     categories,
     shops,
     pendingFeedback,
+    pendingReviews,
     cities,
     vendors,
   ] = await Promise.all([
@@ -49,6 +52,7 @@ export default async function AdminDashboardPage() {
     listCategories(),
     listShops(),
     countPendingFeedback(),
+    countPendingReviews(),
     listAllCities(),
     listVendors(),
   ]);
@@ -271,6 +275,16 @@ export default async function AdminDashboardPage() {
             icon={<Tag size={20} />}
             label="Промокоды"
             sub="скидки и купоны"
+          />
+          <ServiceCard
+            href="/admin/reviews"
+            icon={<Star size={20} />}
+            label="Отзывы с оценками"
+            sub={
+              pendingReviews > 0
+                ? `${pendingReviews} на модерации`
+                : "всё разобрано"
+            }
           />
         </div>
       </section>
