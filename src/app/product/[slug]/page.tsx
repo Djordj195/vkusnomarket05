@@ -3,14 +3,18 @@ import Image from "next/image";
 import { Header } from "@/components/layout/Header";
 import { PageShell } from "@/components/layout/PageShell";
 import { Badge } from "@/components/ui/Badge";
+import { StarRatingStatic } from "@/components/ui/StarRating";
 import {
   getProductBySlug,
   getProductsByCategory,
 } from "@/server/products-store";
 import { getCategoryById } from "@/server/categories-store";
+import { listApprovedReviews, getRatingStats } from "@/server/reviews-store";
 import { formatPrice } from "@/lib/utils";
 import { ProductActions } from "./ProductActions";
 import { ProductCard } from "@/components/catalog/ProductCard";
+import { ReviewsList } from "@/components/catalog/ReviewsList";
+import { ReviewForm } from "@/components/catalog/ReviewForm";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -35,8 +39,13 @@ export default async function ProductPage({ params }: PageProps) {
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const category = await getCategoryById(product.categoryId);
-  const relatedAll = await getProductsByCategory(product.categoryId);
+  const [category, relatedAll, reviews, stats] = await Promise.all([
+    getCategoryById(product.categoryId),
+    getProductsByCategory(product.categoryId),
+    listApprovedReviews("product", product.id),
+    getRatingStats("product", product.id),
+  ]);
+
   const related = relatedAll
     .filter((p) => p.id !== product.id)
     .slice(0, 4);
@@ -71,6 +80,10 @@ export default async function ProductPage({ params }: PageProps) {
             {product.name}
           </h1>
 
+          {stats.count > 0 && (
+            <StarRatingStatic rating={stats.avg} count={stats.count} />
+          )}
+
           <div className="flex items-baseline gap-2">
             <span className="text-[26px] font-extrabold text-ink-900">
               {formatPrice(product.price)}
@@ -90,6 +103,26 @@ export default async function ProductPage({ params }: PageProps) {
           <p className="text-[14px] leading-relaxed text-ink-700">
             {product.description}
           </p>
+
+          {/* Reviews section */}
+          <section className="pt-3">
+            <h2 className="mb-3 text-[16px] font-bold text-ink-900">
+              Отзывы
+              {stats.count > 0 && (
+                <span className="ml-1.5 text-[13px] font-normal text-ink-500">
+                  ({stats.count})
+                </span>
+              )}
+            </h2>
+            <ReviewsList reviews={reviews} />
+            <div className="mt-4">
+              <ReviewForm
+                targetType="product"
+                targetId={product.id}
+                targetName={product.name}
+              />
+            </div>
+          </section>
 
           {related.length > 0 && (
             <section className="pt-2">
