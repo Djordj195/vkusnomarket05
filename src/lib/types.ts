@@ -166,11 +166,12 @@ export const ORDER_STATUS_FLOW: OrderStatus[] = [
   "delivered",
 ];
 
-export type PaymentMethod = "cash" | "card";
+export type PaymentMethod = "cash" | "card" | "sbp";
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   cash: "Наличными курьеру",
   card: "Картой онлайн (ЮKassa)",
+  sbp: "СБП (Система быстрых платежей)",
 };
 
 // Тип доставки заказа. Phase 4 — добавили самовывоз.

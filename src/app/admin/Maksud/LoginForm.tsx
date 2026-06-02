@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -31,6 +32,14 @@ export function LoginForm() {
       <Button type="submit" size="lg" fullWidth disabled={pending}>
         {pending ? "Входим..." : "Войти"}
       </Button>
+      <div className="text-center">
+        <Link
+          href="/admin/Maksud/recovery"
+          className="text-[13px] text-ink-500 hover:text-brand-600 underline"
+        >
+          Забыли пароль?
+        </Link>
+      </div>
     </form>
   );
 }

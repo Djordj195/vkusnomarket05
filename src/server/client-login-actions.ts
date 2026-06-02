@@ -1,6 +1,7 @@
 "use server";
 
 import { sendOtp, verifyAndConsume } from "./sms-auth";
+import { logConsent } from "./consent-store";
 
 export type ClientSendResult =
   | { ok: true; demoCode: string | null }
@@ -30,5 +31,14 @@ export async function verifyClientCodeAction(
   const code = String(formData.get("code") ?? "").trim();
   const verified = await verifyAndConsume(phone, "client_login", code);
   if (!verified.ok) return { ok: false, error: verified.error };
+
+  logConsent({
+    userPhone: verified.phone,
+    context: "client_login",
+    docSlugs: ["offer", "privacy", "consent"],
+    checkboxText:
+      "Я принимаю оферту, политику конфиденциальности и согласие на обработку персональных данных.",
+  }).catch(() => {});
+
   return { ok: true, phone: verified.phone };
 }

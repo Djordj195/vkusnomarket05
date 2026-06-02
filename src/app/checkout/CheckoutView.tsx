@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   MapPin,
   ShieldCheck,
+  Smartphone,
   Store,
   Tag,
   Truck,
@@ -324,13 +325,14 @@ export function CheckoutView({ products, vendors }: Props) {
       }
       clearCart();
 
-      // Phase 8: для card-оплаты создаём платёж в ЮKassa и редиректим
+      // Phase 8: для card/sbp-оплаты создаём платёж в ЮKassa и редиректим
       // клиента на confirmation_url. После оплаты он вернётся на /orders
       // с ?pay=return — там покажется статус.
-      if (payment === "card") {
+      if (payment === "card" || payment === "sbp") {
         const pay = await createPaymentForCheckoutGroup({
           checkoutGroupId: result.groupId,
           customerPhone: phone,
+          paymentMethodType: payment === "sbp" ? "sbp" : "bank_card",
         });
         if (!pay.ok) {
           setError(`Платёж не создан: ${pay.error}`);
@@ -766,10 +768,19 @@ function PaymentStep({
             label={PAYMENT_LABELS.card}
             icon={<ShieldCheck size={20} />}
           />
+          <PaymentOption
+            checked={payment === "sbp"}
+            onClick={() => setPayment("sbp")}
+            label={PAYMENT_LABELS.sbp}
+            icon={<Smartphone size={20} />}
+            subtitle="Мгновенно и без комиссии"
+          />
         </div>
         <p className="text-[11px] text-ink-500">
-          После подтверждения вас перенаправит на защищённую страницу ЮKassa
-          для ввода данных карты. Чек 54-ФЗ выдаётся автоматически.{" "}
+          {payment === "sbp"
+            ? "После подтверждения откроется QR-код или приложение вашего банка. Оплата проходит мгновенно."
+            : "После подтверждения вас перенаправит на защищённую страницу ЮKassa для ввода данных карты."}{" "}
+          Чек 54-ФЗ выдаётся автоматически.{" "}
           <Link href="/legal" className="underline">
             54-ФЗ / реквизиты
           </Link>
@@ -1086,12 +1097,14 @@ function PaymentOption({
   label,
   icon,
   disabled,
+  subtitle,
 }: {
   checked: boolean;
   onClick: () => void;
   label: string;
   icon: React.ReactNode;
   disabled?: boolean;
+  subtitle?: string;
 }) {
   return (
     <button
@@ -1114,8 +1127,11 @@ function PaymentOption({
       >
         {icon}
       </span>
-      <span className="flex-1 text-[14px] font-semibold text-ink-900">
-        {label}
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14px] font-semibold text-ink-900">{label}</span>
+        {subtitle && (
+          <span className="block text-[11px] text-ink-500">{subtitle}</span>
+        )}
       </span>
       {checked && <Check size={18} className="text-brand-600" />}
     </button>
