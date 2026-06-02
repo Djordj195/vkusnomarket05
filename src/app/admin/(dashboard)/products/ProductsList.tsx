@@ -9,7 +9,7 @@ import {
   type FormEvent,
 } from "react";
 import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
-import type { Category, Product, SourceType } from "@/lib/types";
+import type { Category, Product, SourceType, Vertical } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ImagePicker } from "@/components/admin/ImagePicker";
@@ -45,6 +45,8 @@ const EMPTY: FormState = {
   inStock: true,
   weight: "",
   isWeekly: false,
+  vertical: undefined,
+  prescriptionOnly: false,
 };
 
 export function ProductsList({ products, categories, dbConfigured }: Props) {
@@ -99,6 +101,8 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
       inStock: p.inStock,
       weight: p.weight ?? "",
       isWeekly: p.isWeekly ?? false,
+      vertical: p.vertical,
+      prescriptionOnly: false,
     });
   }
 
@@ -125,6 +129,8 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
       inStock: editing.inStock,
       weight: editing.weight?.trim() ? editing.weight : undefined,
       isWeekly: editing.isWeekly,
+      vertical: editing.vertical,
+      prescriptionOnly: editing.prescriptionOnly,
     };
 
     startTransition(async () => {
@@ -455,6 +461,19 @@ export function ProductsList({ products, categories, dbConfigured }: Props) {
                 />
                 Товар недели
               </label>
+              {editing.vertical === "pharmacy" && (
+                <label className="flex items-center gap-2 text-[13px] text-red-700 rounded-xl bg-red-50 p-2">
+                  <input
+                    type="checkbox"
+                    checked={editing.prescriptionOnly ?? false}
+                    onChange={(e) =>
+                      setEditing({ ...editing, prescriptionOnly: e.target.checked })
+                    }
+                    className="h-4 w-4"
+                  />
+                  Рецептурный препарат (запрещён к размещению)
+                </label>
+              )}
             </div>
 
             {error && (

@@ -8,7 +8,7 @@ import {
   deleteProduct,
   getProductById,
 } from "./products-store";
-import type { Product, SourceType } from "@/lib/types";
+import type { Product, SourceType, Vertical } from "@/lib/types";
 
 export type ProductFormInput = {
   slug: string;
@@ -24,6 +24,8 @@ export type ProductFormInput = {
   inStock: boolean;
   weight?: string;
   isWeekly: boolean;
+  vertical?: Vertical;
+  prescriptionOnly?: boolean;
 };
 
 type Result =
@@ -45,6 +47,9 @@ function validate(input: ProductFormInput): string | null {
     (!Number.isFinite(input.oldPrice) || input.oldPrice < 0)
   )
     return "Старая цена должна быть неотрицательным числом.";
+  if (input.vertical === "pharmacy" && input.prescriptionOnly) {
+    return "Рецептурные препараты запрещены для размещения в аптечном разделе. Допускаются только безрецептурные товары и БАД.";
+  }
   return null;
 }
 

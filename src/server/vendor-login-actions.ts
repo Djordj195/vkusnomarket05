@@ -7,6 +7,7 @@ import {
   setVendorSession,
 } from "./vendor-auth";
 import { sendOtp, verifyAndConsume } from "./sms-auth";
+import { logConsent } from "./consent-store";
 
 export type SendCodeResult =
   | { ok: true; brandName: string; demoCode: string | null }
@@ -55,6 +56,15 @@ export async function verifyVendorCodeAction(
     return { ok: false, error: "Сессия истекла. Попробуйте снова." };
   }
   await setVendorSession(vendor.id);
+
+  logConsent({
+    userPhone: phone,
+    context: "vendor_login",
+    docSlugs: ["offer", "privacy", "consent"],
+    checkboxText:
+      "Продавец принимает оферту, политику конфиденциальности и согласие на обработку данных.",
+  }).catch(() => {});
+
   return { ok: true };
 }
 

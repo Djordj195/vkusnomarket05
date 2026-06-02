@@ -69,6 +69,8 @@ export type YooCreatePaymentInput = {
   returnUrl?: string;
   receipt?: PaymentReceipt;
   metadata?: Record<string, string>;
+  /** Способ оплаты: "bank_card" (default) | "sbp". */
+  paymentMethodType?: "bank_card" | "sbp";
 };
 
 // Минимально-достаточный тип ответа ЮKassa, который мы используем
@@ -138,6 +140,9 @@ export async function yooCreatePayment(
       return_url: input.returnUrl ?? env.returnUrl,
     },
   };
+  if (input.paymentMethodType) {
+    body.payment_method_data = { type: input.paymentMethodType };
+  }
   if (input.metadata) body.metadata = input.metadata;
   if (input.receipt) {
     body.receipt = buildReceiptBody(input.receipt, env.taxSystemCode);

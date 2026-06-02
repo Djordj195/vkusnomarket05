@@ -286,6 +286,12 @@ export default async function AdminDashboardPage() {
                 : "всё разобрано"
             }
           />
+          <ServiceCard
+            href="/admin/consents"
+            icon={<ScrollText size={20} />}
+            label="Журнал согласий"
+            sub="152-ФЗ"
+          />
         </div>
       </section>
 

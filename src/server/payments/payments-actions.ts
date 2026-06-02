@@ -57,6 +57,7 @@ export async function createPaymentForCheckoutGroup(input: {
   checkoutGroupId: string;
   customerPhone?: string;
   customerEmail?: string;
+  paymentMethodType?: "bank_card" | "sbp";
 }): Promise<
   | { ok: true; payment: Payment; demo: boolean }
   | { ok: false; error: string }
@@ -112,6 +113,7 @@ export async function createPaymentForCheckoutGroup(input: {
         checkout_group_id: input.checkoutGroupId,
         payment_id: paymentId,
       },
+      paymentMethodType: input.paymentMethodType,
     });
     if (!res.ok) {
       await logAudit({
