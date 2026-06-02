@@ -19,7 +19,9 @@ export async function addCourierAction(
   if (!name || !phone) {
     return { ok: false, error: "Заполните имя и телефон" };
   }
-  await addCourierInStore({ name, phone, isActive: true });
+  const courierType = (formData.get("courierType") as "platform" | "shop") || "platform";
+  const shopId = String(formData.get("shopId") || "").trim() || undefined;
+  await addCourierInStore({ name, phone, isActive: true, courierType, shopId });
   revalidatePath("/admin/couriers");
   return { ok: true };
 }

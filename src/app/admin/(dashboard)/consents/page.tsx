@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Shield } from "lucide-react";
 import { listConsentsAction } from "@/server/consent-actions";
 
@@ -28,19 +28,16 @@ export default function ConsentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await listConsentsAction(search || undefined);
-      setRows(data);
-    } finally {
-      setLoading(false);
-    }
-  }, [search]);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+    listConsentsAction(search || undefined).then((data) => {
+      if (!cancelled) {
+        setRows(data);
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [search]);
 
   return (
     <div className="space-y-4">

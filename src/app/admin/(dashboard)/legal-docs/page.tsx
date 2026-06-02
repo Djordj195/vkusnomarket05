@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { FileText, History, Download } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { LEGAL_DOCS } from "@/data/legal";
+import { LegalVersionsPanel } from "./LegalVersionsPanel";
 
 export default function AdminLegalDocsPage() {
   return (
@@ -10,8 +11,8 @@ export default function AdminLegalDocsPage() {
           Юр.документы
         </h1>
         <p className="text-[12px] text-ink-500">
-          Опубликовано {LEGAL_DOCS.length} документов. Согласия пользователей
-          сохраняются вместе с версией документа, IP-адресом и устройством.
+          Опубликовано {LEGAL_DOCS.length} документов. Публикуйте новые версии —
+          согласия привязаны к конкретной ревизии.
         </p>
       </header>
 
@@ -60,20 +61,7 @@ export default function AdminLegalDocsPage() {
         ))}
       </ul>
 
-      <section className="rounded-2xl border border-ink-200 bg-white p-4">
-        <div className="flex items-center gap-2">
-          <History size={16} className="text-ink-500" />
-          <h2 className="text-[14px] font-bold text-ink-900">
-            Версионирование — в разработке
-          </h2>
-        </div>
-        <p className="mt-2 text-[12px] text-ink-600">
-          Скоро вы сможете редактировать тексты, публиковать новые версии и
-          видеть, сколько пользователей согласились с каждой редакцией. По
-          закону «О персональных данных» (152-ФЗ) согласия фиксируются с
-          версией документа, IP-адресом, устройством и снимком текста чекбокса.
-        </p>
-      </section>
+      <LegalVersionsPanel />
     </div>
   );
 }

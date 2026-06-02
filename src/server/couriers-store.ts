@@ -9,10 +9,19 @@ type CourierRow = {
   name: string;
   phone: string;
   is_active: boolean;
+  courier_type?: string;
+  shop_id?: string;
 };
 
 function rowToCourier(r: CourierRow): Courier {
-  return { id: r.id, name: r.name, phone: r.phone, isActive: r.is_active };
+  return {
+    id: r.id,
+    name: r.name,
+    phone: r.phone,
+    isActive: r.is_active,
+    courierType: (r.courier_type as Courier["courierType"]) ?? "platform",
+    shopId: r.shop_id ?? undefined,
+  };
 }
 
 type Store = { couriers: Courier[] };
@@ -23,8 +32,8 @@ function getMemoryStore(): Store {
   if (!g[globalKey]) {
     g[globalKey] = {
       couriers: [
-        { id: "c-1", name: "Курьер №1", phone: "+7 (999) 000-00-01", isActive: true },
-        { id: "c-2", name: "Курьер №2", phone: "+7 (999) 000-00-02", isActive: true },
+        { id: "c-1", name: "Курьер №1", phone: "+7 (999) 000-00-01", isActive: true, courierType: "platform" },
+        { id: "c-2", name: "Курьер №2", phone: "+7 (999) 000-00-02", isActive: true, courierType: "platform" },
       ],
     };
   }
@@ -67,6 +76,8 @@ export async function addCourier(c: Omit<Courier, "id">): Promise<Courier> {
       name: courier.name,
       phone: courier.phone,
       is_active: courier.isActive,
+      courier_type: courier.courierType,
+      shop_id: courier.shopId ?? null,
     });
     if (error) throw new Error(`addCourier: ${error.message}`);
     return courier;
@@ -85,6 +96,10 @@ export async function updateCourier(
     if (patch.name !== undefined) dbPatch.name = patch.name;
     if (patch.phone !== undefined) dbPatch.phone = patch.phone;
     if (patch.isActive !== undefined) dbPatch.is_active = patch.isActive;
+    if ((patch as Record<string, unknown>).courierType !== undefined)
+      (dbPatch as Record<string, unknown>).courier_type = (patch as Record<string, unknown>).courierType;
+    if ((patch as Record<string, unknown>).shopId !== undefined)
+      (dbPatch as Record<string, unknown>).shop_id = (patch as Record<string, unknown>).shopId;
     const { data, error } = await sb
       .from("couriers")
       .update(dbPatch)
