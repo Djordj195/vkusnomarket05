@@ -215,11 +215,20 @@ export const COURIER_STAGE_FLOW: CourierStage[] = [
   "completed",
 ];
 
+export type CourierType = "platform" | "shop";
+
+export const COURIER_TYPE_LABELS: Record<CourierType, string> = {
+  platform: "Курьер платформы",
+  shop: "Курьер магазина",
+};
+
 export type Courier = {
   id: string;
   name: string;
   phone: string;
   isActive: boolean;
+  courierType: CourierType;
+  shopId?: string;
 };
 
 export type OrderItem = {

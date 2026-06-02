@@ -21,6 +21,7 @@ import {
   updateTicketAction,
   viewTicketAction,
 } from "@/server/tickets/tickets-actions";
+import { MaskedOrderView } from "./MaskedOrderView";
 
 const STATUS_TONE: Record<TicketStatus, "warn" | "info" | "success" | "danger"> = {
   open: "warn",
@@ -192,6 +193,8 @@ export function AdminTicketDetailView({
           })}
         </div>
       </section>
+
+      {ticket.orderId && <MaskedOrderView orderId={ticket.orderId} />}
 
       <section className="space-y-3">
         {messages.map((m) => (

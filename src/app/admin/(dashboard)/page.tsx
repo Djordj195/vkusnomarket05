@@ -13,6 +13,7 @@ import {
   Percent,
   ScrollText,
   Shield,
+  ShieldCheck,
   Sparkles,
   Star,
   Tag,
@@ -291,6 +292,12 @@ export default async function AdminDashboardPage() {
             icon={<ScrollText size={20} />}
             label="Журнал согласий"
             sub="152-ФЗ"
+          />
+          <ServiceCard
+            href="/admin/security"
+            icon={<ShieldCheck size={20} />}
+            label="Безопасность"
+            sub="2FA · TOTP"
           />
         </div>
       </section>
