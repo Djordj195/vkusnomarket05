@@ -10,22 +10,16 @@ import type { SmsProvider } from "./types";
 //   SMS_PROVIDER=demo (или не задан + нет креден) → DemoSmsProvider
 // Если SMS_PROVIDER не задан, авто-выбираем первый сконфигурированный.
 
-let cached: SmsProvider | null = null;
-
 export function getSmsProvider(): SmsProvider {
-  if (cached) return cached;
   const explicit = (process.env.SMS_PROVIDER || "").toLowerCase();
 
   if (explicit === "smsc" || (explicit === "" && isSmscConfigured())) {
-    cached = new SmscProvider();
-    return cached;
+    return new SmscProvider();
   }
   if (explicit === "smsru" || (explicit === "" && isSmsruConfigured())) {
-    cached = new SmsruProvider();
-    return cached;
+    return new SmsruProvider();
   }
-  cached = new DemoSmsProvider();
-  return cached;
+  return new DemoSmsProvider();
 }
 
 export function isSmsRealProviderConfigured(): boolean {

@@ -9,6 +9,7 @@ import {
   Map,
   MapPin,
   MessageSquare,
+  MessageCircle,
   Package,
   Percent,
   ScrollText,
@@ -298,6 +299,12 @@ export default async function AdminDashboardPage() {
             icon={<ShieldCheck size={20} />}
             label="Безопасность"
             sub="2FA · TOTP"
+          />
+          <ServiceCard
+            href="/admin/sms-diag"
+            icon={<MessageCircle size={20} />}
+            label="SMS диагностика"
+            sub="тест отправки"
           />
         </div>
       </section>
