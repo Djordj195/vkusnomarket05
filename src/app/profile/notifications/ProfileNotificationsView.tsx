@@ -75,7 +75,7 @@ export function ProfileNotificationsView({
         return;
       }
       try {
-        const reg = await navigator.serviceWorker.register("/sw-push.js");
+        const reg = await navigator.serviceWorker.register("/sw.js");
         const existing = await reg.pushManager.getSubscription();
         if (existing) {
           setPush({ kind: "subscribed", endpoint: existing.endpoint });

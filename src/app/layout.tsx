@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { IOSInstallPrompt } from "@/components/pwa/IOSInstallPrompt";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 
 const inter = Inter({
@@ -22,7 +24,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: APP_NAME,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
   },
   formatDetection: {
     telephone: false,
@@ -34,6 +36,9 @@ export const metadata: Metadata = {
       "Доставка свежих продуктов, товаров из лавок и готовой еды по г. Кизляр и району.",
     locale: "ru_RU",
     siteName: APP_NAME,
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 };
 
@@ -52,11 +57,51 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={`${inter.variable} h-full antialiased`}>
+      <head>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512.png"
+          media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512.png"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512.png"
+          media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512.png"
+          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512.png"
+          media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512.png"
+          media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
+        />
+      </head>
       <body className="bg-[var(--background)] min-h-full">
         <div className="mx-auto max-w-md min-h-screen bg-white shadow-[0_0_60px_rgba(15,17,22,0.06)]">
           {children}
         </div>
         <BottomNav />
+        <ServiceWorkerRegister />
+        <IOSInstallPrompt />
       </body>
     </html>
   );
