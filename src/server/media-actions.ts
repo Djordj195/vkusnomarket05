@@ -16,6 +16,27 @@ export type UploadResult =
   | { ok: true; url: string }
   | { ok: false; error: string };
 
+/**
+ * Ensures the 'media' storage bucket exists. Creates it if missing.
+ * Called before each upload to prevent "bucket not found" errors.
+ */
+async function ensureMediaBucket(
+  sb: ReturnType<typeof getSupabaseAdmin> & object
+): Promise<string | null> {
+  const { data } = await sb.storage.getBucket("media");
+  if (data) return null; // already exists
+
+  const { error } = await sb.storage.createBucket("media", {
+    public: true,
+    fileSizeLimit: MAX_BYTES,
+    allowedMimeTypes: Array.from(ALLOWED),
+  });
+  if (error && !/already.*exist/i.test(error.message)) {
+    return error.message;
+  }
+  return null;
+}
+
 export async function uploadMediaAction(
   formData: FormData,
   folder: "products" | "categories" | "shops" = "products"
@@ -59,8 +80,15 @@ export async function uploadMediaAction(
     return m ? m[1].toLowerCase() : "bin";
   })();
 
-  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const sb = getSupabaseAdmin()!;
+
+  // Auto-create bucket if needed
+  const bucketErr = await ensureMediaBucket(sb);
+  if (bucketErr) {
+    return { ok: false, error: `Ошибка хранилища: ${bucketErr}` };
+  }
+
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const arrayBuffer = await file.arrayBuffer();
   const { error } = await sb.storage
     .from("media")
@@ -70,13 +98,7 @@ export async function uploadMediaAction(
     });
 
   if (error) {
-    if (/bucket.*not.*found/i.test(error.message)) {
-      return {
-        ok: false,
-        error:
-          "Хранилище media не настроено. Запустите SQL-миграцию 0003_media_and_category_image.sql.",
-      };
-    }
+    console.error("[media-upload] error:", error.message);
     return { ok: false, error: `Ошибка загрузки: ${error.message}` };
   }
 
