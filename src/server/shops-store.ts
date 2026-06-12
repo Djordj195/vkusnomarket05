@@ -48,8 +48,21 @@ export async function listShops(): Promise<Shop[]> {
 }
 
 export async function getShopsBySource(source: SourceType): Promise<Shop[]> {
-  const all = await listShops();
-  return all.filter((s) => s.source === source);
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("shops")
+      .select("*")
+      .eq("source", source)
+      .order("created_at", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error))
+        return [...STATIC_SHOPS].filter((s) => s.source === source);
+      throw new Error(`getShopsBySource: ${error.message}`);
+    }
+    return (data as ShopRow[]).map(rowToShop);
+  }
+  return [...STATIC_SHOPS].filter((s) => s.source === source);
 }
 
 export async function getShopById(id: string): Promise<Shop | undefined> {
