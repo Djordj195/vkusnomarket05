@@ -16,6 +16,7 @@ import { getCurrentVendor } from "@/server/vendor-auth";
 import { listOrdersByVendor } from "@/server/orders-store";
 import { Badge } from "@/components/ui/Badge";
 import { formatPrice } from "@/lib/utils";
+import { VendorPushBanner } from "./VendorPushBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -50,8 +51,12 @@ export default async function VendorDashboardOverview() {
     (o) => o.status === "accepted" || o.status === "preparing" || o.status === "courier"
   ).length;
 
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null;
+
   return (
     <div className="space-y-5">
+      <VendorPushBanner vendorId={vendor.id} vapidPublicKey={vapidPublicKey} />
+
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-[22px] font-extrabold text-ink-900">Обзор</h1>

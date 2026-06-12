@@ -38,8 +38,19 @@ export default function SmsDiagPanel() {
             <Row label="SMS_PROVIDER env" value={diag.envSmsProvider} />
             <Row label="SMSRU_API_ID задан" value={diag.envSmsruApiIdSet ? "Да" : "Нет"} ok={diag.envSmsruApiIdSet} />
             <Row label="SMSC_LOGIN задан" value={diag.envSmscLoginSet ? "Да" : "Нет"} ok={diag.envSmscLoginSet} />
+            <Row label="SMSRU_SENDER задан" value={diag.envSmsruSenderSet ? diag.envSmsruSender : "Нет"} ok={diag.envSmsruSenderSet} />
             <Row label="SMS.ru сконфигурирован" value={diag.smsruConfigured ? "Да" : "Нет"} ok={diag.smsruConfigured} />
             <Row label="SMSC сконфигурирован" value={diag.smscConfigured ? "Да" : "Нет"} ok={diag.smscConfigured} />
+            {diag.isReal && !diag.envSmsruSenderSet && (
+              <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-amber-800 text-[12px]">
+                ⚠️ <code>SMSRU_SENDER</code> не задан. SMS.ru может отклонить отправку.
+                Создайте отправителя на{" "}
+                <a href="https://sms.ru/?panel=senders" target="_blank" rel="noopener" className="underline">
+                  sms.ru
+                </a>{" "}
+                и добавьте его в переменные окружения Vercel.
+              </div>
+            )}
             {!diag.isReal && (
               <div className="mt-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-amber-800 text-[12px]">
                 ⚠️ SMS работает в демо-режиме! Реальные SMS не отправляются.
