@@ -1,5 +1,5 @@
 export const APP_NAME = "ВкусМаркет";
-export const APP_TAGLINE = "Доставка по Кизляру и району";
+export const APP_TAGLINE = "Всё что вы любите. Быстро. Рядом.";
 export const CITY_NAME = "Кизляр";
 
 // Минимальной суммы заказа нет — клиент может заказать на любую сумму.

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: `%s · ${APP_NAME}`,
   },
   description:
-    "Доставка свежих продуктов с рынка, товаров из лавок и готовой еды по г. Кизляр и району.",
+    "Всё что вы любите. Быстро. Рядом. Доставка продуктов и готовой еды по г. Кизляр и району.",
   applicationName: APP_NAME,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     type: "website",
     title: `${APP_NAME} — ${APP_TAGLINE}`,
     description:
-      "Доставка свежих продуктов, товаров из лавок и готовой еды по г. Кизляр и району.",
+      "Всё что вы любите. Быстро. Рядом. Доставка продуктов и готовой еды по г. Кизляр и району.",
     locale: "ru_RU",
     siteName: APP_NAME,
   },
