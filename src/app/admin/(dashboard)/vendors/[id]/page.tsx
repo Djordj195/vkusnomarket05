@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ExternalLink, Sparkles } from "lucide-react";
+import { ChevronLeft, ExternalLink, KeyRound, Sparkles } from "lucide-react";
 import { getVendorById } from "@/server/vendors-store";
 import { getCityById } from "@/server/cities-store";
+import { getCredentialsByVendorId } from "@/server/vendor-credentials-store";
 import {
   VERTICAL_LABELS,
   type VendorStatus,
@@ -11,6 +12,7 @@ import {
   toggleVendorFeaturedAction,
   updateVendorStatusAction,
 } from "@/server/vendor-actions";
+import { AdminResetPasswordForm } from "./AdminResetPasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +41,7 @@ export default async function AdminVendorDetailPage({
   const vendor = await getVendorById(id);
   if (!vendor) notFound();
   const city = await getCityById(vendor.cityId);
+  const credentials = await getCredentialsByVendorId(vendor.id);
 
   return (
     <div className="space-y-4">
@@ -160,6 +163,41 @@ export default async function AdminVendorDetailPage({
             </form>
           )}
         </div>
+      </section>
+
+      <section className="rounded-2xl bg-white border border-ink-200 p-4">
+        <div className="flex items-center gap-2">
+          <KeyRound size={16} className="text-ink-500" />
+          <h2 className="text-[14px] font-bold text-ink-800">
+            Учётные данные (логин/пароль)
+          </h2>
+        </div>
+        {credentials ? (
+          <div className="mt-3 space-y-2">
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-[13px] text-emerald-800">
+              Логин: <strong>{credentials.login}</strong>
+              <br />
+              <span className="text-[11px] text-emerald-600">
+                Создано: {new Date(credentials.createdAt).toLocaleDateString("ru-RU")}
+              </span>
+            </div>
+            <AdminResetPasswordForm vendorId={vendor.id} />
+          </div>
+        ) : (
+          <div className="mt-3">
+            {vendor.status === "approved" ? (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-800">
+                Учётные данные ещё не созданы. Продавец может создать их на
+                странице{" "}
+                <span className="font-mono text-amber-700">/vendor/create-password</span>.
+              </div>
+            ) : (
+              <div className="rounded-xl bg-ink-50 border border-ink-200 p-3 text-[13px] text-ink-600">
+                Продавец сможет создать логин и пароль после одобрения заявки.
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <DataCard title="Юридическая информация">

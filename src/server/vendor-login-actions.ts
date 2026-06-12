@@ -2,63 +2,36 @@
 
 import { redirect } from "next/navigation";
 import {
+  authenticateVendor,
   clearVendorSession,
-  findVendorByPhone,
   setVendorSession,
 } from "./vendor-auth";
-import { sendOtp, verifyAndConsume } from "./sms-auth";
 import { logConsent } from "./consent-store";
 
-export type SendCodeResult =
-  | { ok: true; brandName: string; demoCode: string | null }
-  | { ok: false; error: string };
+export type LoginResult = { ok: true } | { ok: false; error: string };
 
-export async function sendVendorCodeAction(
+export async function vendorLoginAction(
   formData: FormData
-): Promise<SendCodeResult> {
-  const phone = String(formData.get("phone") ?? "");
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 10) {
-    return { ok: false, error: "Введите корректный номер телефона." };
+): Promise<LoginResult> {
+  const login = String(formData.get("login") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!login) {
+    return { ok: false, error: "Введите логин." };
   }
-  const vendor = await findVendorByPhone(phone);
-  if (!vendor) {
-    return {
-      ok: false,
-      error:
-        "Продавец с таким номером не найден. Если ещё не подавали заявку — оформите её на /vendor/signup.",
-    };
-  }
-  if (vendor.status === "blocked") {
-    return { ok: false, error: "Доступ заблокирован. Обратитесь в поддержку." };
-  }
-  if (vendor.status === "suspended") {
-    return { ok: false, error: "Аккаунт приостановлен. Обратитесь в поддержку." };
+  if (!password) {
+    return { ok: false, error: "Введите пароль." };
   }
 
-  const sent = await sendOtp(phone, "vendor_login");
-  if (!sent.ok) return { ok: false, error: sent.error };
-  return { ok: true, brandName: vendor.brandName, demoCode: sent.demoCode };
-}
-
-export type VerifyCodeResult = { ok: true } | { ok: false; error: string };
-
-export async function verifyVendorCodeAction(
-  formData: FormData
-): Promise<VerifyCodeResult> {
-  const phone = String(formData.get("phone") ?? "");
-  const code = String(formData.get("code") ?? "").trim();
-  const verified = await verifyAndConsume(phone, "vendor_login", code);
-  if (!verified.ok) return { ok: false, error: verified.error };
-
-  const vendor = await findVendorByPhone(phone);
-  if (!vendor) {
-    return { ok: false, error: "Сессия истекла. Попробуйте снова." };
+  const result = await authenticateVendor(login, password);
+  if (!result.ok) {
+    return { ok: false, error: result.error };
   }
-  await setVendorSession(vendor.id);
+
+  await setVendorSession(result.vendor.id);
 
   logConsent({
-    userPhone: phone,
+    userPhone: result.vendor.contacts?.phone ?? login,
     context: "vendor_login",
     docSlugs: ["offer", "privacy", "consent"],
     checkboxText:
