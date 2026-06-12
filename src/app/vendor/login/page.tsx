@@ -48,8 +48,7 @@ export default async function VendorLoginPage() {
           Вход для продавцов
         </h1>
         <p className="mt-2 text-[13px] text-ink-500">
-          Введите номер телефона, указанный в заявке. Мы отправим SMS с
-          6-значным кодом.
+          Введите логин и пароль, которые вы создали после одобрения заявки.
         </p>
       </div>
 
@@ -66,7 +65,14 @@ export default async function VendorLoginPage() {
           >
             странице регистрации
           </Link>
-          . После одобрения вы получите доступ в личный кабинет.
+          . После одобрения вы сможете{" "}
+          <Link
+            href="/vendor/create-password"
+            className="font-semibold text-brand-700 hover:underline"
+          >
+            создать логин и пароль
+          </Link>{" "}
+          для входа.
         </div>
       </div>
     </PageShell>

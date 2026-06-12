@@ -179,17 +179,25 @@ export function SignupForm({ cities }: Props) {
         </h2>
         <p className="mt-2 text-[14px] text-ink-600">
           Мы проверим документы и свяжемся с вами в течение 1–3 рабочих дней.
-          После одобрения витрина появится по адресу{" "}
-          <span className="font-mono text-brand-700">/vendor/{submittedSlug}</span>.
+          После одобрения вы сможете создать логин и пароль для входа в кабинет
+          на странице{" "}
+          <span className="font-mono text-brand-700">/vendor/create-password</span>.
         </p>
         <Button
           fullWidth
           size="lg"
           className="mt-6"
+          onClick={() => router.push("/vendor/create-password")}
+        >
+          Создать учётные данные
+        </Button>
+        <button
+          type="button"
           onClick={() => router.push("/")}
+          className="mt-2 block w-full text-center text-[13px] text-ink-500 hover:text-ink-800"
         >
           На главную
-        </Button>
+        </button>
       </div>
     );
   }
