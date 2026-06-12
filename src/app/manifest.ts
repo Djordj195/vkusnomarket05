@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ВкусМаркет — доставка по Кизляру",
+    name: "ВкусМаркет — Всё что вы любите. Быстро. Рядом.",
     short_name: "ВкусМаркет",
     description:
-      "Доставка свежих продуктов с рынка, товаров из лавок и готовой еды по г. Кизляр и району.",
+      "Всё что вы любите. Быстро. Рядом. Доставка продуктов и готовой еды по г. Кизляр и району.",
     start_url: "/",
     id: "/",
     display: "standalone",
