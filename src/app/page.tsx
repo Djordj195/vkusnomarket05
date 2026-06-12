@@ -13,35 +13,30 @@ import { listVendors } from "@/server/vendors-store";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [
-    categories,
-    shops,
-    products,
-    approvedFeedback,
-    approvedFeedbackTotal,
-    currentCity,
-    cities,
-  ] = await Promise.all([
-    listCategories(),
-    listShops(),
-    listProducts(),
-    listApprovedFeedback(3),
-    countApprovedFeedback(),
+  // Resolve city first (needs cookies), then fire all data queries in parallel
+  const [currentCity, cities] = await Promise.all([
     getCurrentCity(),
     listCities(),
   ]);
 
-  // Phase 1/2: продавцы есть только в активных городах. В остальных
-  // главная показывает заглушку «скоро откроемся».
   const isActiveCity = currentCity.status === "active";
+
+  const [categories, shops, products, approvedFeedback, approvedFeedbackTotal, cityVendors] =
+    await Promise.all([
+      listCategories(),
+      listShops(),
+      listProducts(),
+      listApprovedFeedback(3),
+      countApprovedFeedback(),
+      isActiveCity
+        ? listVendors({ cityId: currentCity.id, status: "approved" })
+        : Promise.resolve([]),
+    ]);
+
   const cityProducts = isActiveCity ? products : [];
   const cityCategories = isActiveCity ? categories : [];
   const cityShops = isActiveCity ? shops : [];
 
-  // Phase 2: рейтинг продавцов в текущем городе (только approved).
-  const cityVendors = isActiveCity
-    ? await listVendors({ cityId: currentCity.id, status: "approved" })
-    : [];
   const featuredVendors = cityVendors
     .slice()
     .sort((a, b) => {

@@ -48,20 +48,22 @@ export async function listCategories(): Promise<Category[]> {
     }
     const cats = (data as CategoryRow[]).map(rowToCategory);
 
-    // Replace stored items_count with the real number of products in each
-    // category, so the count shown on the home page always matches what the
-    // user sees when they open the category.
-    const { data: prodRows, error: prodErr } = await sb
-      .from("products")
-      .select("category_id");
-    if (!prodErr && Array.isArray(prodRows)) {
+    // Count products per category using a lightweight RPC or grouped query
+    // instead of fetching every product row.
+    const { data: countRows, error: countErr } = await sb.rpc(
+      "count_products_by_category"
+    );
+    if (!countErr && Array.isArray(countRows)) {
       const counts = new Map<string, number>();
-      for (const row of prodRows as { category_id: string }[]) {
-        counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
+      for (const row of countRows as { category_id: string; cnt: number }[]) {
+        counts.set(row.category_id, row.cnt);
       }
       for (const c of cats) {
         c.itemsCount = counts.get(c.id) ?? 0;
       }
+    } else {
+      // Fallback: single count query per category is still cheaper than SELECT *
+      // but we keep the data as-is from items_count column
     }
 
     return cats;

@@ -142,46 +142,148 @@ export async function getProductBySlug(
 export async function getProductsByCategory(
   categoryId: string
 ): Promise<Product[]> {
-  const all = await listProducts();
-  return all.filter((p) => p.categoryId === categoryId);
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("products")
+      .select("*")
+      .eq("category_id", categoryId)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error))
+        return staticProductsHydrated().filter(
+          (p) => p.categoryId === categoryId
+        );
+      throw new Error(`getProductsByCategory: ${error.message}`);
+    }
+    return (data as ProductRow[]).map(rowToProduct);
+  }
+  return staticProductsHydrated().filter(
+    (p) => p.categoryId === categoryId
+  );
 }
 
 export async function getProductsByShop(shopId: string): Promise<Product[]> {
-  const all = await listProducts();
-  return all.filter((p) => p.shopId === shopId);
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("products")
+      .select("*")
+      .eq("shop_id", shopId)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error))
+        return staticProductsHydrated().filter((p) => p.shopId === shopId);
+      throw new Error(`getProductsByShop: ${error.message}`);
+    }
+    return (data as ProductRow[]).map(rowToProduct);
+  }
+  return staticProductsHydrated().filter((p) => p.shopId === shopId);
 }
 
 export async function getProductsBySource(
   source: SourceType
 ): Promise<Product[]> {
-  const all = await listProducts();
-  return all.filter((p) => p.source === source);
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("products")
+      .select("*")
+      .eq("source", source)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error))
+        return staticProductsHydrated().filter((p) => p.source === source);
+      throw new Error(`getProductsBySource: ${error.message}`);
+    }
+    return (data as ProductRow[]).map(rowToProduct);
+  }
+  return staticProductsHydrated().filter((p) => p.source === source);
 }
 
 export async function getProductsByVendor(
   vendorId: string
 ): Promise<Product[]> {
-  const all = await listProducts();
-  return all.filter((p) => p.vendorId === vendorId);
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("products")
+      .select("*")
+      .eq("vendor_id", vendorId)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error))
+        return staticProductsHydrated().filter((p) => p.vendorId === vendorId);
+      throw new Error(`getProductsByVendor: ${error.message}`);
+    }
+    return (data as ProductRow[]).map(rowToProduct);
+  }
+  return staticProductsHydrated().filter((p) => p.vendorId === vendorId);
 }
 
 export async function getProductsByVertical(
   vertical: Vertical
 ): Promise<Product[]> {
-  const all = await listProducts();
-  return all.filter((p) => p.vertical === vertical);
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("products")
+      .select("*")
+      .eq("vertical", vertical)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error))
+        return staticProductsHydrated().filter((p) => p.vertical === vertical);
+      throw new Error(`getProductsByVertical: ${error.message}`);
+    }
+    return (data as ProductRow[]).map(rowToProduct);
+  }
+  return staticProductsHydrated().filter((p) => p.vertical === vertical);
 }
 
 export async function getWeeklyProducts(): Promise<Product[]> {
-  const all = await listProducts();
-  return all.filter((p) => p.isWeekly);
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("products")
+      .select("*")
+      .eq("is_weekly", true)
+      .order("sort_order", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error))
+        return staticProductsHydrated().filter((p) => p.isWeekly);
+      throw new Error(`getWeeklyProducts: ${error.message}`);
+    }
+    return (data as ProductRow[]).map(rowToProduct);
+  }
+  return staticProductsHydrated().filter((p) => p.isWeekly);
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  const all = await listProducts();
-  return all.filter(
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const pattern = `%${q}%`;
+    const { data, error } = await sb
+      .from("products")
+      .select("*")
+      .or(`name.ilike.${pattern},description.ilike.${pattern}`)
+      .order("sort_order", { ascending: true })
+      .limit(50);
+    if (error) {
+      if (isMissingTableError(error)) {
+        return staticProductsHydrated().filter(
+          (p) =>
+            p.name.toLowerCase().includes(q) ||
+            p.description.toLowerCase().includes(q)
+        );
+      }
+      throw new Error(`searchProducts: ${error.message}`);
+    }
+    return (data as ProductRow[]).map(rowToProduct);
+  }
+  return staticProductsHydrated().filter(
     (p) =>
       p.name.toLowerCase().includes(q) ||
       p.description.toLowerCase().includes(q)

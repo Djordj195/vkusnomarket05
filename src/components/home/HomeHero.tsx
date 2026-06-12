@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Pizza, ShoppingBasket, Pill, SprayCan } from "lucide-react";
 
 import { BrandPill } from "@/components/layout/Logo";
@@ -59,11 +60,14 @@ type HomeHeroProps = {
 export function HomeHero({ citySlot }: HomeHeroProps) {
   return (
     <header className="relative isolate overflow-hidden">
-      {/* Background image with food theme */}
-      <div
-        className="absolute inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: `url(${HERO_IMAGE})` }}
-        aria-hidden="true"
+      {/* Background image — Next.js Image for automatic optimization */}
+      <Image
+        src={HERO_IMAGE}
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 480px) 100vw, 480px"
+        className="absolute inset-0 -z-10 object-cover"
       />
       <div
         className="absolute inset-0 -z-10 bg-gradient-to-b from-black/40 via-black/55 to-black/75"
