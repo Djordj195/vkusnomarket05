@@ -1,13 +1,11 @@
 // Main Service Worker — handles offline caching + push notifications.
 // Combines asset caching for PWA install (iOS/Android) with push events.
 
-const CACHE_NAME = "vkusmarket-v1";
+const CACHE_NAME = "vkusmarket-v2";
 const OFFLINE_URL = "/offline";
 
-// Precache app shell
+// Precache app shell (only icons — no HTML pages to avoid stale cache on iOS)
 const PRECACHE_URLS = [
-  "/",
-  "/offline",
   "/icon-192.png",
   "/icon-512.png",
 ];
@@ -35,35 +33,52 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
-  // Only cache GET requests
+  // Only handle GET requests
   if (request.method !== "GET") return;
 
-  // Skip API/server action requests
   const url = new URL(request.url);
+
+  // CRITICAL: Only handle same-origin requests.
+  // Cross-origin requests (Google Fonts, CDN images, etc.) must be left
+  // to the browser — intercepting them on iOS Safari causes failures.
+  if (url.origin !== self.location.origin) return;
+
+  // Skip API/server action requests
   if (url.pathname.startsWith("/api/")) return;
   if (request.headers.get("next-action")) return;
+  // Skip Next.js internal requests
+  if (url.pathname.startsWith("/_next/")) return;
 
+  // Network-first for navigations, cache-first for static assets
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL))
+        )
+    );
+    return;
+  }
+
+  // For static assets (images, etc.) — cache-first
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        // Cache successful navigation responses
-        if (response.ok && request.mode === "navigate") {
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((response) => {
+        if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
-      })
-      .catch(() => {
-        // If offline, serve from cache
-        return caches.match(request).then((cached) => {
-          if (cached) return cached;
-          // For navigation, show offline page
-          if (request.mode === "navigate") {
-            return caches.match(OFFLINE_URL);
-          }
-          return new Response("Offline", { status: 503 });
-        });
-      })
+      });
+    })
   );
 });
 
