@@ -16,6 +16,7 @@ import { sendEmail } from "./email";
 import { sendWebPush, type WebPushPayload } from "./push";
 import { getSmsProvider } from "../sms";
 import { normalizeRuPhone } from "../sms";
+import { orderNewHtml, genericNotificationHtml } from "./email-templates";
 
 // Универсальный диспетчер: принимает событие, описывает что отправить
 // в каждый из каналов, и сам решает что фактически отправлять с учётом
@@ -195,10 +196,18 @@ async function deliverEmail(
     });
     return "skipped";
   }
+  const htmlBuilder =
+    input.event === "order.new" ? orderNewHtml : genericNotificationHtml;
+  const html = htmlBuilder({
+    title: input.title,
+    body: input.body,
+    url: input.url,
+  });
   const res = await sendEmail({
     to: input.email,
     subject: input.title,
     text: input.body + (input.url ? `\n\n${input.url}` : ""),
+    html,
   });
   await log({
     recipientType: input.recipientType,

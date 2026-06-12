@@ -13,6 +13,8 @@ export type SmsDiagResult = {
   envSmsProvider: string;
   envSmsruApiIdSet: boolean;
   envSmscLoginSet: boolean;
+  envSmsruSenderSet: boolean;
+  envSmsruSender: string;
 };
 
 export async function getSmsDiagAction(): Promise<SmsDiagResult | null> {
@@ -28,6 +30,8 @@ export async function getSmsDiagAction(): Promise<SmsDiagResult | null> {
     envSmsProvider: process.env.SMS_PROVIDER || "(не задан)",
     envSmsruApiIdSet: !!process.env.SMSRU_API_ID,
     envSmscLoginSet: !!process.env.SMSC_LOGIN,
+    envSmsruSenderSet: !!process.env.SMSRU_SENDER,
+    envSmsruSender: process.env.SMSRU_SENDER || "(не задан)",
   };
 }
 
