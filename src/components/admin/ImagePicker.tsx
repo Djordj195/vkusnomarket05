@@ -21,6 +21,77 @@ type Props = {
   shape?: "square" | "wide";
 };
 
+const MAX_DIMENSION = 1920;
+const QUALITY = 0.82;
+const MAX_UPLOAD_MB = 8;
+
+/**
+ * Compress/convert image file to JPEG using Canvas.
+ * This handles HEIC, large camera photos, and any other format the browser can decode.
+ * Falls back to original file if canvas conversion fails.
+ */
+async function compressImage(file: File): Promise<File> {
+  // If the file is already small enough and a web-friendly format, skip compression
+  const isWebFriendly =
+    file.type === "image/jpeg" ||
+    file.type === "image/png" ||
+    file.type === "image/webp";
+  if (isWebFriendly && file.size < 1024 * 1024) {
+    return file;
+  }
+
+  return new Promise<File>((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      let { width, height } = img;
+      // Resize if larger than MAX_DIMENSION
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file); // fallback
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file); // fallback
+            return;
+          }
+          const compressed = new File(
+            [blob],
+            file.name.replace(/\.[^.]+$/, ".jpg"),
+            { type: "image/jpeg" }
+          );
+          resolve(compressed);
+        },
+        "image/jpeg",
+        QUALITY
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file); // fallback to original
+    };
+
+    img.src = url;
+  });
+}
+
 export function ImagePicker({
   value,
   onChange,
@@ -38,16 +109,19 @@ export function ImagePicker({
 
   async function handleFile(file: File) {
     setError(null);
-    // Client-side validation
-    const mb = file.size / 1024 / 1024;
-    if (mb > 8) {
-      setError("Файл слишком большой (макс. 8 МБ).");
-      return;
-    }
     setPending(true);
     try {
+      // Compress/convert image client-side (handles HEIC, large photos, etc.)
+      const processed = await compressImage(file);
+
+      const mb = processed.size / 1024 / 1024;
+      if (mb > MAX_UPLOAD_MB) {
+        setError(`Файл слишком большой (${mb.toFixed(1)} МБ, макс. ${MAX_UPLOAD_MB} МБ).`);
+        return;
+      }
+
       const fd = new FormData();
-      fd.set("file", file);
+      fd.set("file", processed);
       const res = await uploadMediaAction(fd, folder);
       if (!res.ok) {
         setError(res.error);
@@ -123,7 +197,7 @@ export function ImagePicker({
           id={fileInputId}
           ref={fileRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/*"
+          accept="image/*"
           className="sr-only"
           onChange={(e) => {
             const f = e.target.files?.[0];

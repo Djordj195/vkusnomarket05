@@ -15,6 +15,8 @@ const ALLOWED_IMAGE = new Set([
   "image/webp",
   "image/gif",
   "image/avif",
+  "image/heic",
+  "image/heif",
 ]);
 
 const MAX_BYTES_LOGO = 4 * 1024 * 1024; // 4 MB — логотип маленький
@@ -40,12 +42,14 @@ function extFor(file: File): string {
     "image/webp": "webp",
     "image/gif": "gif",
     "image/avif": "avif",
+    "image/heic": "heic",
+    "image/heif": "heif",
     "application/pdf": "pdf",
   };
   const fromMime = map[file.type];
   if (fromMime) return fromMime;
   const m = file.name.match(/\.([a-zA-Z0-9]+)$/);
-  return m ? m[1].toLowerCase() : "bin";
+  return m ? m[1].toLowerCase() : "jpg";
 }
 
 function rand(): string {
