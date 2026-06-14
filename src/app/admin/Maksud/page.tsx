@@ -21,7 +21,7 @@ export default async function AdminLoginPage() {
           <h1 className="mt-2 text-[20px] font-extrabold text-ink-900">
             Админ-панель
           </h1>
-          <p className="text-[13px] text-ink-500">ВкусМаркет · Кизляр</p>
+          <p className="text-[13px] text-ink-500">ВкусМаркет</p>
         </div>
         <div className="mt-6">
           <LoginForm />

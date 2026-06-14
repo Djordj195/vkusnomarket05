@@ -51,7 +51,7 @@ type Initial = {
   isActive: boolean;
 };
 
-const DEFAULT_FALLBACK: [number, number] = [43.8478, 46.7141]; // Кизляр
+const DEFAULT_FALLBACK: [number, number] = [55.7558, 37.6173]; // Москва (центр РФ)
 
 export function ZoneEditor({
   initial,
