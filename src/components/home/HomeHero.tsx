@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Pizza, ShoppingBasket, Pill, SprayCan } from "lucide-react";
 
-import { BrandPill } from "@/components/layout/Logo";
+import { BrandPill, LogoMark } from "@/components/layout/Logo";
 import type { Vertical } from "@/lib/types";
 
 const HERO_IMAGE =
@@ -81,9 +81,7 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
             aria-label="ВкусМаркет — на главную"
             className="block"
           >
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-ink-900 text-[10px] font-extrabold leading-none text-accent-300 shadow-md shadow-black/30">
-              ВМ
-            </span>
+            <LogoMark size={36} />
           </Link>
           <BrandPill />
           {citySlot}
