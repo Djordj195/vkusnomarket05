@@ -26,6 +26,7 @@ import {
  *  - предпросмотр (image или иконка для PDF)
  *  - удаление
  *  - валидация формата и размера на клиенте (бэк проверит повторно)
+ *  - автоматическое сжатие/конвертация изображений (HEIC, большие фото)
  *  - повторную загрузку при ошибке
  *
  * Использует server action, передаваемый родителем через проп `upload`.
@@ -34,6 +35,71 @@ import {
  *  - курьеров (courier-media-actions.ts)
  *  - админов (media-actions.ts, после миграции)
  */
+
+const IMG_MAX_DIMENSION = 1920;
+const IMG_QUALITY = 0.82;
+
+async function compressImage(file: File): Promise<File> {
+  // Skip non-image files (e.g. PDF)
+  if (!file.type.startsWith("image/") && file.type !== "") return file;
+  // Skip PDFs
+  if (file.type === "application/pdf") return file;
+  // If the file is already small enough and a web-friendly format, skip
+  const isWebFriendly =
+    file.type === "image/jpeg" ||
+    file.type === "image/png" ||
+    file.type === "image/webp";
+  if (isWebFriendly && file.size < 1024 * 1024) return file;
+
+  return new Promise<File>((resolve) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > IMG_MAX_DIMENSION || height > IMG_MAX_DIMENSION) {
+        const ratio = Math.min(
+          IMG_MAX_DIMENSION / width,
+          IMG_MAX_DIMENSION / height
+        );
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = window.document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file);
+            return;
+          }
+          resolve(
+            new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+              type: "image/jpeg",
+            })
+          );
+        },
+        "image/jpeg",
+        IMG_QUALITY
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+
+    img.src = url;
+  });
+}
 
 export type UploadActionResult =
   | { ok: true; url: string; path?: string }
@@ -124,16 +190,19 @@ export function MediaUploader({
   const handleFile = useCallback(
     async (file: File) => {
       setError(null);
-      // Клиентская предвалидация — даст быстрый фидбэк до запроса
-      const mb = file.size / 1024 / 1024;
-      if (mb > maxSizeMb) {
-        setError(`Файл слишком большой (макс. ${maxSizeMb} МБ).`);
-        return;
-      }
       setPending(true);
       try {
+        // Compress/convert images client-side (handles HEIC, large phone photos)
+        const processed = await compressImage(file);
+
+        const mb = processed.size / 1024 / 1024;
+        if (mb > maxSizeMb) {
+          setError(`Файл слишком большой (${mb.toFixed(1)} МБ, макс. ${maxSizeMb} МБ).`);
+          return;
+        }
+
         const fd = new FormData();
-        fd.set("file", file);
+        fd.set("file", processed);
         if (extraFields) {
           for (const [k, v] of Object.entries(extraFields)) {
             fd.set(k, v);

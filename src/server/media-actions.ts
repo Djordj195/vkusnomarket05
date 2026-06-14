@@ -10,6 +10,8 @@ const ALLOWED = new Set([
   "image/webp",
   "image/gif",
   "image/avif",
+  "image/heic",
+  "image/heif",
 ]);
 
 export type UploadResult =
@@ -17,14 +19,22 @@ export type UploadResult =
   | { ok: false; error: string };
 
 /**
- * Ensures the 'media' storage bucket exists. Creates it if missing.
- * Called before each upload to prevent "bucket not found" errors.
+ * Ensures the 'media' storage bucket exists and is properly configured.
+ * Creates it if missing. Updates MIME types if the bucket has outdated config.
  */
 async function ensureMediaBucket(
   sb: ReturnType<typeof getSupabaseAdmin> & object
 ): Promise<string | null> {
   const { data } = await sb.storage.getBucket("media");
-  if (data) return null; // already exists
+  if (data) {
+    // Update bucket to ensure all MIME types are allowed
+    await sb.storage.updateBucket("media", {
+      public: true,
+      fileSizeLimit: MAX_BYTES,
+      allowedMimeTypes: Array.from(ALLOWED),
+    });
+    return null;
+  }
 
   const { error } = await sb.storage.createBucket("media", {
     public: true,
@@ -66,7 +76,7 @@ export async function uploadMediaAction(
   if (file.type && !ALLOWED.has(file.type)) {
     return {
       ok: false,
-      error: "Поддерживаются JPEG/PNG/WEBP/GIF/AVIF.",
+      error: "Поддерживаются JPEG/PNG/WEBP/GIF/AVIF/HEIC.",
     };
   }
 
@@ -76,8 +86,10 @@ export async function uploadMediaAction(
     if (file.type === "image/webp") return "webp";
     if (file.type === "image/gif") return "gif";
     if (file.type === "image/avif") return "avif";
+    if (file.type === "image/heic") return "heic";
+    if (file.type === "image/heif") return "heif";
     const m = file.name.match(/\.([a-zA-Z0-9]+)$/);
-    return m ? m[1].toLowerCase() : "bin";
+    return m ? m[1].toLowerCase() : "jpg";
   })();
 
   const sb = getSupabaseAdmin()!;
