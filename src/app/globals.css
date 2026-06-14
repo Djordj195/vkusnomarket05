@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand: OneTwoTrip-style purple */
-  --color-brand-50: #f3f0ff;
-  --color-brand-100: #e9e3ff;
-  --color-brand-200: #d4c8ff;
-  --color-brand-300: #b6a1ff;
-  --color-brand-400: #9277ff;
-  --color-brand-500: #6f46ff;
-  --color-brand-600: #5b30f0;
-  --color-brand-700: #4824c7;
-  --color-brand-800: #3a1ea3;
-  --color-brand-900: #2c1880;
+  /* Brand: fresh green (matches logo) */
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
 
   /* Accent: bright yellow pill */
   --color-accent-50: #fffceb;

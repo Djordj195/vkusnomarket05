@@ -38,7 +38,7 @@ export function BrandPill({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full bg-accent-300 px-3 py-1 text-[12px] font-extrabold tracking-tight text-ink-900 shadow-[0_2px_8px_rgba(245,184,0,0.35)]",
+        "inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-[12px] font-extrabold tracking-tight text-brand-700 shadow-[0_2px_8px_rgba(22,163,74,0.2)]",
         className
       )}
     >
