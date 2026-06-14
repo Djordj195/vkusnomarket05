@@ -13,6 +13,12 @@ export async function GET(req: Request) {
   if (!paymentId) {
     return NextResponse.json({ error: "paymentId required" }, { status: 400 });
   }
+
+  // Prevent open redirect — only allow same-origin relative paths.
+  const safeUrl = returnUrl.startsWith("/") && !returnUrl.startsWith("//")
+    ? returnUrl
+    : "/orders";
+
   await applyPaymentStatus(paymentId, "succeeded", { demo: true });
-  return NextResponse.redirect(returnUrl);
+  return NextResponse.redirect(new URL(safeUrl, url.origin));
 }

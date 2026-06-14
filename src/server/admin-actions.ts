@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { login as adminLogin, logout as adminLogout } from "./admin-auth";
+import {
+  checkRateLimit,
+  recordFailedAttempt,
+  resetAttempts,
+} from "./rate-limit";
 
 export type LoginState = {
   error?: string;
@@ -17,10 +22,21 @@ export async function loginAction(
   if (!login || !password) {
     return { error: "Введите логин и пароль" };
   }
+
+  const rl = checkRateLimit(`admin-login:${login}`);
+  if (!rl.allowed) {
+    return {
+      error: `Слишком много попыток. Попробуйте через ${rl.retryAfterSec} сек.`,
+    };
+  }
+
   const ok = await adminLogin(login, password);
   if (!ok) {
+    recordFailedAttempt(`admin-login:${login}`);
     return { error: "Неверный логин или пароль" };
   }
+
+  resetAttempts(`admin-login:${login}`);
   redirect("/admin");
 }
 
