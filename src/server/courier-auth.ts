@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { signCookie, verifyCookie } from "./cookie-sign";
 
 const COOKIE_NAME = "vkusnomarket_courier";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 дней
@@ -30,12 +31,11 @@ function normalizePhone(input: string): string {
 }
 
 function encode(s: CourierSession): string {
-  return Buffer.from(JSON.stringify(s)).toString("base64");
+  return JSON.stringify(s);
 }
 
-function decode(token: string): CourierSession | null {
+function decode(json: string): CourierSession | null {
   try {
-    const json = Buffer.from(token, "base64").toString("utf-8");
     const parsed = JSON.parse(json) as CourierSession;
     if (!parsed.id || !parsed.type || !parsed.phone) return null;
     return parsed;
@@ -46,7 +46,7 @@ function decode(token: string): CourierSession | null {
 
 export async function setCourierSession(session: CourierSession): Promise<void> {
   const c = await cookies();
-  c.set(COOKIE_NAME, encode(session), {
+  c.set(COOKIE_NAME, signCookie(encode(session)), {
     httpOnly: true,
     sameSite: "lax",
     maxAge: COOKIE_MAX_AGE,
@@ -62,9 +62,11 @@ export async function clearCourierSession(): Promise<void> {
 
 export async function getCurrentCourier(): Promise<CourierSession | null> {
   const c = await cookies();
-  const token = c.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  return decode(token);
+  const raw = c.get(COOKIE_NAME)?.value;
+  if (!raw) return null;
+  const payload = verifyCookie(raw);
+  if (!payload) return null;
+  return decode(payload);
 }
 
 export function normalizeCourierPhone(phone: string): string {

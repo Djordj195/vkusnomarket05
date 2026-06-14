@@ -1,4 +1,5 @@
 import "server-only";
+import { randomInt } from "crypto";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import type { SmsPurpose } from "./sms";
 
@@ -69,7 +70,7 @@ function memory(): Store {
 
 function generateNumericCode(length = 6): string {
   let s = "";
-  for (let i = 0; i < length; i++) s += Math.floor(Math.random() * 10).toString();
+  for (let i = 0; i < length; i++) s += randomInt(10).toString();
   return s;
 }
 

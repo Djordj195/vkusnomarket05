@@ -7,6 +7,11 @@ import {
   setVendorSession,
 } from "./vendor-auth";
 import { logConsent } from "./consent-store";
+import {
+  checkRateLimit,
+  recordFailedAttempt,
+  resetAttempts,
+} from "./rate-limit";
 
 export type LoginResult = { ok: true } | { ok: false; error: string };
 
@@ -23,11 +28,21 @@ export async function vendorLoginAction(
     return { ok: false, error: "Введите пароль." };
   }
 
+  const rl = checkRateLimit(`vendor-login:${login}`);
+  if (!rl.allowed) {
+    return {
+      ok: false,
+      error: `Слишком много попыток. Попробуйте через ${rl.retryAfterSec} сек.`,
+    };
+  }
+
   const result = await authenticateVendor(login, password);
   if (!result.ok) {
+    recordFailedAttempt(`vendor-login:${login}`);
     return { ok: false, error: result.error };
   }
 
+  resetAttempts(`vendor-login:${login}`);
   await setVendorSession(result.vendor.id);
 
   logConsent({

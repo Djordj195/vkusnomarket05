@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { sendOtp, verifyAndConsume } from "./sms-auth";
+import { signCookie } from "./cookie-sign";
 
 const ADMIN_PHONE =
   process.env.ADMIN_RECOVERY_PHONE ||
@@ -11,11 +12,7 @@ const ADMIN_PHONE =
 const COOKIE_NAME = "vkusnomarket_admin";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
-function getAdminToken(): string {
-  const login = process.env.ADMIN_LOGIN || "admin";
-  const password = process.env.ADMIN_PASSWORD || "vkusno2025";
-  return Buffer.from(`${login}:${password}`).toString("base64");
-}
+const SESSION_PAYLOAD = "admin:authenticated";
 
 export type RecoverySendResult =
   | { ok: true; maskedPhone: string; demoCode: string | null }
@@ -56,7 +53,7 @@ export async function verifyAdminRecoveryCode(
   if (!verified.ok) return { ok: false, error: verified.error };
 
   const c = await cookies();
-  c.set(COOKIE_NAME, getAdminToken(), {
+  c.set(COOKIE_NAME, signCookie(SESSION_PAYLOAD), {
     httpOnly: true,
     sameSite: "lax",
     maxAge: COOKIE_MAX_AGE,
