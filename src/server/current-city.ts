@@ -8,7 +8,7 @@ export const CITY_COOKIE = "vm_city_id";
 const CITY_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 год
 
 /**
- * Возвращает текущий выбранный клиентом город. По умолчанию — Кизляр.
+ * Возвращает текущий выбранный клиентом город.
  * Если в куке стоит несуществующий ID — возвращаем дефолт.
  */
 export async function getCurrentCity(): Promise<City> {

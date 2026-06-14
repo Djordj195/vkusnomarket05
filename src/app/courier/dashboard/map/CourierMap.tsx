@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import type { CourierOrderItem } from "@/lib/courier-orders";
 
 const POLL_INTERVAL_MS = 8000;
-const DEFAULT_CENTER: [number, number] = [43.8478, 46.7141]; // Кизляр
+const DEFAULT_CENTER: [number, number] = [55.7558, 37.6173]; // Москва (центр РФ)
 
 export function CourierMap({ initial }: { initial: CourierOrderItem[] }) {
   const [items, setItems] = useState<CourierOrderItem[]>(initial);
