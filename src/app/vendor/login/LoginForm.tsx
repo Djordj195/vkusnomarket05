@@ -54,6 +54,14 @@ export function LoginForm() {
         {pending ? "Входим..." : "Войти в кабинет"}
       </Button>
       <p className="text-center text-[12px] text-ink-500">
+        <Link
+          href="/vendor/forgot-password"
+          className="font-semibold text-brand-700 hover:underline"
+        >
+          Забыли пароль?
+        </Link>
+      </p>
+      <p className="text-center text-[12px] text-ink-500">
         Нет учётных данных?{" "}
         <Link
           href="/vendor/create-password"
