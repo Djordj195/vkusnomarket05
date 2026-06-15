@@ -16,6 +16,9 @@ type SmsruEnv = {
   sender?: string;
 };
 
+// Cache: skip sender name if it was rejected (code 204) to avoid double requests
+let senderRejected = false;
+
 function readEnv(): SmsruEnv | null {
   const apiId = process.env.SMSRU_API_ID;
   if (!apiId) return null;
@@ -84,7 +87,11 @@ async function doSend(
   const url = `https://sms.ru/sms/send?${params.toString()}`;
   console.info(`[sms.ru] sending to ${phone.slice(0, 4)}**** sender=${sender ?? "(default)"}`);
 
-  const res = await fetch(url, { method: "GET", cache: "no-store" });
+  const res = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+    signal: AbortSignal.timeout(8000),
+  });
   if (!res.ok) {
     console.error(`[sms.ru] HTTP ${res.status}`);
     return { ok: false, error: `SMS.ru HTTP ${res.status}` };
@@ -120,13 +127,16 @@ async function send(phone: string, message: string): Promise<SendCodeResult> {
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
-  try {
-    // Try with sender name first (if configured)
-    const result = await doSend(phone, message, env.sender);
+  // Use sender only if it's set AND hasn't been previously rejected
+  const sender = (env.sender && !senderRejected) ? env.sender : undefined;
 
-    // If sender name not approved (code 204), retry without it
-    if (!result.ok && result.statusCode === 204 && env.sender) {
-      console.info("[sms.ru] sender not approved, retrying without sender name");
+  try {
+    const result = await doSend(phone, message, sender);
+
+    // If sender name not approved (code 204), cache rejection and retry once
+    if (!result.ok && result.statusCode === 204 && sender) {
+      senderRejected = true;
+      console.info("[sms.ru] sender not approved, caching rejection & retrying without sender");
       return await doSend(phone, message, undefined);
     }
 

@@ -1,7 +1,7 @@
 // Main Service Worker — handles offline caching + push notifications.
 // Combines asset caching for PWA install (iOS/Android) with push events.
 
-const CACHE_NAME = "vkusmarket-v2";
+const CACHE_NAME = "vkusmarket-v3";
 const OFFLINE_URL = "/offline";
 
 // Precache app shell (only icons — no HTML pages to avoid stale cache on iOS)
@@ -49,10 +49,15 @@ self.addEventListener("fetch", (event) => {
   // Skip Next.js internal requests
   if (url.pathname.startsWith("/_next/")) return;
 
-  // Network-first for navigations, cache-first for static assets
+  // Network-first for navigations with timeout to prevent hanging
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
+      Promise.race([
+        fetch(request),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("nav timeout")), 10000)
+        ),
+      ])
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();

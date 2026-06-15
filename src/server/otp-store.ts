@@ -147,27 +147,29 @@ export async function generateAndStore(
 
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
-    // Помечаем все активные коды как использованные, чтобы старый код не сработал.
-    await sb
-      .from("otp_codes")
-      .update({ consumed_at: now.toISOString() })
-      .eq("phone", entry.phone)
-      .eq("purpose", entry.purpose)
-      .is("consumed_at", null);
-    const { error } = await sb.from("otp_codes").insert({
-      id: entry.id,
-      phone: entry.phone,
-      purpose: entry.purpose,
-      code: entry.code,
-      attempts: 0,
-      consumed_at: null,
-      requested_by: entry.requestedBy,
-      ip: entry.ip,
-      created_at: entry.createdAt,
-      expires_at: entry.expiresAt,
-    });
-    if (error) {
-      return { ok: false, error: `otp insert: ${error.message}` };
+    // Run invalidation + insert in parallel — insert uses a new unique ID so no conflict
+    const [, insertResult] = await Promise.all([
+      sb
+        .from("otp_codes")
+        .update({ consumed_at: now.toISOString() })
+        .eq("phone", entry.phone)
+        .eq("purpose", entry.purpose)
+        .is("consumed_at", null),
+      sb.from("otp_codes").insert({
+        id: entry.id,
+        phone: entry.phone,
+        purpose: entry.purpose,
+        code: entry.code,
+        attempts: 0,
+        consumed_at: null,
+        requested_by: entry.requestedBy,
+        ip: entry.ip,
+        created_at: entry.createdAt,
+        expires_at: entry.expiresAt,
+      }),
+    ]);
+    if (insertResult.error) {
+      return { ok: false, error: `otp insert: ${insertResult.error.message}` };
     }
     return { ok: true, entry };
   }

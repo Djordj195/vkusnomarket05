@@ -43,7 +43,8 @@ export async function sendOtp(
 
   const send = await provider.sendCode(phone, gen.entry.code, purpose);
 
-  await logAudit({
+  // Fire-and-forget: don't block user response for audit logging
+  logAudit({
     actorType: "system",
     action: "auth.code_sent",
     targetType: "phone",
@@ -55,10 +56,9 @@ export async function sendOtp(
       providerMessageId: send.ok ? send.providerMessageId : null,
       error: send.ok ? null : send.error,
     },
-  });
+  }).catch(() => {});
 
   if (!send.ok) {
-    // Show user-friendly message, keep technical details in audit log
     return { ok: false, error: "Не удалось отправить SMS. Попробуйте позже." };
   }
   return { ok: true, demoCode: isDemo ? DEMO_SMS_CODE : null };
