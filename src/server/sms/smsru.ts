@@ -2,22 +2,18 @@ import "server-only";
 import type { SmsProvider, SendCodeResult, SmsPurpose } from "./types";
 import { buildSmsText } from "./types";
 
-// SMS.ru — альтернативный провайдер. Free dev-режим (бесплатные тестовые
-// отправки) + платные тарифы. Аутентификация по API-ID.
+// SMS.ru — провайдер SMS. Аутентификация по API-ID.
 //
 // ENV-переменные:
 //   SMSRU_API_ID  — API ID из личного кабинета sms.ru
 //   SMSRU_SENDER  — sender (буквенный, опционально)
 //
-// API: https://sms.ru/api/send
+// API: https://sms.ru/sms/send (POST, json=1)
 
 type SmsruEnv = {
   apiId: string;
   sender?: string;
 };
-
-// Cache: skip sender name if it was rejected (code 204) to avoid double requests
-let senderRejected = false;
 
 function readEnv(): SmsruEnv | null {
   const apiId = process.env.SMSRU_API_ID;
@@ -76,21 +72,22 @@ async function doSend(
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
-  const params = new URLSearchParams({
+  const body = new URLSearchParams({
     api_id: env.apiId,
     to: phone,
     msg: message,
     json: "1",
   });
-  if (sender) params.set("from", sender);
+  if (sender) body.set("from", sender);
 
-  const url = `https://sms.ru/sms/send?${params.toString()}`;
-  console.info(`[sms.ru] sending to ${phone.slice(0, 4)}**** sender=${sender ?? "(default)"}`);
+  console.info(`[sms.ru] POST to ${phone.slice(0, 4)}**** sender=${sender ?? "(default)"}`);
 
-  const res = await fetch(url, {
-    method: "GET",
+  const res = await fetch("https://sms.ru/sms/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
     cache: "no-store",
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(5000),
   });
   if (!res.ok) {
     console.error(`[sms.ru] HTTP ${res.status}`);
@@ -105,7 +102,7 @@ async function doSend(
     const code = json.status_code;
     const msg = STATUS_MESSAGES[code] ?? json.status_text ?? `Ошибка ${code}`;
     console.error(`[sms.ru] global error: ${msg}`);
-    return { ok: false, error: `SMS.ru: ${msg}`, statusCode: code };
+    return { ok: false, error: msg, statusCode: code };
   }
 
   // Проверяем статус конкретного SMS (может отличаться от глобального)
@@ -116,7 +113,7 @@ async function doSend(
       const code = firstSms.status_code;
       const msg = STATUS_MESSAGES[code] ?? firstSms.status_text ?? `Ошибка отправки ${code}`;
       console.error(`[sms.ru] per-phone error: ${msg}`);
-      return { ok: false, error: `SMS.ru: ${msg}`, statusCode: code };
+      return { ok: false, error: msg, statusCode: code };
     }
   }
 
@@ -127,16 +124,16 @@ async function send(phone: string, message: string): Promise<SendCodeResult> {
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
-  // Use sender only if it's set AND hasn't been previously rejected
-  const sender = (env.sender && !senderRejected) ? env.sender : undefined;
+  // Не используем sender name — отправляем без него для максимальной надёжности.
+  // SMS.ru часто отклоняет неодобренных отправителей (204), что замедляет доставку.
 
   try {
-    const result = await doSend(phone, message, sender);
+    const result = await doSend(phone, message, undefined);
 
-    // If sender name not approved (code 204), cache rejection and retry once
-    if (!result.ok && result.statusCode === 204 && sender) {
-      senderRejected = true;
-      console.info("[sms.ru] sender not approved, caching rejection & retrying without sender");
+    // Retry once on transient network errors (timeout, connection reset)
+    if (!result.ok && isTransientError(result.error)) {
+      console.info("[sms.ru] transient error, retrying once...");
+      await new Promise((r) => setTimeout(r, 300));
       return await doSend(phone, message, undefined);
     }
 
@@ -144,8 +141,26 @@ async function send(phone: string, message: string): Promise<SendCodeResult> {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "SMS.ru network error";
     console.error(`[sms.ru] exception: ${msg}`);
-    return { ok: false, error: msg };
+    // Retry once on exception (timeout, DNS, etc.)
+    try {
+      await new Promise((r) => setTimeout(r, 300));
+      return await doSend(phone, message, undefined);
+    } catch (e2) {
+      const msg2 = e2 instanceof Error ? e2.message : "SMS.ru network error";
+      return { ok: false, error: msg2 };
+    }
   }
+}
+
+function isTransientError(error: string): boolean {
+  const lower = error.toLowerCase();
+  return (
+    lower.includes("timeout") ||
+    lower.includes("abort") ||
+    lower.includes("network") ||
+    lower.includes("econnreset") ||
+    lower.includes("http 5")
+  );
 }
 
 export class SmsruProvider implements SmsProvider {

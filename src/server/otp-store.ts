@@ -190,6 +190,21 @@ export async function generateAndStore(
   return { ok: true, entry };
 }
 
+/** Mark an OTP entry as consumed by ID (e.g. when SMS send fails). */
+export async function consumeEntry(id: string): Promise<void> {
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    await sb
+      .from("otp_codes")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", id);
+    return;
+  }
+  const store = memory();
+  const entry = store.codes.find((c) => c.id === id);
+  if (entry) entry.consumedAt = new Date().toISOString();
+}
+
 export type VerifyResult =
   | { ok: true }
   | { ok: false; error: string; attemptsLeft?: number };
