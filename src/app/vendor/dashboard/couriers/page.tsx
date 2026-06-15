@@ -1,18 +1,26 @@
-import { PlaceholderCard, SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { getCurrentVendor } from "@/server/vendor-auth";
+import { listCouriers } from "@/server/couriers-store";
+import { SubpageHeader } from "@/components/vendor/PlaceholderCard";
+import { VendorCourierManager } from "./VendorCourierManager";
+import { redirect } from "next/navigation";
 
-export default function VendorCouriersPage() {
+export const dynamic = "force-dynamic";
+
+export default async function VendorCouriersPage() {
+  const vendor = await getCurrentVendor();
+  if (!vendor) redirect("/vendor/login");
+
+  const allCouriers = await listCouriers();
+  const myCouriers = allCouriers.filter((c) => c.shopId === vendor.id);
+
   return (
     <div className="space-y-4">
       <SubpageHeader title="Курьеры" />
       <p className="text-[13px] text-ink-500">
-        Свои курьеры магазина и KPI. Можно использовать курьеров платформы —
-        они подключаются автоматически при поступлении заказа.
+        Управление вашими курьерами. Добавляйте курьеров, связывайтесь
+        с ними напрямую через звонок, WhatsApp или Telegram.
       </p>
-
-      <PlaceholderCard
-        title="Список курьеров появится после регистрации"
-        description="Чтобы добавить курьера, отправьте ему ссылку на регистрацию в курьерском приложении и привяжите к вашему магазину. Также вы сможете назначать заказы, видеть статусы и метрики."
-      />
+      <VendorCourierManager couriers={myCouriers} />
     </div>
   );
 }
