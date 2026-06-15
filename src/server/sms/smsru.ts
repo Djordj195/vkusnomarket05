@@ -124,24 +124,47 @@ async function send(phone: string, message: string): Promise<SendCodeResult> {
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
-  // Не используем sender name — отправляем без него для максимальной надёжности.
-  // SMS.ru часто отклоняет неодобренных отправителей (204), что замедляет доставку.
+  // Strategy: try with SMSRU_SENDER first (if set), then without.
+  // SMS.ru requires an approved sender — some accounts need `from`, others work without it.
+  const attempts: Array<string | undefined> = env.sender
+    ? [env.sender, undefined]
+    : [undefined];
 
   try {
-    const result = await doSend(phone, message, undefined);
+    for (let i = 0; i < attempts.length; i++) {
+      const sender = attempts[i];
+      const result = await doSend(phone, message, sender);
 
-    // Retry once on transient network errors (timeout, connection reset)
-    if (!result.ok && isTransientError(result.error)) {
-      console.info("[sms.ru] transient error, retrying once...");
-      await new Promise((r) => setTimeout(r, 300));
-      return await doSend(phone, message, undefined);
+      // If sender not approved (204), try the next option
+      if (!result.ok && result.statusCode === 204 && i < attempts.length - 1) {
+        console.info(`[sms.ru] sender=${sender ?? "(none)"} rejected (204), trying next option`);
+        continue;
+      }
+
+      // Retry once on transient network errors
+      if (!result.ok && isTransientError(result.error)) {
+        console.info("[sms.ru] transient error, retrying once...");
+        await new Promise((r) => setTimeout(r, 300));
+        return await doSend(phone, message, sender);
+      }
+
+      // If final 204 — provide actionable instructions
+      if (!result.ok && result.statusCode === 204) {
+        return {
+          ok: false,
+          error: "SMS.ru требует одобренного отправителя. Зайдите на sms.ru → Отправители → создайте и дождитесь одобрения.",
+          statusCode: 204,
+        };
+      }
+
+      return result;
     }
 
-    return result;
+    // Fallback (shouldn't reach here)
+    return await doSend(phone, message, undefined);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "SMS.ru network error";
     console.error(`[sms.ru] exception: ${msg}`);
-    // Retry once on exception (timeout, DNS, etc.)
     try {
       await new Promise((r) => setTimeout(r, 300));
       return await doSend(phone, message, undefined);
