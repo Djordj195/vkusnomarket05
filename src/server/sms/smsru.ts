@@ -52,7 +52,24 @@ const STATUS_MESSAGES: Record<number, string> = {
   232: "Превышен лимит одинаковых сообщений в день",
 };
 
-async function send(phone: string, message: string): Promise<SendCodeResult> {
+type SmsruResponse = {
+  status: string;
+  status_code: number;
+  sms?: Record<string, {
+    status?: string;
+    status_code?: number;
+    sms_id?: string;
+    status_text?: string;
+  }>;
+  status_text?: string;
+  balance?: number;
+};
+
+async function doSend(
+  phone: string,
+  message: string,
+  sender?: string
+): Promise<SendCodeResult> {
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
@@ -62,55 +79,58 @@ async function send(phone: string, message: string): Promise<SendCodeResult> {
     msg: message,
     json: "1",
   });
-  if (env.sender) params.set("from", env.sender);
+  if (sender) params.set("from", sender);
+
+  const url = `https://sms.ru/sms/send?${params.toString()}`;
+  console.info(`[sms.ru] sending to ${phone.slice(0, 4)}**** sender=${sender ?? "(default)"}`);
+
+  const res = await fetch(url, { method: "GET", cache: "no-store" });
+  if (!res.ok) {
+    console.error(`[sms.ru] HTTP ${res.status}`);
+    return { ok: false, error: `SMS.ru HTTP ${res.status}` };
+  }
+  const json = (await res.json()) as SmsruResponse;
+
+  console.info(`[sms.ru] response: status=${json.status} code=${json.status_code} balance=${json.balance ?? "??"}`);
+
+  // Глобальная ошибка (неверный api_id, нет баланса и т.д.)
+  if (json.status !== "OK") {
+    const code = json.status_code;
+    const msg = STATUS_MESSAGES[code] ?? json.status_text ?? `Ошибка ${code}`;
+    console.error(`[sms.ru] global error: ${msg}`);
+    return { ok: false, error: `SMS.ru: ${msg}`, statusCode: code };
+  }
+
+  // Проверяем статус конкретного SMS (может отличаться от глобального)
+  const firstSms = json.sms ? Object.values(json.sms)[0] : undefined;
+  if (firstSms) {
+    console.info(`[sms.ru] per-phone: status=${firstSms.status} code=${firstSms.status_code} id=${firstSms.sms_id ?? "-"}`);
+    if (firstSms.status_code && firstSms.status_code !== 100) {
+      const code = firstSms.status_code;
+      const msg = STATUS_MESSAGES[code] ?? firstSms.status_text ?? `Ошибка отправки ${code}`;
+      console.error(`[sms.ru] per-phone error: ${msg}`);
+      return { ok: false, error: `SMS.ru: ${msg}`, statusCode: code };
+    }
+  }
+
+  return { ok: true, providerMessageId: firstSms?.sms_id };
+}
+
+async function send(phone: string, message: string): Promise<SendCodeResult> {
+  const env = readEnv();
+  if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
   try {
-    const url = `https://sms.ru/sms/send?${params.toString()}`;
-    console.info(`[sms.ru] sending to ${phone.slice(0, 4)}****`);
+    // Try with sender name first (if configured)
+    const result = await doSend(phone, message, env.sender);
 
-    const res = await fetch(url, { method: "GET", cache: "no-store" });
-    if (!res.ok) {
-      console.error(`[sms.ru] HTTP ${res.status}`);
-      return { ok: false, error: `SMS.ru HTTP ${res.status}` };
-    }
-    const json = (await res.json()) as {
-      status: string;
-      status_code: number;
-      sms?: Record<string, {
-        status?: string;
-        status_code?: number;
-        sms_id?: string;
-        status_text?: string;
-      }>;
-      status_text?: string;
-      balance?: number;
-    };
-
-    console.info(`[sms.ru] response: status=${json.status} code=${json.status_code} balance=${json.balance ?? "??"}`);
-
-    // Глобальная ошибка (неверный api_id, нет баланса и т.д.)
-    if (json.status !== "OK") {
-      const msg = STATUS_MESSAGES[json.status_code]
-        ?? json.status_text
-        ?? `Ошибка ${json.status_code}`;
-      console.error(`[sms.ru] global error: ${msg}`);
-      return { ok: false, error: `SMS.ru: ${msg}` };
+    // If sender name not approved (code 204), retry without it
+    if (!result.ok && result.statusCode === 204 && env.sender) {
+      console.info("[sms.ru] sender not approved, retrying without sender name");
+      return await doSend(phone, message, undefined);
     }
 
-    // Проверяем статус конкретного SMS (может отличаться от глобального)
-    const firstSms = json.sms ? Object.values(json.sms)[0] : undefined;
-    if (firstSms) {
-      console.info(`[sms.ru] per-phone: status=${firstSms.status} code=${firstSms.status_code} id=${firstSms.sms_id ?? "-"}`);
-      if (firstSms.status_code && firstSms.status_code !== 100) {
-        const msg = STATUS_MESSAGES[firstSms.status_code]
-          ?? firstSms.status_text
-          ?? `Ошибка отправки ${firstSms.status_code}`;
-        console.error(`[sms.ru] per-phone error: ${msg}`);
-        return { ok: false, error: `SMS.ru: ${msg}` };
-      }
-    }
-
-    return { ok: true, providerMessageId: firstSms?.sms_id };
+    return result;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "SMS.ru network error";
     console.error(`[sms.ru] exception: ${msg}`);

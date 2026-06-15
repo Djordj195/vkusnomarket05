@@ -58,7 +58,8 @@ export async function sendOtp(
   });
 
   if (!send.ok) {
-    return { ok: false, error: `SMS не отправлено: ${send.error}` };
+    // Show user-friendly message, keep technical details in audit log
+    return { ok: false, error: "Не удалось отправить SMS. Попробуйте позже." };
   }
   return { ok: true, demoCode: isDemo ? DEMO_SMS_CODE : null };
 }

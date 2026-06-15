@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
+import { Logo } from "@/components/layout/Logo";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -84,11 +85,12 @@ export default function AuthPage() {
     <PageShell>
       <Header variant="page" title="Вход или регистрация" showBack />
       <div className="px-4 pt-4 pb-4 space-y-5">
-        <div className="text-center pt-4">
+        <div className="text-center pt-4 space-y-3">
+          <Logo size={48} className="justify-center" />
           <div className="text-[24px] font-extrabold leading-tight text-ink-900">
             Вход или регистрация
           </div>
-          <p className="mt-2 text-[14px] text-ink-500">
+          <p className="text-[14px] text-ink-500">
             Мы отправим SMS с 6-значным кодом подтверждения.
           </p>
         </div>
