@@ -17,15 +17,17 @@ export interface SmsProvider {
   sendText(phone: string, text: string): Promise<SendCodeResult>;
 }
 
-export type SmsPurpose = "client_login" | "vendor_login" | "courier_login";
+export type SmsPurpose = "client_login" | "vendor_login" | "courier_login" | "vendor_recovery";
 
 export function buildSmsText(code: string, purpose: SmsPurpose): string {
   const intro =
-    purpose === "vendor_login"
-      ? "Код входа в кабинет продавца ВкусМаркет"
-      : purpose === "courier_login"
-        ? "Код входа в кабинет курьера ВкусМаркет"
-        : "Код входа в ВкусМаркет";
+    purpose === "vendor_recovery"
+      ? "Код восстановления пароля ВкусМаркет"
+      : purpose === "vendor_login"
+        ? "Код входа в кабинет продавца ВкусМаркет"
+        : purpose === "courier_login"
+          ? "Код входа в кабинет курьера ВкусМаркет"
+          : "Код входа в ВкусМаркет";
   return `${intro}: ${code}. Никому не передавайте.`;
 }
 
