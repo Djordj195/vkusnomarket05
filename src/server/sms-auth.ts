@@ -1,6 +1,6 @@
 import "server-only";
 import { getSmsProvider, isSmsRealProviderConfigured, normalizeRuPhone } from "./sms";
-import { generateAndStore, verify as verifyOtp, RESEND_COOLDOWN_MS } from "./otp-store";
+import { generateAndStore, verify as verifyOtp, consumeEntry, RESEND_COOLDOWN_MS } from "./otp-store";
 import { logAudit } from "./audit-store";
 import { DEMO_SMS_CODE } from "@/lib/constants";
 import type { SmsPurpose } from "./sms";
@@ -59,7 +59,11 @@ export async function sendOtp(
   }).catch(() => {});
 
   if (!send.ok) {
-    return { ok: false, error: "Не удалось отправить SMS. Попробуйте позже." };
+    // Invalidate OTP entry so the user can retry immediately without cooldown
+    consumeEntry(gen.entry.id).catch(() => {});
+    // Show specific error from provider to help diagnose
+    const userError = send.error || "Не удалось отправить SMS. Попробуйте позже.";
+    return { ok: false, error: userError };
   }
   return { ok: true, demoCode: isDemo ? DEMO_SMS_CODE : null };
 }
