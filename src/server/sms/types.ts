@@ -7,7 +7,7 @@ import "server-only";
 
 export type SendCodeResult =
   | { ok: true; providerMessageId?: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; statusCode?: number };
 
 export interface SmsProvider {
   readonly name: string;
