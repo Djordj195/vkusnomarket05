@@ -334,6 +334,41 @@ export async function updateVendorStorefront(
   if (error) throw new Error(`updateVendorStorefront: ${error.message}`);
 }
 
+export type VendorContactsPatch = {
+  phone?: string;
+  email?: string;
+  telegram?: string;
+  whatsapp?: string;
+  legalEntityType?: string;
+  legalName?: string;
+  inn?: string;
+};
+
+export async function updateVendorContacts(
+  id: string,
+  patch: VendorContactsPatch
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("updateVendorContacts: Supabase не настроен.");
+  }
+  const row: Record<string, unknown> = {};
+  if (patch.phone !== undefined || patch.email !== undefined || patch.telegram !== undefined || patch.whatsapp !== undefined) {
+    row.contacts = {
+      ...(patch.phone !== undefined && { phone: patch.phone }),
+      ...(patch.email !== undefined && { email: patch.email }),
+      ...(patch.telegram !== undefined && { telegram: patch.telegram }),
+      ...(patch.whatsapp !== undefined && { whatsapp: patch.whatsapp }),
+    };
+  }
+  if (patch.legalEntityType !== undefined) row.legal_entity_type = patch.legalEntityType;
+  if (patch.legalName !== undefined) row.legal_name = patch.legalName;
+  if (patch.inn !== undefined) row.inn = patch.inn;
+  if (Object.keys(row).length === 0) return;
+  const sb = getSupabaseAdmin()!;
+  const { error } = await sb.from("vendors").update(row).eq("id", id);
+  if (error) throw new Error(`updateVendorContacts: ${error.message}`);
+}
+
 export async function isSlugAvailable(slug: string): Promise<boolean> {
   if (!isSupabaseConfigured()) {
     return !STATIC_VENDORS.some((v) => v.slug === slug);

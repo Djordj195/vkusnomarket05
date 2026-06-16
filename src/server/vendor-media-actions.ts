@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentVendor } from "./vendor-auth";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
-import { updateVendorStorefront } from "./vendors-store";
+import { updateVendorStorefront, updateVendorContacts } from "./vendors-store";
 
 /**
  * Allowed image MIME types for vendor uploads (logo / banner / gallery / docs).
@@ -218,5 +218,48 @@ export async function updateVendorStorefrontAction(
   revalidatePath("/vendor/dashboard");
   revalidatePath("/vendor/dashboard/storefront");
   revalidatePath(`/vendor/${vendor.slug}`);
+  return { ok: true };
+}
+
+type ContactsResult = { ok: true } | { ok: false; error: string };
+
+export async function updateVendorContactsAction(
+  formData: FormData
+): Promise<ContactsResult> {
+  const vendor = await getCurrentVendor();
+  if (!vendor) {
+    return { ok: false, error: "Войдите в кабинет продавца." };
+  }
+
+  const phone = String(formData.get("phone") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const telegram = String(formData.get("telegram") ?? "").trim();
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const legalEntityType = String(formData.get("legalEntityType") ?? "").trim();
+  const legalName = String(formData.get("legalName") ?? "").trim();
+  const inn = String(formData.get("inn") ?? "").trim();
+
+  if (inn && !/^\d{10,12}$/.test(inn)) {
+    return { ok: false, error: "ИНН должен содержать 10 или 12 цифр." };
+  }
+
+  try {
+    await updateVendorContacts(vendor.id, {
+      phone: phone || undefined,
+      email: email || undefined,
+      telegram: telegram || undefined,
+      whatsapp: whatsapp || undefined,
+      legalEntityType: legalEntityType || undefined,
+      legalName: legalName || undefined,
+      inn: inn || undefined,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Неизвестная ошибка.";
+    return { ok: false, error: message };
+  }
+
+  revalidatePath("/vendor/dashboard");
+  revalidatePath("/vendor/dashboard/settings");
+  revalidatePath("/vendor/dashboard/settings/requisites");
   return { ok: true };
 }
