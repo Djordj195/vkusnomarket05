@@ -11,9 +11,13 @@ import {
   Users,
   Settings,
   ChevronRight,
+  Plus,
+  ShoppingBag,
+  TrendingUp,
 } from "lucide-react";
 import { getCurrentVendor } from "@/server/vendor-auth";
 import { listOrdersByVendor } from "@/server/orders-store";
+import { getProductsByVendor } from "@/server/products-store";
 import { Badge } from "@/components/ui/Badge";
 import { formatPrice } from "@/lib/utils";
 import { VendorPushBanner } from "./VendorPushBanner";
@@ -37,7 +41,11 @@ export default async function VendorDashboardOverview() {
     tone: "ink",
   };
 
-  const orders = await listOrdersByVendor(vendor.id);
+  const [orders, products] = await Promise.all([
+    listOrdersByVendor(vendor.id),
+    getProductsByVendor(vendor.id),
+  ]);
+
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayMs = todayStart.getTime();
@@ -50,6 +58,9 @@ export default async function VendorDashboardOverview() {
   const activeCount = orders.filter(
     (o) => o.status === "accepted" || o.status === "preparing" || o.status === "courier"
   ).length;
+  const newOrdersCount = orders.filter((o) => o.status === "accepted").length;
+  const productCount = products.length;
+  const inStockCount = products.filter((p) => p.inStock).length;
 
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null;
 
@@ -67,6 +78,28 @@ export default async function VendorDashboardOverview() {
         <Badge tone={statusInfo.tone as "brand"}>{statusInfo.label}</Badge>
       </header>
 
+      {/* Quick actions */}
+      <section className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+        <QuickAction
+          href="/vendor/dashboard/catalog"
+          icon={<Plus size={16} />}
+          label="Добавить товар"
+          tone="bg-brand-600 text-white"
+        />
+        <QuickAction
+          href="/vendor/dashboard/orders?status=new"
+          icon={<Bell size={16} />}
+          label={newOrdersCount > 0 ? `Новые заказы (${newOrdersCount})` : "Заказы"}
+          tone={newOrdersCount > 0 ? "bg-amber-500 text-white" : "bg-ink-100 text-ink-700"}
+        />
+        <QuickAction
+          href="/vendor/dashboard/storefront"
+          icon={<Store size={16} />}
+          label="Витрина"
+          tone="bg-ink-100 text-ink-700"
+        />
+      </section>
+
       <section className="grid grid-cols-2 gap-3">
         <StatTile
           href="/vendor/dashboard/orders"
@@ -74,7 +107,7 @@ export default async function VendorDashboardOverview() {
           label="Заказы сегодня"
           value={String(ordersToday.length)}
           tone="brand"
-          hint={ordersToday.length ? "Из них активные ниже" : "Пока тихо"}
+          hint={ordersToday.length ? `Из них новых: ${newOrdersCount}` : "Пока тихо"}
         />
         <StatTile
           href="/vendor/dashboard/finances"
@@ -86,7 +119,7 @@ export default async function VendorDashboardOverview() {
         />
         <StatTile
           href="/vendor/dashboard/orders?status=preparing"
-          icon={<Bell size={18} />}
+          icon={<TrendingUp size={18} />}
           label="Активные"
           value={String(activeCount)}
           tone="amber"
@@ -104,15 +137,49 @@ export default async function VendorDashboardOverview() {
               : "Отзывов пока нет"
           }
         />
+        <StatTile
+          href="/vendor/dashboard/catalog"
+          icon={<ShoppingBag size={18} />}
+          label="Товаров"
+          value={String(productCount)}
+          tone="brand"
+          hint={`В наличии: ${inStockCount}`}
+        />
       </section>
 
-      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-        <h2 className="text-[14px] font-bold text-amber-900">Алерты</h2>
-        <p className="mt-1 text-[12px] text-amber-800/90">
-          Здесь будут показываться важные уведомления о заказах, отзывах и
-          выплатах. Сейчас активных алертов нет.
-        </p>
-      </section>
+      {/* Alerts */}
+      {newOrdersCount > 0 ? (
+        <Link
+          href="/vendor/dashboard/orders?status=new"
+          className="block rounded-2xl border border-amber-300 bg-amber-50 p-4 transition hover:bg-amber-100"
+        >
+          <h2 className="text-[14px] font-bold text-amber-900">
+            Новых заказов: {newOrdersCount}
+          </h2>
+          <p className="mt-1 text-[12px] text-amber-800/90">
+            Нажмите чтобы принять или отклонить заказы
+          </p>
+        </Link>
+      ) : productCount === 0 ? (
+        <Link
+          href="/vendor/dashboard/catalog"
+          className="block rounded-2xl border border-brand-200 bg-brand-50 p-4 transition hover:bg-brand-100"
+        >
+          <h2 className="text-[14px] font-bold text-brand-900">
+            Добавьте первый товар
+          </h2>
+          <p className="mt-1 text-[12px] text-brand-800/90">
+            Ваш каталог пуст. Добавьте товары чтобы клиенты могли оформлять заказы.
+          </p>
+        </Link>
+      ) : (
+        <section className="rounded-2xl border border-ink-200 bg-ink-50 p-4">
+          <h2 className="text-[14px] font-bold text-ink-700">Всё спокойно</h2>
+          <p className="mt-1 text-[12px] text-ink-500">
+            Нет активных алертов. Заказы и уведомления появятся здесь автоматически.
+          </p>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-2 text-[15px] font-bold text-ink-900">Управление</h2>
@@ -244,6 +311,28 @@ function ServiceCard({
         <div className="truncate text-[11px] text-ink-500">{sub}</div>
       </div>
       <ChevronRight size={16} className="text-ink-400" />
+    </Link>
+  );
+}
+
+function QuickAction({
+  href,
+  icon,
+  label,
+  tone,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  tone: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-bold transition-opacity hover:opacity-90 ${tone}`}
+    >
+      {icon}
+      <span>{label}</span>
     </Link>
   );
 }

@@ -2,12 +2,15 @@
 
 import Image from "next/image";
 import {
+  useDeferredValue,
+  useMemo,
   useState,
   useTransition,
   type FormEvent,
 } from "react";
-import { Pencil, Plus, Trash2, X, Package, ToggleLeft, ToggleRight } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, X, Package } from "lucide-react";
 import type { Category, Product } from "@/lib/types";
+import { SOURCE_SHORT_LABELS } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -17,7 +20,6 @@ import {
   vendorCreateProductAction,
   vendorUpdateProductAction,
   vendorDeleteProductAction,
-  vendorToggleStockAction,
   type VendorProductFormInput,
 } from "@/server/vendor-products-actions";
 import { useRouter } from "next/navigation";
@@ -44,12 +46,43 @@ const EMPTY: FormState = {
 export function VendorCatalogManager({ products, categories }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
+  const [filterCat, setFilterCat] = useState<string>("all");
   const [editing, setEditing] = useState<FormState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
 
+  const categoryMap = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories]
+  );
+
+  const usedCategoryIds = useMemo(
+    () => [...new Set(products.map((p) => p.categoryId))],
+    [products]
+  );
+
+  const filtered = useMemo(() => {
+    let list = products;
+    if (filterCat !== "all") {
+      list = list.filter((p) => p.categoryId === filterCat);
+    }
+    const q = deferredQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter((p) => {
+        const cat = categoryMap.get(p.categoryId);
+        return (
+          p.name.toLowerCase().includes(q) ||
+          (cat?.name?.toLowerCase().includes(q) ?? false)
+        );
+      });
+    }
+    return list;
+  }, [products, filterCat, deferredQuery, categoryMap]);
+
   function openCreate() {
-    setEditing({ ...EMPTY });
+    setEditing({ ...EMPTY, categoryId: categories[0]?.id ?? "" });
     setError(null);
   }
 
@@ -110,13 +143,6 @@ export function VendorCatalogManager({ products, categories }: Props) {
     });
   }
 
-  function handleToggleStock(p: Product) {
-    startTransition(async () => {
-      await vendorToggleStockAction(p.id, !p.inStock);
-      router.refresh();
-    });
-  }
-
   const patch = (key: keyof FormState, val: unknown) =>
     setEditing((s) => (s ? { ...s, [key]: val } : s));
 
@@ -124,18 +150,81 @@ export function VendorCatalogManager({ products, categories }: Props) {
   const hiddenCount = products.filter((p) => !p.inStock).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Stats */}
       <section className="grid grid-cols-3 gap-3">
-        <Tile label="Категории" value={String(new Set(products.map((p) => p.categoryId)).size)} />
-        <Tile label="Товары" value={String(inStockCount)} />
+        <Tile label="Категории" value={String(usedCategoryIds.length)} />
+        <Tile label="В наличии" value={String(inStockCount)} />
         <Tile label="Скрытые" value={String(hiddenCount)} />
       </section>
 
-      {/* Add button */}
-      <Button fullWidth onClick={openCreate}>
-        <Plus size={16} className="mr-1" /> Добавить товар
-      </Button>
+      {/* Search + Add */}
+      <div className="flex items-center gap-2">
+        <label className="relative block flex-1">
+          <span className="sr-only">Поиск товаров</span>
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-500"
+          />
+          <input
+            type="search"
+            inputMode="search"
+            autoComplete="off"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Поиск по названию или категории"
+            className="w-full rounded-2xl border border-ink-200 bg-white py-2.5 pl-9 pr-9 text-[14px] text-ink-900 placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Очистить поиск"
+              className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-800"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </label>
+        <button
+          type="button"
+          onClick={openCreate}
+          disabled={pending}
+          className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-2xl bg-brand-500 px-3.5 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Plus size={16} />
+          <span>Добавить</span>
+        </button>
+      </div>
+
+      {/* Category filter tabs */}
+      {usedCategoryIds.length > 1 && (
+        <nav className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" aria-label="Фильтр по категории">
+          <FilterTab
+            label="Все"
+            active={filterCat === "all"}
+            onClick={() => setFilterCat("all")}
+          />
+          {usedCategoryIds.map((cid) => {
+            const cat = categoryMap.get(cid);
+            if (!cat) return null;
+            return (
+              <FilterTab
+                key={cid}
+                label={`${cat.emoji} ${cat.name}`}
+                active={filterCat === cid}
+                onClick={() => setFilterCat(cid)}
+              />
+            );
+          })}
+        </nav>
+      )}
+
+      {/* Count */}
+      <div className="text-[11px] text-ink-500">
+        Найдено: <strong className="text-ink-900">{filtered.length}</strong>{" "}
+        из {products.length}
+      </div>
 
       {/* Error */}
       {error && !editing && (
@@ -143,80 +232,101 @@ export function VendorCatalogManager({ products, categories }: Props) {
       )}
 
       {/* Product list */}
-      {products.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-ink-200 p-8 text-center">
           <Package size={40} className="mx-auto mb-2 text-ink-300" />
-          <p className="text-[14px] font-semibold text-ink-700">Товаров пока нет</p>
+          <p className="text-[14px] font-semibold text-ink-700">
+            {products.length === 0
+              ? "Товаров пока нет"
+              : `Ничего не найдено по запросу «${deferredQuery}»`}
+          </p>
           <p className="text-[12px] text-ink-500 mt-1">
-            Нажмите «Добавить товар» чтобы начать
+            {products.length === 0
+              ? "Нажмите «Добавить» чтобы начать"
+              : "Попробуйте другой запрос или категорию"}
           </p>
         </div>
       ) : (
         <ul className="space-y-2">
-          {products.map((p) => (
-            <li
-              key={p.id}
-              className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3"
-            >
-              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-ink-100">
-                {p.image ? (
-                  <Image
-                    src={p.image}
-                    alt={p.name}
-                    fill
-                    className="object-cover"
-                    sizes="56px"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-ink-300">
-                    <Package size={20} />
-                  </div>
-                )}
-              </div>
+          {filtered.map((p) => {
+            const cat = categoryMap.get(p.categoryId);
+            return (
+              <li
+                key={p.id}
+                className="flex items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3"
+              >
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-ink-100">
+                  {p.image ? (
+                    <Image
+                      src={p.image}
+                      alt={p.name}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-ink-300">
+                      <Package size={20} />
+                    </div>
+                  )}
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="truncate text-[13px] font-bold text-ink-900">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-bold text-ink-900">
                     {p.name}
-                  </span>
-                  {!p.inStock && <Badge tone="neutral">Скрыт</Badge>}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-ink-500">
+                    <Badge tone="brand">
+                      {SOURCE_SHORT_LABELS[p.source]}
+                    </Badge>
+                    <span className="truncate">{cat?.name ?? "—"}</span>
+                    {p.weight && <span>· {p.weight}</span>}
+                  </div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-[13px] font-extrabold text-ink-900">
+                      {formatPrice(p.price)}
+                    </span>
+                    <span className="text-[10px] text-ink-500">
+                      / {p.unit}
+                    </span>
+                    {p.oldPrice ? (
+                      <span className="text-[10px] text-ink-400 line-through">
+                        {formatPrice(p.oldPrice)}
+                      </span>
+                    ) : null}
+                    {p.inStock ? (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                        В наличии
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                        Скрыт
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-[12px] text-ink-500">
-                  {formatPrice(p.price)}
-                  {p.oldPrice ? (
-                    <span className="ml-1 line-through">{formatPrice(p.oldPrice)}</span>
-                  ) : null}
-                  {" · "}
-                  {p.unit}
-                </div>
-              </div>
 
-              <div className="flex shrink-0 gap-1">
-                <button
-                  type="button"
-                  onClick={() => handleToggleStock(p)}
-                  className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
-                  title={p.inStock ? "Скрыть" : "Показать"}
-                >
-                  {p.inStock ? <ToggleRight size={18} className="text-green-600" /> : <ToggleLeft size={18} />}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openEdit(p)}
-                  className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmDelete(p)}
-                  className="rounded-lg p-1.5 text-ink-400 hover:bg-red-50 hover:text-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </li>
-          ))}
+                <div className="flex shrink-0 flex-col gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(p)}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-700 hover:bg-ink-200"
+                    aria-label="Редактировать"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(p)}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                    aria-label="Удалить"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -377,6 +487,30 @@ export function VendorCatalogManager({ products, categories }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function FilterTab({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        active
+          ? "shrink-0 rounded-full bg-brand-600 px-3 py-1.5 text-[12px] font-semibold text-white"
+          : "shrink-0 rounded-full bg-ink-100 px-3 py-1.5 text-[12px] font-semibold text-ink-700 hover:bg-ink-200"
+      }
+    >
+      {label}
+    </button>
   );
 }
 
