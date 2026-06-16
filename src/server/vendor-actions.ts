@@ -5,11 +5,14 @@ import { isAdminAuthenticated } from "./admin-auth";
 import { logAudit } from "./audit-store";
 import {
   createVendorApplication,
+  getVendorById,
+  getVendorByContactPhone,
   isSlugAvailable,
   updateVendorFeatured,
   updateVendorStatus,
   type CreateVendorInput,
 } from "./vendors-store";
+import { getSmsProvider } from "./sms";
 import type { LegalEntityType, Vertical, VendorStatus } from "@/lib/types";
 
 const VALID_VERTICALS: Vertical[] = [
@@ -169,6 +172,8 @@ export async function updateVendorStatusAction(
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "") as VendorStatus;
   if (!id || !VALID_STATUSES.includes(status)) return;
+
+  const vendor = await getVendorById(id);
   await updateVendorStatus(id, status);
   await logAudit({
     actorType: "admin",
@@ -177,6 +182,19 @@ export async function updateVendorStatusAction(
     targetId: id,
     payload: { status },
   });
+
+  // Send SMS notification when vendor is approved
+  if (status === "approved" && vendor?.contacts?.phone) {
+    const phone = vendor.contacts.phone.replace(/\D/g, "");
+    if (phone.length === 11) {
+      const sms = getSmsProvider();
+      const text = `Ваша заявка на подключение к ВкусМаркет одобрена! Создайте логин и пароль: ${process.env.NEXT_PUBLIC_BASE_URL ?? "https://vkusnomarket05.vercel.app"}/vendor/create-password`;
+      sms.sendText(phone, text).catch((err) => {
+        console.error("[vendor-approve] SMS notification failed:", err);
+      });
+    }
+  }
+
   revalidatePath("/admin/vendors");
   revalidatePath(`/admin/vendors/${id}`);
   revalidatePath("/", "layout");
@@ -200,4 +218,25 @@ export async function toggleVendorFeaturedAction(
   revalidatePath("/admin/vendors");
   revalidatePath(`/admin/vendors/${id}`);
   revalidatePath("/", "layout");
+}
+
+// ─── Vendor application status check ──────────────────────────
+export type CheckStatusResult =
+  | { ok: true; status: VendorStatus; brandName: string }
+  | { ok: false; error: string };
+
+export async function checkApplicationStatusAction(
+  phone: string
+): Promise<CheckStatusResult> {
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.length !== 11) {
+    return { ok: false, error: "Введите корректный номер телефона." };
+  }
+
+  const vendor = await getVendorByContactPhone(cleaned);
+  if (!vendor) {
+    return { ok: false, error: "Заявка с таким номером не найдена." };
+  }
+
+  return { ok: true, status: vendor.status, brandName: vendor.brandName };
 }
