@@ -1,29 +1,10 @@
 import type { MetadataRoute } from "next";
+import { buildManifest } from "@/lib/manifests";
 
 export default function manifest(): MetadataRoute.Manifest {
+  const base = buildManifest("client");
   return {
-    name: "ВкусМаркет — Всё что вы любите. Быстро. Рядом.",
-    short_name: "ВкусМаркет",
-    description:
-      "Всё что вы любите. Быстро. Рядом. Доставка продуктов и готовой еды по всей России.",
-    start_url: "/",
-    id: "/",
-    display: "standalone",
-    orientation: "portrait",
-    background_color: "#ffffff",
-    theme_color: "#6f46ff",
-    lang: "ru",
-    categories: ["food", "shopping"],
-    icons: [
-      { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
-      {
-        src: "/icon-maskable.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
-      },
-    ],
+    ...base,
     screenshots: [
       {
         src: "/icon-512.png",

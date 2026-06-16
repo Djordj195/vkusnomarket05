@@ -156,6 +156,50 @@ export async function getVendorBySlug(
   return STATIC_VENDORS.find((v) => v.slug === slug);
 }
 
+export async function getVendorByContactPhone(
+  phone: string
+): Promise<Vendor | undefined> {
+  const digits = phone.replace(/\D/g, "");
+  const normalized = digits.startsWith("8") ? `7${digits.slice(1)}` : digits;
+
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { data, error } = await sb
+      .from("vendors")
+      .select(VENDOR_COLS)
+      .eq("contact_phone", phone)
+      .maybeSingle();
+    if (error && !isMissingTableError(error)) {
+      throw new Error(`getVendorByContactPhone: ${error.message}`);
+    }
+    if (data) return rowToVendor(data as VendorRow);
+
+    // Try normalized forms: +7XXXXXXXXXX, 7XXXXXXXXXX, 8XXXXXXXXXX
+    const variants = [
+      `+7${normalized.slice(1)}`,
+      normalized,
+      `8${normalized.slice(1)}`,
+    ];
+    for (const variant of variants) {
+      if (variant === phone) continue;
+      const { data: d2, error: e2 } = await sb
+        .from("vendors")
+        .select(VENDOR_COLS)
+        .eq("contact_phone", variant)
+        .maybeSingle();
+      if (e2 && !isMissingTableError(e2)) continue;
+      if (d2) return rowToVendor(d2 as VendorRow);
+    }
+    return undefined;
+  }
+
+  return STATIC_VENDORS.find((v) => {
+    const cp = v.contacts?.phone?.replace(/\D/g, "") ?? "";
+    const cn = cp.startsWith("8") ? `7${cp.slice(1)}` : cp;
+    return cn === normalized;
+  });
+}
+
 export type CreateVendorInput = {
   id: string;
   slug: string;

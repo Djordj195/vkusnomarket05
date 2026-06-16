@@ -178,18 +178,16 @@ export function SignupForm({ cities }: Props) {
           Заявка отправлена!
         </h2>
         <p className="mt-2 text-[14px] text-ink-600">
-          Мы проверим документы и свяжемся с вами в течение 1–3 рабочих дней.
-          После одобрения вы сможете создать логин и пароль для входа в кабинет
-          на странице{" "}
-          <span className="font-mono text-brand-700">/vendor/create-password</span>.
+          Мы проверим документы в течение 1–3 рабочих дней. Когда заявка будет
+          одобрена, вам придёт SMS с ссылкой для создания логина и пароля.
         </p>
         <Button
           fullWidth
           size="lg"
           className="mt-6"
-          onClick={() => router.push("/vendor/create-password")}
+          onClick={() => router.push("/vendor/check-status")}
         >
-          Создать учётные данные
+          Проверить статус заявки
         </Button>
         <button
           type="button"
