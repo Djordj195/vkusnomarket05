@@ -148,7 +148,8 @@ export function CourierLoginForm() {
   return (
     <form className="space-y-3" onSubmit={onVerify}>
       <div className="rounded-xl bg-brand-50 p-3 text-[13px] text-brand-800">
-        Код отправлен на номер <strong>{phone}</strong>
+        Код отправлен на номер <strong>{phone}</strong>.
+        Если SMS не пришла — ожидайте звонок, робот продиктует код
         <div className="mt-1 text-[12px] text-brand-700/80">
           Тип: {courierType === "platform" ? "Курьер платформы" : "Курьер магазина"}
         </div>
@@ -160,7 +161,7 @@ export function CourierLoginForm() {
         </div>
       )}
       <Input
-        label="Код из SMS"
+        label="Код подтверждения"
         placeholder="••••••"
         inputMode="numeric"
         value={code}

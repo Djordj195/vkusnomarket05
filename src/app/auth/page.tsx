@@ -91,7 +91,7 @@ export default function AuthPage() {
             Вход или регистрация
           </div>
           <p className="text-[14px] text-ink-500">
-            Мы отправим SMS с 6-значным кодом подтверждения.
+            Мы отправим код подтверждения по SMS или звонком.
           </p>
         </div>
 
@@ -151,7 +151,8 @@ export default function AuthPage() {
         ) : (
           <div className="space-y-3">
             <div className="rounded-xl bg-brand-50 p-3 text-[13px] text-brand-800">
-              Код отправлен на номер <strong>{phone}</strong>
+              Код отправлен на номер <strong>{phone}</strong>.
+              Если SMS не пришла — ожидайте звонок, робот продиктует код.
             </div>
             {demoCode && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
@@ -160,7 +161,7 @@ export default function AuthPage() {
               </div>
             )}
             <Input
-              label="Код из SMS"
+              label="Код подтверждения"
               placeholder="••••••"
               inputMode="numeric"
               value={code}
@@ -184,7 +185,7 @@ export default function AuthPage() {
               Изменить номер
             </button>
             <p className="text-center text-[12px] text-ink-400">
-              Не пришёл код? Подождите 60 секунд и нажмите{" "}
+              Не пришёл код? Подождите 60 сек. и нажмите{" "}
               <button
                 type="button"
                 onClick={sendCode}

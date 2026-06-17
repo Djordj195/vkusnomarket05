@@ -42,7 +42,7 @@ export default function VendorForgotPasswordPage() {
         </h1>
         <p className="mt-2 text-[13px] text-ink-500">
           Введите номер телефона, который вы указали при регистрации.
-          Мы отправим SMS с кодом для сброса пароля.
+          Мы отправим код для сброса пароля по SMS или звонком.
         </p>
       </div>
 

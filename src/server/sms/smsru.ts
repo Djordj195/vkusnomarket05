@@ -120,12 +120,55 @@ async function doSend(
   return { ok: true, providerMessageId: firstSms?.sms_id };
 }
 
-async function send(phone: string, message: string): Promise<SendCodeResult> {
+// Voice call fallback: SMS.ru code/call API — robot reads code aloud.
+// Doesn't require approved sender name.
+async function doCallSend(
+  phone: string,
+  code: string
+): Promise<SendCodeResult> {
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
-  // Strategy: try with SMSRU_SENDER first (if set), then without.
-  // SMS.ru requires an approved sender — some accounts need `from`, others work without it.
+  const body = new URLSearchParams({
+    api_id: env.apiId,
+    phone,
+    code,
+    json: "1",
+  });
+
+  console.info(`[sms.ru] code/call to ${phone.slice(0, 4)}****`);
+
+  const res = await fetch("https://sms.ru/code/call", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+    cache: "no-store",
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) {
+    console.error(`[sms.ru] code/call HTTP ${res.status}`);
+    return { ok: false, error: `SMS.ru HTTP ${res.status}` };
+  }
+  const json = (await res.json()) as SmsruResponse;
+  console.info(`[sms.ru] code/call response: status=${json.status} code=${json.status_code}`);
+
+  if (json.status !== "OK") {
+    const sc = json.status_code;
+    const msg = STATUS_MESSAGES[sc] ?? json.status_text ?? `Ошибка ${sc}`;
+    console.error(`[sms.ru] code/call error: ${msg}`);
+    return { ok: false, error: msg, statusCode: sc };
+  }
+
+  return { ok: true };
+}
+
+async function send(phone: string, message: string, code?: string): Promise<SendCodeResult> {
+  const env = readEnv();
+  if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
+
+  // Strategy:
+  // 1. Try SMS with SMSRU_SENDER (if set), then without sender
+  // 2. If all SMS attempts fail with 204 (sender not approved) — fall back to voice call
   const attempts: Array<string | undefined> = env.sender
     ? [env.sender, undefined]
     : [undefined];
@@ -148,13 +191,17 @@ async function send(phone: string, message: string): Promise<SendCodeResult> {
         return await doSend(phone, message, sender);
       }
 
-      // If final 204 — provide actionable instructions
-      if (!result.ok && result.statusCode === 204) {
-        return {
-          ok: false,
-          error: "SMS.ru требует одобренного отправителя. Зайдите на sms.ru → Отправители → создайте и дождитесь одобрения.",
-          statusCode: 204,
-        };
+      // If final 204 — fall back to voice call
+      if (!result.ok && result.statusCode === 204 && code) {
+        console.info("[sms.ru] SMS sender not approved, falling back to voice call");
+        const callResult = await doCallSend(phone, code);
+        if (callResult.ok) return callResult;
+        // If call also fails, retry once
+        if (isTransientError(callResult.error)) {
+          await new Promise((r) => setTimeout(r, 300));
+          return await doCallSend(phone, code);
+        }
+        return callResult;
       }
 
       return result;
@@ -195,7 +242,7 @@ export class SmsruProvider implements SmsProvider {
     code: string,
     purpose: SmsPurpose
   ): Promise<SendCodeResult> {
-    return send(phone, buildSmsText(code, purpose));
+    return send(phone, buildSmsText(code, purpose), code);
   }
 
   sendText(phone: string, text: string): Promise<SendCodeResult> {
