@@ -71,6 +71,8 @@ function productToRow(
     source: p.source,
     category_id: p.categoryId,
     shop_id: p.shopId ?? null,
+    vendor_id: p.vendorId ?? null,
+    vertical: p.vertical ?? null,
     price: p.price,
     old_price: p.oldPrice ?? null,
     unit: p.unit,
@@ -348,6 +350,8 @@ export async function updateProduct(
   if (patch.inStock !== undefined) dbPatch.in_stock = patch.inStock;
   if (patch.weight !== undefined) dbPatch.weight = patch.weight ?? null;
   if (patch.isWeekly !== undefined) dbPatch.is_weekly = patch.isWeekly;
+  if (patch.vendorId !== undefined) dbPatch.vendor_id = patch.vendorId ?? null;
+  if (patch.vertical !== undefined) dbPatch.vertical = patch.vertical ?? null;
 
   const { data, error } = await sb
     .from("products")
