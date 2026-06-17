@@ -94,7 +94,10 @@ export async function vendorCreateProductAction(
     });
     revalidatePath("/vendor/dashboard/catalog");
     revalidatePath("/");
+    revalidatePath("/catalog");
+    revalidatePath(`/section/${source}`);
     revalidatePath(`/product/${product.slug}`);
+    revalidatePath(`/category/${input.categoryId}`);
     return { ok: true, product };
   } catch (e) {
     return {
@@ -137,6 +140,7 @@ export async function vendorUpdateProductAction(
     if (!product) return { ok: false, error: "Товар не найден" };
     revalidatePath("/vendor/dashboard/catalog");
     revalidatePath("/");
+    revalidatePath("/catalog");
     revalidatePath(`/product/${product.slug}`);
     return { ok: true, product };
   } catch (e) {
@@ -161,6 +165,7 @@ export async function vendorDeleteProductAction(id: string): Promise<Result> {
     if (!ok) return { ok: false, error: "Товар не найден" };
     revalidatePath("/vendor/dashboard/catalog");
     revalidatePath("/");
+    revalidatePath("/catalog");
     return { ok: true };
   } catch (e) {
     return {
@@ -186,6 +191,8 @@ export async function vendorToggleStockAction(
     const product = await updateProduct(id, { inStock });
     if (!product) return { ok: false, error: "Товар не найден" };
     revalidatePath("/vendor/dashboard/catalog");
+    revalidatePath("/");
+    revalidatePath("/catalog");
     return { ok: true, product };
   } catch (e) {
     return {

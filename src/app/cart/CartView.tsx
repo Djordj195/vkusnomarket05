@@ -132,15 +132,6 @@ export function CartView({ products, vendors }: Props) {
         variant="page"
         title="Корзина"
         showBack={false}
-        rightSlot={
-          <button
-            type="button"
-            onClick={clear}
-            className="text-[12px] font-medium text-ink-500 hover:text-red-600"
-          >
-            Очистить
-          </button>
-        }
       />
 
       <div className="px-4 pt-2 pb-4 space-y-3">
@@ -187,7 +178,7 @@ export function CartView({ products, vendors }: Props) {
       </div>
 
       <div
-        className="fixed bottom-[72px] inset-x-0 z-30 mx-auto max-w-md border-t border-ink-100 bg-white p-3"
+        className="fixed bottom-[72px] inset-x-0 z-30 mx-auto max-w-md border-t border-ink-100 bg-white px-3 pt-2 pb-3"
         style={{
           paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
         }}
@@ -198,6 +189,14 @@ export function CartView({ products, vendors }: Props) {
             {formatPrice(grandTotal)}
           </Button>
         </Link>
+        <button
+          type="button"
+          onClick={clear}
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-medium text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+        >
+          <Trash2 size={15} />
+          Очистить корзину
+        </button>
       </div>
     </PageShell>
   );
