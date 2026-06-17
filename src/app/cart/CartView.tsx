@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -34,6 +34,7 @@ export function CartView({ products, vendors }: Props) {
   const setQuantity = useCart((s) => s.setQuantity);
   const remove = useCart((s) => s.remove);
   const clear = useCart((s) => s.clear);
+  const replaceAll = useCart((s) => s.replaceAll);
   const hydrated = useCart((s) => s.hydrated);
   const searchParams = useSearchParams();
   const isRepeated = searchParams?.get("repeated") === "1";
@@ -43,6 +44,15 @@ export function CartView({ products, vendors }: Props) {
     for (const p of products) m.set(p.id, p);
     return m;
   }, [products]);
+
+  // Auto-clean stale cart items referencing products that no longer exist
+  useEffect(() => {
+    if (!hydrated) return;
+    const valid = items.filter((i) => productMap.has(i.productId));
+    if (valid.length < items.length) {
+      replaceAll(valid);
+    }
+  }, [hydrated, items, productMap, replaceAll]);
 
   const vendorMap = useMemo(() => {
     const m = new Map<string, Vendor>();
