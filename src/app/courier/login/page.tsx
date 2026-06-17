@@ -45,7 +45,7 @@ export default async function CourierLoginPage() {
           Курьерское приложение
         </h1>
         <p className="mt-2 text-[13px] text-ink-500">
-          Войдите по номеру телефона — мы пришлём SMS с 6-значным кодом.
+          Войдите по номеру телефона — мы пришлём код по SMS или звонком.
         </p>
       </div>
 

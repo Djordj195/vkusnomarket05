@@ -45,7 +45,7 @@ export function ForgotPasswordForm() {
   function resetPassword() {
     setError(null);
     if (!code.trim()) {
-      setError("Введите код из SMS.");
+      setError("Введите код подтверждения.");
       return;
     }
     if (!newPassword) {
@@ -103,7 +103,8 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-3">
         <div className="rounded-xl bg-brand-50 p-3 text-[13px] text-brand-800">
-          Код отправлен на номер <strong>{maskedPhone}</strong>
+          Код отправлен на номер <strong>{maskedPhone}</strong>.
+              Если SMS не пришла — ожидайте звонок
         </div>
         {demoCode && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
@@ -111,7 +112,7 @@ export function ForgotPasswordForm() {
           </div>
         )}
         <Input
-          label="Код из SMS"
+          label="Код подтверждения"
           placeholder="••••••"
           inputMode="numeric"
           value={code}
