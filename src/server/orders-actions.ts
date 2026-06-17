@@ -90,16 +90,12 @@ export async function createOrder(
   }
 
   // Группируем позиции по vendorId, попутно резолвя каждую через store.
+  // Пропускаем товары, которые были удалены или не найдены в БД.
   const buckets = new Map<string, OrderItem[]>();
   for (const it of input.items) {
     if (it.quantity <= 0) continue;
     const product = await getProductById(it.productId);
-    if (!product) {
-      return {
-        ok: false,
-        error: `Товар не найден: ${it.productId}`,
-      };
-    }
+    if (!product) continue;
     const key = product.vendorId ?? "__unknown__";
     const bucket = buckets.get(key) ?? [];
     bucket.push({

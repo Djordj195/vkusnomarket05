@@ -97,6 +97,7 @@ export function CheckoutView({ products, vendors }: Props) {
   const router = useRouter();
   const items = useCart((s) => s.items);
   const clearCart = useCart((s) => s.clear);
+  const replaceAll = useCart((s) => s.replaceAll);
   const hydrated = useCart((s) => s.hydrated);
   const upsertOrder = useOrders((s) => s.upsert);
   const user = useAuth((s) => s.user);
@@ -106,6 +107,15 @@ export function CheckoutView({ products, vendors }: Props) {
     for (const p of products) m.set(p.id, p);
     return m;
   }, [products]);
+
+  // Auto-clean stale cart items referencing products that no longer exist
+  useEffect(() => {
+    if (!hydrated) return;
+    const valid = items.filter((i) => productMap.has(i.productId));
+    if (valid.length < items.length) {
+      replaceAll(valid);
+    }
+  }, [hydrated, items, productMap, replaceAll]);
 
   const vendorMap = useMemo(() => {
     const m = new Map<string, Vendor>();

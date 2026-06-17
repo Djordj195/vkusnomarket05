@@ -129,10 +129,12 @@ async function doCallSend(
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
+  // SMS.ru code/call accepts only 4-digit codes
+  const shortCode = code.slice(0, 4);
   const body = new URLSearchParams({
     api_id: env.apiId,
     phone,
-    code,
+    code: shortCode,
     json: "1",
   });
 

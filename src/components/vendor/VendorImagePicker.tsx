@@ -8,7 +8,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { uploadVendorMediaAction } from "@/server/vendor-media-actions";
 
 type Props = {
   value: string;
@@ -63,6 +62,32 @@ async function compressImage(file: File): Promise<File> {
   });
 }
 
+type UploadResponse = { ok: true; url: string } | { ok: false; error: string };
+
+async function uploadWithRetry(fd: FormData, retries = 2): Promise<UploadResponse> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const json = (await res.json()) as UploadResponse;
+      return json;
+    } catch (err) {
+      if (attempt === retries) {
+        return {
+          ok: false,
+          error: err instanceof Error
+            ? `Ошибка сети: ${err.message}. Проверьте соединение и попробуйте снова.`
+            : "Ошибка загрузки. Проверьте соединение.",
+        };
+      }
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+  }
+  return { ok: false, error: "Ошибка загрузки." };
+}
+
 export function VendorImagePicker({ value, onChange, label }: Props) {
   const fileInputId = useId();
   const cameraInputId = useId();
@@ -83,8 +108,7 @@ export function VendorImagePicker({ value, onChange, label }: Props) {
       }
       const fd = new FormData();
       fd.set("file", processed);
-      fd.set("slot", "gallery");
-      const res = await uploadVendorMediaAction(fd);
+      const res = await uploadWithRetry(fd);
       if (!res.ok) { setError(res.error); return; }
       onChange(res.url);
     } catch (err) {

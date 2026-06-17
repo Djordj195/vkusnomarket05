@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { MapPin, Search, X, Loader2 } from "lucide-react";
+import { MapPin, Search, X, Loader2, Navigation } from "lucide-react";
 import { selectCityAction } from "@/server/cities-actions";
 import type { City } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -10,33 +10,87 @@ import { cn } from "@/lib/utils";
 type Props = {
   currentCity: City;
   cities: City[];
-  /**
-   * "brand" — светлая кнопка для белых шапок;
-   * "hero"  — полупрозрачная стеклянная кнопка для тёмных hero-блоков.
-   */
   tone?: "brand" | "hero";
 };
 
-/**
- * Кнопка-чип «город» в шапке и модалка выбора города.
- * Запоминает выбор в куке (через server action) и перезагружает страницу,
- * чтобы серверные компоненты подтянули новые данные под выбранный город.
- */
+function haversineKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function findNearestCity(
+  lat: number,
+  lng: number,
+  cities: City[]
+): City | null {
+  let best: City | null = null;
+  let bestDist = Infinity;
+  for (const c of cities) {
+    const d = haversineKm(lat, lng, c.lat, c.lng);
+    if (d < bestDist) {
+      bestDist = d;
+      best = c;
+    }
+  }
+  return best;
+}
+
+const GEO_CHECKED_KEY = "vm_geo_checked";
+
 export function CityPicker({ currentCity, cities, tone = "brand" }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [detecting, setDetecting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-detect city on first visit
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem(GEO_CHECKED_KEY)) return;
+    sessionStorage.setItem(GEO_CHECKED_KEY, "1");
+
+    if (!("geolocation" in navigator)) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const nearest = findNearestCity(
+          pos.coords.latitude,
+          pos.coords.longitude,
+          cities
+        );
+        if (nearest && nearest.id !== currentCity.id) {
+          const fd = new FormData();
+          fd.set("cityId", nearest.id);
+          startTransition(async () => {
+            await selectCityAction(fd);
+            window.location.reload();
+          });
+        }
+      },
+      () => { /* denied or error — keep default city */ },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+    );
+  }, [cities, currentCity.id]);
 
   useEffect(() => {
     if (!open) return;
-    // фокус на поиске при открытии
     const t = setTimeout(() => inputRef.current?.focus(), 50);
-    // блокируем прокрутку фона, чтобы модалка не «уезжала» с подложкой
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    // закрытие по Esc
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
@@ -77,9 +131,28 @@ export function CityPicker({ currentCity, cities, tone = "brand" }: Props) {
     startTransition(async () => {
       await selectCityAction(fd);
       close();
-      // Перезагружаемся, чтобы RSC перетянул каталог под новый город.
       window.location.reload();
     });
+  }
+
+  function detectCity() {
+    if (!("geolocation" in navigator)) return;
+    setDetecting(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const nearest = findNearestCity(
+          pos.coords.latitude,
+          pos.coords.longitude,
+          cities
+        );
+        setDetecting(false);
+        if (nearest) {
+          chooseCity(nearest.id);
+        }
+      },
+      () => setDetecting(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   }
 
   return (
@@ -122,7 +195,7 @@ export function CityPicker({ currentCity, cities, tone = "brand" }: Props) {
               </button>
             </div>
 
-            <div className="px-4 pb-3">
+            <div className="px-4 pb-3 space-y-2">
               <div className="relative">
                 <Search
                   size={16}
@@ -137,6 +210,22 @@ export function CityPicker({ currentCity, cities, tone = "brand" }: Props) {
                   className="w-full rounded-xl bg-ink-100 pl-9 pr-3 py-2.5 text-[14px] text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand-300"
                 />
               </div>
+
+              {"geolocation" in (typeof navigator !== "undefined" ? navigator : {}) && (
+                <button
+                  type="button"
+                  onClick={detectCity}
+                  disabled={detecting || isPending}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-50 px-3 py-2.5 text-[13px] font-semibold text-brand-700 hover:bg-brand-100 disabled:opacity-50"
+                >
+                  {detecting ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Navigation size={14} />
+                  )}
+                  {detecting ? "Определяем..." : "Определить по геолокации"}
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto pb-4">

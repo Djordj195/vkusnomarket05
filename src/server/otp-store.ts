@@ -216,7 +216,7 @@ export async function verify(
 ): Promise<VerifyResult> {
   const normalized = code.trim();
   if (!/^\d{4,8}$/.test(normalized)) {
-    return { ok: false, error: "Введите код из SMS." };
+    return { ok: false, error: "Введите код подтверждения." };
   }
 
   if (isSupabaseConfigured()) {
@@ -239,7 +239,8 @@ export async function verify(
     if (!isActive(entry)) {
       return { ok: false, error: "Код истёк, запросите новый." };
     }
-    if (entry.code !== normalized) {
+    // Accept both full 6-digit code and first 4 digits (voice call fallback)
+    if (entry.code !== normalized && entry.code.slice(0, 4) !== normalized) {
       const attempts = entry.attempts + 1;
       await sb
         .from("otp_codes")
@@ -273,7 +274,8 @@ export async function verify(
   if (!entry || !isActive(entry)) {
     return { ok: false, error: "Код истёк, запросите новый." };
   }
-  if (entry.code !== normalized) {
+  // Accept both full 6-digit code and first 4 digits (voice call fallback)
+  if (entry.code !== normalized && entry.code.slice(0, 4) !== normalized) {
     entry.attempts += 1;
     const left = MAX_ATTEMPTS - entry.attempts;
     return {
