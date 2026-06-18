@@ -37,8 +37,8 @@ const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
 export default function LegalPage() {
   return (
     <PageShell className="bg-white">
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-ink-100">
-        <div className="mx-auto max-w-md px-2 py-3 flex items-center gap-1.5">
+      <header className="sticky top-0 z-30 pt-safe-top bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-ink-100">
+        <div className="mx-auto max-w-screen-lg px-2 py-3 flex items-center gap-1.5">
           <Link
             href="/profile"
             aria-label="Назад"

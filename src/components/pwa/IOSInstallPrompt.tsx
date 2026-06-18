@@ -43,7 +43,7 @@ export function IOSInstallPrompt() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-20 z-[9999] mx-auto max-w-md px-4 animate-in slide-in-from-bottom-4">
+    <div className="fixed inset-x-0 bottom-20 z-[9999] mx-auto max-w-md md:max-w-2xl lg:max-w-5xl px-4 animate-in slide-in-from-bottom-4">
       <div className="relative rounded-2xl bg-white p-4 shadow-xl ring-1 ring-ink-100">
         <button
           onClick={dismiss}

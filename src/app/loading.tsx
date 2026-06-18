@@ -27,7 +27,7 @@ export default function HomeLoading() {
       {/* Product grid */}
       <div className="px-4 space-y-2">
         <div className="h-5 w-36 bg-ink-100 rounded" />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-2">
               <div className="aspect-square rounded-2xl bg-ink-100" />

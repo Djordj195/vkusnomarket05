@@ -92,7 +92,7 @@ export function VendorCourierManager({ couriers }: Props) {
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-2xl border border-ink-200 bg-white p-3 text-center">
           <div className="text-[10px] font-medium uppercase tracking-wide text-ink-500">
             Всего

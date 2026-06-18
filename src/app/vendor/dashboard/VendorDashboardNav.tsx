@@ -64,7 +64,7 @@ export function VendorDashboardNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Кабинет продавца"
     >
-      <ul className="mx-auto grid w-full max-w-3xl grid-cols-5">
+      <ul className="mx-auto grid w-full max-w-3xl lg:max-w-5xl grid-cols-5">
         {items.map((it) => {
           const Icon = it.icon;
           const active = it.match(pathname);

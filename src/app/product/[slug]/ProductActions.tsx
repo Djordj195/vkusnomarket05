@@ -19,7 +19,7 @@ export function ProductActions({ product }: { product: Product }) {
 
   return (
     <div
-      className="fixed bottom-[72px] inset-x-0 z-30 mx-auto max-w-md border-t border-ink-100 bg-white p-3"
+      className="fixed bottom-[72px] inset-x-0 z-30 mx-auto max-w-md md:max-w-2xl lg:max-w-5xl border-t border-ink-100 bg-white p-3"
       style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}
     >
       <div className="flex items-center gap-2">

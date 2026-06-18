@@ -50,7 +50,7 @@ export function CourierBottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="Курьерское приложение"
     >
-      <ul className="mx-auto grid w-full max-w-3xl grid-cols-4">
+      <ul className="mx-auto grid w-full max-w-3xl lg:max-w-5xl grid-cols-4">
         {items.map((it) => {
           const Icon = it.icon;
           const active = it.match(pathname);

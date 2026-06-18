@@ -66,7 +66,7 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
         alt=""
         fill
         priority
-        sizes="(max-width: 480px) 100vw, 480px"
+        sizes="(max-width: 480px) 100vw, (max-width: 1024px) 100vw, 1024px"
         className="absolute inset-0 -z-10 object-cover"
       />
       <div
@@ -74,7 +74,7 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
         aria-hidden="true"
       />
 
-      <div className="px-4 pt-3">
+      <div className="px-4" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
         <div className="flex items-center justify-between">
           <Link
             href="/"
@@ -96,7 +96,7 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
           </p>
         </div>
 
-        <div className="mt-3 mb-5 grid grid-cols-2 gap-2.5">
+        <div className="mt-3 mb-5 grid grid-cols-2 md:grid-cols-4 gap-2.5">
           {VERTICALS.map((t) => (
             <VerticalHeroTile key={t.vertical} tile={t} />
           ))}

@@ -94,7 +94,7 @@ export function AdminBottomNav() {
       className="fixed bottom-0 inset-x-0 z-40 border-t border-ink-200 bg-white"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <ul className="mx-auto flex max-w-3xl">
+      <ul className="mx-auto flex max-w-3xl lg:max-w-5xl">
         {items.map((it) => {
           const active = it.match(pathname);
           const Icon = it.icon;

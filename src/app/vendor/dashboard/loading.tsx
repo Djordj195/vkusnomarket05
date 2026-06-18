@@ -8,13 +8,13 @@ export default function VendorDashboardLoading() {
         </div>
         <div className="h-6 w-16 bg-ink-100 rounded-full" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-[100px] rounded-2xl bg-ink-100" />
         ))}
       </div>
       <div className="h-[80px] rounded-2xl bg-ink-100" />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-[72px] rounded-2xl bg-ink-100" />
         ))}

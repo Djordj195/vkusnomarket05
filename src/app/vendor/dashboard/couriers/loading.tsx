@@ -4,7 +4,7 @@ export default function VendorCouriersLoading() {
       <div className="h-6 w-24 rounded bg-ink-200" />
       <div className="h-4 w-56 rounded bg-ink-100" />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {[1, 2].map((i) => (
           <div key={i} className="rounded-2xl border border-ink-200 bg-white p-3 text-center">
             <div className="mx-auto h-3 w-12 rounded bg-ink-100" />

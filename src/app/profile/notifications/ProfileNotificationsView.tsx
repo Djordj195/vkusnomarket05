@@ -265,7 +265,7 @@ export function ProfileNotificationsView({
 
   return (
     <PageShell className="bg-white">
-      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-ink-100 bg-white/80 px-3 py-2 backdrop-blur">
+      <div className="sticky top-0 z-10 pt-safe-top flex items-center gap-2 border-b border-ink-100 bg-white/80 px-3 py-2 backdrop-blur">
         <Link
           href="/profile"
           className="flex items-center gap-1 rounded-xl px-2 py-1 text-[14px] text-ink-700 hover:bg-ink-50"

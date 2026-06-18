@@ -36,7 +36,7 @@ export default async function CourierHistoryHubPage() {
     <div className="space-y-4">
       <SubpageHeader title="История доставок" backHref="/courier/dashboard" />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <Stat label="Всего" value={String(orders.length)} hint="заказов" />
         <Stat
           label="Доход"

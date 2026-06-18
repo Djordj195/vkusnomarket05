@@ -12,7 +12,7 @@ export function PageShell({
   return (
     <main
       className={cn(
-        "mx-auto w-full max-w-md min-h-screen bg-white",
+        "mx-auto w-full max-w-md md:max-w-2xl lg:max-w-5xl min-h-screen bg-white",
         !noBottomPadding && "pb-bottom-nav",
         className
       )}

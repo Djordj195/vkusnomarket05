@@ -18,7 +18,7 @@ function CategoryThumb({ cat, size }: { cat: Category; size: "lg" | "sm" }) {
 
 export function CategoryGrid({ items }: { items: Category[] }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       {items.map((cat) => (
         <Link
           key={cat.id}
