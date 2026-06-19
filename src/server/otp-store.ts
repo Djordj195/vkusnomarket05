@@ -1,29 +1,40 @@
 import "server-only";
-import { randomInt } from "crypto";
+import { randomInt, createHash, timingSafeEqual } from "crypto";
 import { getSupabaseAdmin, isSupabaseConfigured } from "./supabase";
 import type { SmsPurpose } from "./sms";
 
-// Phase 7: store одноразовых паролей.
+// OTP store — хранилище одноразовых кодов подтверждения.
 //
-// Поведение:
-//  • generateAndStore(phone, purpose) → создаёт новый код, ставит TTL 5 мин,
-//    инвалидирует все предыдущие активные коды этой пары (phone, purpose).
-//  • verify(phone, purpose, code) → проверяет код, инкрементит attempts.
-//    После 5 неудачных попыток код считается просроченным.
-//  • lastSentAt(phone, purpose) → когда был последний запрос (для rate-limit
-//    «один SMS в 60 секунд»).
+// Безопасность:
+//  • Код хранится как SHA-256 хеш (не в открытом виде).
+//  • Сравнение через timingSafeEqual (защита от timing-атак).
+//  • TTL 5 минут, максимум 5 попыток ввода.
+//  • Rate-limit: 1 код в 60 сек на номер, макс 10 в день на номер.
 //
-// Двухрежимность: Supabase (таблица otp_codes из миграции 0011) или память.
+// Двухрежимность: Supabase (таблица otp_codes) или in-memory (dev/preview).
 
-const TTL_MS = 5 * 60 * 1000;
-export const RESEND_COOLDOWN_MS = 60 * 1000;
+const TTL_MS = 5 * 60 * 1000; // 5 минут
+export const RESEND_COOLDOWN_MS = 60 * 1000; // 60 секунд
 const MAX_ATTEMPTS = 5;
+const MAX_DAILY_SENDS = 10;
+
+function hashCode(code: string): string {
+  return createHash("sha256").update(code).digest("hex");
+}
+
+function safeCompare(input: string, stored: string): boolean {
+  const a = Buffer.from(hashCode(input), "hex");
+  const b = Buffer.from(stored, "hex");
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
 
 export type OtpEntry = {
   id: string;
   phone: string;
   purpose: SmsPurpose;
-  code: string;
+  codeHash: string;
+  shortCodeHash: string; // first 4 digits hash (for voice call)
   attempts: number;
   consumedAt: string | null;
   requestedBy: string | null;
@@ -36,7 +47,7 @@ type Row = {
   id: string;
   phone: string;
   purpose: SmsPurpose;
-  code: string;
+  code: string; // DB column name is `code` but stores hash
   attempts: number;
   consumed_at: string | null;
   requested_by: string | null;
@@ -46,11 +57,14 @@ type Row = {
 };
 
 function rowToEntry(r: Row): OtpEntry {
+  // `code` column stores "hash|shortHash" format
+  const [codeHash, shortCodeHash] = r.code.split("|");
   return {
     id: r.id,
     phone: r.phone,
     purpose: r.purpose,
-    code: r.code,
+    codeHash: codeHash ?? r.code,
+    shortCodeHash: shortCodeHash ?? codeHash ?? r.code,
     attempts: r.attempts,
     consumedAt: r.consumed_at,
     requestedBy: r.requested_by,
@@ -88,8 +102,31 @@ export type GenerateInput = {
 };
 
 export type GenerateResult =
-  | { ok: true; entry: OtpEntry }
+  | { ok: true; code: string; entryId: string }
   | { ok: false; error: string; retryAfterMs?: number };
+
+async function countDailySends(phone: string, purpose: SmsPurpose): Promise<number> {
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+
+  if (isSupabaseConfigured()) {
+    const sb = getSupabaseAdmin()!;
+    const { count, error } = await sb
+      .from("otp_codes")
+      .select("id", { count: "exact", head: true })
+      .eq("phone", phone)
+      .eq("purpose", purpose)
+      .gte("created_at", dayStart.toISOString());
+    if (error) return 0;
+    return count ?? 0;
+  }
+  return memory().codes.filter(
+    (c) =>
+      c.phone === phone &&
+      c.purpose === purpose &&
+      new Date(c.createdAt) >= dayStart
+  ).length;
+}
 
 export async function lastSentAt(
   phone: string,
@@ -120,6 +157,7 @@ export async function lastSentAt(
 export async function generateAndStore(
   input: GenerateInput
 ): Promise<GenerateResult> {
+  // Rate limit: 1 SMS per 60 seconds
   const lastAt = await lastSentAt(input.phone, input.purpose);
   if (lastAt) {
     const elapsed = Date.now() - lastAt.getTime();
@@ -131,12 +169,28 @@ export async function generateAndStore(
       };
     }
   }
+
+  // Rate limit: max 10 per day per phone
+  const dailyCount = await countDailySends(input.phone, input.purpose);
+  if (dailyCount >= MAX_DAILY_SENDS) {
+    return {
+      ok: false,
+      error: "Превышен лимит отправок на сегодня. Попробуйте завтра.",
+    };
+  }
+
   const now = new Date();
+  const plainCode = generateNumericCode(6);
+  const shortCode = plainCode.slice(0, 4);
+  const codeHash = hashCode(plainCode);
+  const shortCodeHash = hashCode(shortCode);
+
   const entry: OtpEntry = {
     id: `otp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     phone: input.phone,
     purpose: input.purpose,
-    code: generateNumericCode(6),
+    codeHash,
+    shortCodeHash,
     attempts: 0,
     consumedAt: null,
     requestedBy: input.requestedBy ?? null,
@@ -145,9 +199,11 @@ export async function generateAndStore(
     expiresAt: new Date(now.getTime() + TTL_MS).toISOString(),
   };
 
+  // Store hashes in "hash|shortHash" format in the `code` column
+  const dbCodeValue = `${codeHash}|${shortCodeHash}`;
+
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
-    // Run invalidation + insert in parallel — insert uses a new unique ID so no conflict
     const [, insertResult] = await Promise.all([
       sb
         .from("otp_codes")
@@ -159,7 +215,7 @@ export async function generateAndStore(
         id: entry.id,
         phone: entry.phone,
         purpose: entry.purpose,
-        code: entry.code,
+        code: dbCodeValue,
         attempts: 0,
         consumed_at: null,
         requested_by: entry.requestedBy,
@@ -171,7 +227,7 @@ export async function generateAndStore(
     if (insertResult.error) {
       return { ok: false, error: `otp insert: ${insertResult.error.message}` };
     }
-    return { ok: true, entry };
+    return { ok: true, code: plainCode, entryId: entry.id };
   }
 
   const store = memory();
@@ -185,12 +241,10 @@ export async function generateAndStore(
     }
   }
   store.codes.push(entry);
-  // Защита от роста в памяти.
   if (store.codes.length > 500) store.codes.splice(0, store.codes.length - 500);
-  return { ok: true, entry };
+  return { ok: true, code: plainCode, entryId: entry.id };
 }
 
-/** Mark an OTP entry as consumed by ID (e.g. when SMS send fails). */
 export async function consumeEntry(id: string): Promise<void> {
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
@@ -230,22 +284,21 @@ export async function verify(
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (error)
-      return { ok: false, error: `otp lookup: ${error.message}` };
-    if (!data) {
-      return { ok: false, error: "Код истёк, запросите новый." };
-    }
+    if (error) return { ok: false, error: `otp lookup: ${error.message}` };
+    if (!data) return { ok: false, error: "Код истёк, запросите новый." };
+
     const entry = rowToEntry(data as Row);
     if (!isActive(entry)) {
       return { ok: false, error: "Код истёк, запросите новый." };
     }
-    // Accept both full 6-digit code and first 4 digits (voice call fallback)
-    if (entry.code !== normalized && entry.code.slice(0, 4) !== normalized) {
+
+    // Compare using timing-safe hash comparison
+    const matchesFull = safeCompare(normalized, entry.codeHash);
+    const matchesShort = safeCompare(normalized, entry.shortCodeHash);
+
+    if (!matchesFull && !matchesShort) {
       const attempts = entry.attempts + 1;
-      await sb
-        .from("otp_codes")
-        .update({ attempts })
-        .eq("id", entry.id);
+      await sb.from("otp_codes").update({ attempts }).eq("id", entry.id);
       const left = MAX_ATTEMPTS - attempts;
       return {
         ok: false,
@@ -263,6 +316,7 @@ export async function verify(
     return { ok: true };
   }
 
+  // In-memory store
   const store = memory();
   const list = store.codes
     .filter((c) => c.phone === phone && c.purpose === purpose && !c.consumedAt)
@@ -274,8 +328,11 @@ export async function verify(
   if (!entry || !isActive(entry)) {
     return { ok: false, error: "Код истёк, запросите новый." };
   }
-  // Accept both full 6-digit code and first 4 digits (voice call fallback)
-  if (entry.code !== normalized && entry.code.slice(0, 4) !== normalized) {
+
+  const matchesFull = safeCompare(normalized, entry.codeHash);
+  const matchesShort = safeCompare(normalized, entry.shortCodeHash);
+
+  if (!matchesFull && !matchesShort) {
     entry.attempts += 1;
     const left = MAX_ATTEMPTS - entry.attempts;
     return {

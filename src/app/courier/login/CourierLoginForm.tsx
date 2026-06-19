@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { OtpCodeStep } from "@/components/auth/OtpCodeStep";
 import { maskPhoneInput } from "@/lib/utils";
 import {
   sendCourierCodeAction,
@@ -18,41 +19,47 @@ export function CourierLoginForm() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
   const [courierType, setCourierType] = useState<CourierType>("platform");
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [demoCode, setDemoCode] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
+  const [cooldownSec, setCooldownSec] = useState(60);
 
-  function onSendCode(e: React.FormEvent) {
-    e.preventDefault();
+  const onSendCode = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setError(null);
     if (!consent) {
       setError("Подтвердите согласие с условиями ниже.");
       return;
     }
-    const fd = new FormData();
-    fd.set("phone", phone);
-    startTransition(async () => {
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.set("phone", phone);
       const res = await sendCourierCodeAction(fd);
       if (!res.ok) {
         setError(res.error);
+        if (res.retryAfterSec) setCooldownSec(res.retryAfterSec);
         return;
       }
       setDemoCode(res.demoCode);
+      setCooldownSec(res.cooldownSec);
       setStep("code");
-    });
-  }
+      setError(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [phone, consent]);
 
-  function onVerify(e: React.FormEvent) {
-    e.preventDefault();
+  const onVerify = useCallback(async (code: string) => {
     setError(null);
-    const fd = new FormData();
-    fd.set("phone", phone);
-    fd.set("code", code);
-    fd.set("courierType", courierType);
-    startTransition(async () => {
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.set("phone", phone);
+      fd.set("code", code);
+      fd.set("courierType", courierType);
       const res = await verifyCourierCodeAction(fd);
       if (!res.ok) {
         setError(res.error);
@@ -60,8 +67,30 @@ export function CourierLoginForm() {
       }
       router.replace("/courier/dashboard");
       router.refresh();
-    });
-  }
+    } finally {
+      setLoading(false);
+    }
+  }, [phone, courierType, router]);
+
+  const handleResend = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.set("phone", phone);
+      const res = await sendCourierCodeAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+        if (res.retryAfterSec) setCooldownSec(res.retryAfterSec);
+        return;
+      }
+      setDemoCode(res.demoCode);
+      setCooldownSec(res.cooldownSec);
+      setError(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [phone]);
 
   if (step === "phone") {
     return (
@@ -138,53 +167,31 @@ export function CourierLoginForm() {
             .
           </span>
         </label>
-        <Button fullWidth size="lg" type="submit" disabled={pending}>
-          {pending ? "Отправляем..." : "Получить код"}
+        <Button fullWidth size="lg" type="submit" disabled={loading}>
+          {loading ? "Отправляем код..." : "Получить код"}
         </Button>
       </form>
     );
   }
 
   return (
-    <form className="space-y-3" onSubmit={onVerify}>
-      <div className="rounded-xl bg-brand-50 p-3 text-[13px] text-brand-800">
-        Код отправлен на номер <strong>{phone}</strong>.
-        Если SMS не пришла — ожидайте звонок, робот продиктует код
-        <div className="mt-1 text-[12px] text-brand-700/80">
+    <OtpCodeStep
+      phone={phone}
+      demoCode={demoCode}
+      cooldownSec={cooldownSec}
+      error={error}
+      loading={loading}
+      onVerify={onVerify}
+      onResend={handleResend}
+      onChangePhone={() => {
+        setStep("phone");
+        setError(null);
+      }}
+      extraInfo={
+        <div className="text-[12px] text-brand-700/80 rounded-xl bg-brand-50/50 px-3 py-1.5">
           Тип: {courierType === "platform" ? "Курьер платформы" : "Курьер магазина"}
         </div>
-      </div>
-      {demoCode && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
-          Демо-режим: SMS-провайдер не подключён, используйте код{" "}
-          <strong>{demoCode}</strong>.
-        </div>
-      )}
-      <Input
-        label="Код подтверждения"
-        placeholder="••••••"
-        inputMode="numeric"
-        value={code}
-        onChange={(e) =>
-          setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-        }
-        maxLength={6}
-        error={error ?? undefined}
-      />
-      <Button fullWidth size="lg" type="submit" disabled={pending}>
-        {pending ? "Проверяем..." : "Начать смену"}
-      </Button>
-      <button
-        type="button"
-        onClick={() => {
-          setStep("phone");
-          setCode("");
-          setError(null);
-        }}
-        className="block w-full text-center text-[13px] text-ink-500 hover:text-ink-800"
-      >
-        Изменить номер
-      </button>
-    </form>
+      }
+    />
   );
 }

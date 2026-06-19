@@ -1,21 +1,19 @@
 import "server-only";
+import { after } from "next/server";
 import { getSmsProvider, isSmsRealProviderConfigured, normalizeRuPhone } from "./sms";
 import { generateAndStore, verify as verifyOtp, consumeEntry, RESEND_COOLDOWN_MS } from "./otp-store";
 import { logAudit } from "./audit-store";
 import { DEMO_SMS_CODE } from "@/lib/constants";
 import type { SmsPurpose } from "./sms";
 
-// Phase 7: единая точка отправки/проверки OTP для всех трёх логинов.
-// Особенности:
-//  • В демо-режиме (нет креден провайдера или SMS_PROVIDER=demo) — код
-//    *всегда* `123456`, чтобы preview работал без реальных SMS. OTP
-//    всё равно генерится и кладётся в store, но клиенту достаточно
-//    ввести `123456` (см. verifyAndConsume).
-//  • В прод-режиме генерится случайный 6-значный код, и проверяется он же.
-//  • Аудит-лог: `auth.code_sent`, `auth.code_verified`, `auth.code_failed`.
+// OTP flow — единая точка отправки/проверки OTP для всех логинов.
+//
+// Ключевое улучшение: отправка SMS происходит через `after()` — пользователь
+// НЕ ждёт ответа от SMS-провайдера. OTP генерируется и сохраняется мгновенно,
+// ответ возвращается клиенту сразу, а SMS отправляется в фоне.
 
 export type SendCodeOutcome =
-  | { ok: true; demoCode: string | null }
+  | { ok: true; demoCode: string | null; cooldownSec: number }
   | { ok: false; error: string; retryAfterSec?: number };
 
 export async function sendOtp(
@@ -26,6 +24,7 @@ export async function sendOtp(
   if (!phone) {
     return { ok: false, error: "Введите корректный номер (+7...)." };
   }
+
   const gen = await generateAndStore({ phone, purpose });
   if (!gen.ok) {
     if (gen.retryAfterMs && gen.retryAfterMs > 0) {
@@ -40,32 +39,55 @@ export async function sendOtp(
 
   const provider = getSmsProvider();
   const isDemo = provider.isDemo;
+  const cooldownSec = Math.ceil(RESEND_COOLDOWN_MS / 1000);
 
-  const send = await provider.sendCode(phone, gen.entry.code, purpose);
-
-  // Fire-and-forget: don't block user response for audit logging
-  logAudit({
-    actorType: "system",
-    action: "auth.code_sent",
-    targetType: "phone",
-    targetId: phone,
-    payload: {
-      purpose,
-      provider: provider.name,
-      ok: send.ok,
-      providerMessageId: send.ok ? send.providerMessageId : null,
-      error: send.ok ? null : send.error,
-    },
-  }).catch(() => {});
-
-  if (!send.ok) {
-    // Invalidate OTP entry so the user can retry immediately without cooldown
-    consumeEntry(gen.entry.id).catch(() => {});
-    // Show specific error from provider to help diagnose
-    const userError = send.error || "Не удалось отправить SMS. Попробуйте позже.";
-    return { ok: false, error: userError };
+  if (isDemo) {
+    logAudit({
+      actorType: "system",
+      action: "auth.code_sent",
+      targetType: "phone",
+      targetId: phone,
+      payload: { purpose, provider: "demo", ok: true },
+    }).catch(() => {});
+    return { ok: true, demoCode: DEMO_SMS_CODE, cooldownSec };
   }
-  return { ok: true, demoCode: isDemo ? DEMO_SMS_CODE : null };
+
+  // Non-blocking: SMS отправляется в фоне через after().
+  // Пользователь сразу видит "код отправлен" и может вводить код.
+  const code = gen.code;
+  const entryId = gen.entryId;
+
+  after(async () => {
+    try {
+      console.info(`[otp] background send to ${phone.slice(0, 4)}**** purpose=${purpose}`);
+      const send = await provider.sendCode(phone, code, purpose);
+
+      logAudit({
+        actorType: "system",
+        action: "auth.code_sent",
+        targetType: "phone",
+        targetId: phone,
+        payload: {
+          purpose,
+          provider: provider.name,
+          ok: send.ok,
+          providerMessageId: send.ok ? send.providerMessageId : null,
+          error: send.ok ? null : send.error,
+        },
+      }).catch(() => {});
+
+      if (!send.ok) {
+        console.error(`[otp] SMS send failed for ${phone.slice(0, 4)}****: ${send.error}`);
+        // Invalidate OTP so user can retry immediately
+        await consumeEntry(entryId);
+      }
+    } catch (e) {
+      console.error("[otp] background send exception:", e);
+      await consumeEntry(entryId).catch(() => {});
+    }
+  });
+
+  return { ok: true, demoCode: null, cooldownSec };
 }
 
 export type VerifyOutcome =
@@ -83,23 +105,21 @@ export async function verifyAndConsume(
   }
   const code = rawCode.trim();
 
-  // Демо-режим: принимаем `123456`. Реальный сгенерированный код
-  // помечаем как использованный, чтобы один и тот же номер не открыл
-  // несколько активных сессий.
+  // Демо-режим: принимаем `123456`
   if (!isSmsRealProviderConfigured() && code === DEMO_SMS_CODE) {
-    await logAudit({
+    logAudit({
       actorType: "system",
       action: "auth.code_verified",
       targetType: "phone",
       targetId: phone,
       payload: { purpose, mode: "demo" },
-    });
+    }).catch(() => {});
     return { ok: true, phone };
   }
 
   const result = await verifyOtp(phone, purpose, code);
   if (!result.ok) {
-    await logAudit({
+    logAudit({
       actorType: "system",
       action: "auth.code_failed",
       targetType: "phone",
@@ -109,16 +129,16 @@ export async function verifyAndConsume(
         error: result.error,
         attemptsLeft: result.attemptsLeft ?? null,
       },
-    });
+    }).catch(() => {});
     return { ok: false, error: result.error };
   }
-  await logAudit({
+  logAudit({
     actorType: "system",
     action: "auth.code_verified",
     targetType: "phone",
     targetId: phone,
     payload: { purpose, mode: "real" },
-  });
+  }).catch(() => {});
   return { ok: true, phone };
 }
 

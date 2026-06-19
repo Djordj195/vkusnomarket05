@@ -4,8 +4,8 @@ import { sendOtp, verifyAndConsume } from "./sms-auth";
 import { logConsent } from "./consent-store";
 
 export type ClientSendResult =
-  | { ok: true; demoCode: string | null }
-  | { ok: false; error: string };
+  | { ok: true; demoCode: string | null; cooldownSec: number }
+  | { ok: false; error: string; retryAfterSec?: number };
 
 export async function sendClientCodeAction(
   formData: FormData
@@ -16,8 +16,8 @@ export async function sendClientCodeAction(
     return { ok: false, error: "Введите корректный номер телефона." };
   }
   const sent = await sendOtp(phone, "client_login");
-  if (!sent.ok) return { ok: false, error: sent.error };
-  return { ok: true, demoCode: sent.demoCode };
+  if (!sent.ok) return { ok: false, error: sent.error, retryAfterSec: sent.retryAfterSec };
+  return { ok: true, demoCode: sent.demoCode, cooldownSec: sent.cooldownSec };
 }
 
 export type ClientVerifyResult =
