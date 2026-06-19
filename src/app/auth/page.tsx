@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
@@ -8,6 +8,7 @@ import { Logo } from "@/components/layout/Logo";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { OtpCodeStep } from "@/components/auth/OtpCodeStep";
 import { useAuth } from "@/store/auth";
 import { isValidPhone, maskPhoneInput } from "@/lib/utils";
 import {
@@ -24,13 +25,13 @@ export default function AuthPage() {
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [demoCode, setDemoCode] = useState<string | null>(null);
+  const [cooldownSec, setCooldownSec] = useState(60);
 
-  const sendCode = async () => {
+  const sendCode = useCallback(async () => {
     setError(null);
     if (!isValidPhone(phone)) {
       setError("Введите корректный номер (+7...).");
@@ -47,16 +48,19 @@ export default function AuthPage() {
       const res = await sendClientCodeAction(fd);
       if (!res.ok) {
         setError(res.error);
+        if (res.retryAfterSec) setCooldownSec(res.retryAfterSec);
         return;
       }
       setDemoCode(res.demoCode);
+      setCooldownSec(res.cooldownSec);
       setStep("code");
+      setError(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [phone, consent]);
 
-  const verify = async () => {
+  const verify = useCallback(async (code: string) => {
     setError(null);
     setLoading(true);
     try {
@@ -77,9 +81,27 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [phone, name, setUser, router]);
 
-  const codeLength = 6;
+  const handleResend = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.set("phone", phone);
+      const res = await sendClientCodeAction(fd);
+      if (!res.ok) {
+        setError(res.error);
+        if (res.retryAfterSec) setCooldownSec(res.retryAfterSec);
+        return;
+      }
+      setDemoCode(res.demoCode);
+      setCooldownSec(res.cooldownSec);
+      setError(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [phone]);
 
   return (
     <PageShell>
@@ -145,58 +167,23 @@ export default function AuthPage() {
               </span>
             </label>
             <Button fullWidth size="lg" onClick={sendCode} disabled={loading}>
-              {loading ? "Отправляем..." : "Получить код"}
+              {loading ? "Отправляем код..." : "Получить код"}
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="rounded-xl bg-brand-50 p-3 text-[13px] text-brand-800">
-              Код отправлен на номер <strong>{phone}</strong>.
-              Если SMS не пришла — ожидайте звонок, робот продиктует код.
-            </div>
-            {demoCode && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
-                Демо-режим: SMS-провайдер не подключён, используйте код{" "}
-                <strong>{demoCode}</strong>.
-              </div>
-            )}
-            <Input
-              label="Код подтверждения"
-              placeholder="••••••"
-              inputMode="numeric"
-              value={code}
-              onChange={(e) =>
-                setCode(e.target.value.replace(/\D/g, "").slice(0, codeLength))
-              }
-              maxLength={codeLength}
-              error={error ?? undefined}
-            />
-            <Button fullWidth size="lg" onClick={verify} disabled={loading}>
-              {loading ? "Проверяем..." : "Войти"}
-            </Button>
-            <button
-              type="button"
-              onClick={() => {
-                setStep("phone");
-                setCode("");
-              }}
-              className="block w-full text-center text-[13px] text-ink-500 hover:text-ink-800"
-            >
-              Изменить номер
-            </button>
-            <p className="text-center text-[12px] text-ink-400">
-              Не пришёл код? Подождите 60 сек. и нажмите{" "}
-              <button
-                type="button"
-                onClick={sendCode}
-                disabled={loading}
-                className="font-semibold text-brand-700 hover:underline disabled:text-ink-400"
-              >
-                отправить снова
-              </button>
-              .
-            </p>
-          </div>
+          <OtpCodeStep
+            phone={phone}
+            demoCode={demoCode}
+            cooldownSec={cooldownSec}
+            error={error}
+            loading={loading}
+            onVerify={verify}
+            onResend={handleResend}
+            onChangePhone={() => {
+              setStep("phone");
+              setError(null);
+            }}
+          />
         )}
       </div>
     </PageShell>

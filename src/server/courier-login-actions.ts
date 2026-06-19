@@ -9,8 +9,8 @@ import {
 import { sendOtp, verifyAndConsume } from "./sms-auth";
 
 export type CourierSendCodeResult =
-  | { ok: true; demoCode: string | null }
-  | { ok: false; error: string };
+  | { ok: true; demoCode: string | null; cooldownSec: number }
+  | { ok: false; error: string; retryAfterSec?: number };
 
 export async function sendCourierCodeAction(
   formData: FormData
@@ -21,8 +21,8 @@ export async function sendCourierCodeAction(
     return { ok: false, error: "Введите корректный номер телефона." };
   }
   const sent = await sendOtp(phone, "courier_login");
-  if (!sent.ok) return { ok: false, error: sent.error };
-  return { ok: true, demoCode: sent.demoCode };
+  if (!sent.ok) return { ok: false, error: sent.error, retryAfterSec: sent.retryAfterSec };
+  return { ok: true, demoCode: sent.demoCode, cooldownSec: sent.cooldownSec };
 }
 
 export type CourierVerifyResult =

@@ -21,7 +21,7 @@ function normalizePhone(input: string): string {
 }
 
 export type RecoverySendResult =
-  | { ok: true; maskedPhone: string; demoCode: string | null }
+  | { ok: true; maskedPhone: string; demoCode: string | null; cooldownSec: number }
   | { ok: false; error: string };
 
 export async function sendVendorRecoveryCodeAction(
@@ -72,7 +72,7 @@ export async function sendVendorRecoveryCodeAction(
   const masked =
     phone.slice(0, 4) + "***" + phone.slice(-2);
 
-  return { ok: true, maskedPhone: masked, demoCode: sent.demoCode };
+  return { ok: true, maskedPhone: masked, demoCode: sent.demoCode, cooldownSec: sent.cooldownSec };
 }
 
 export type RecoveryVerifyResult =

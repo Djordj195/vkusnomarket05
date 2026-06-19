@@ -15,7 +15,7 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SESSION_PAYLOAD = "admin:authenticated";
 
 export type RecoverySendResult =
-  | { ok: true; maskedPhone: string; demoCode: string | null }
+  | { ok: true; maskedPhone: string; demoCode: string | null; cooldownSec: number }
   | { ok: false; error: string };
 
 export async function sendAdminRecoveryCode(
@@ -38,7 +38,7 @@ export async function sendAdminRecoveryCode(
     "***" +
     ADMIN_PHONE.slice(-4);
 
-  return { ok: true, maskedPhone: masked, demoCode: sent.demoCode };
+  return { ok: true, maskedPhone: masked, demoCode: sent.demoCode, cooldownSec: sent.cooldownSec };
 }
 
 export type RecoveryVerifyResult =
