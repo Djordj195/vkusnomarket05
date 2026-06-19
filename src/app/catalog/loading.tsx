@@ -7,7 +7,7 @@ export default function CatalogLoading() {
           <div className="h-4 w-28 bg-ink-100 rounded" />
           <div className="h-3 w-16 bg-ink-100 rounded" />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-2">
               <div className="aspect-square rounded-2xl bg-ink-100" />

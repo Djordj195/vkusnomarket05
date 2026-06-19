@@ -33,11 +33,11 @@ export function Header({
     return (
       <header
         className={cn(
-          "sticky top-0 z-30 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-ink-100",
+          "sticky top-0 z-30 pt-safe-top bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-ink-100",
           className
         )}
       >
-        <div className="mx-auto max-w-md px-4 pt-3 pb-2">
+        <div className="mx-auto max-w-screen-lg px-4 pt-3 pb-2">
           <div className="flex items-center justify-between">
             <Link href="/" className="block">
               <Logo size={32} />
@@ -52,11 +52,11 @@ export function Header({
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-ink-100",
+        "sticky top-0 z-30 pt-safe-top bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 border-b border-ink-100",
         className
       )}
     >
-      <div className="mx-auto max-w-md px-2 py-3 flex items-center gap-1.5">
+      <div className="mx-auto max-w-screen-lg px-2 py-3 flex items-center gap-1.5">
         {showBack !== false && (
           <button
             type="button"

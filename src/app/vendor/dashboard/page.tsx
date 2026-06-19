@@ -100,7 +100,7 @@ export default async function VendorDashboardOverview() {
         />
       </section>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatTile
           href="/vendor/dashboard/orders"
           icon={<ClipboardList size={18} />}
@@ -183,7 +183,7 @@ export default async function VendorDashboardOverview() {
 
       <section>
         <h2 className="mb-2 text-[15px] font-bold text-ink-900">Управление</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <ServiceCard
             href="/vendor/dashboard/storefront"
             icon={<Store size={20} />}

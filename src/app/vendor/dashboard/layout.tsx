@@ -27,7 +27,7 @@ export default async function VendorDashboardLayout({
         className="sticky top-0 z-30 border-b border-ink-200 bg-white"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-2 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-3xl lg:max-w-5xl items-center justify-between gap-2 px-4 py-3">
           <Link href="/vendor/dashboard" className="flex items-center gap-2">
             <Image
               src="/icon-vendor-192.png"
@@ -60,7 +60,7 @@ export default async function VendorDashboardLayout({
 
       <AppInstallBanner appName="ВМ Продавец" themeColor="#16a34a" />
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-4">{children}</main>
+      <main className="mx-auto w-full max-w-3xl lg:max-w-5xl px-4 py-4">{children}</main>
 
       <VendorDashboardNav />
     </div>

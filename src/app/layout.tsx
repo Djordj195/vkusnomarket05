@@ -96,7 +96,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[var(--background)] min-h-full">
-        <div className="mx-auto max-w-md min-h-screen bg-white shadow-[0_0_60px_rgba(15,17,22,0.06)]">
+        <div className="mx-auto max-w-md md:max-w-2xl lg:max-w-5xl min-h-screen bg-white shadow-[0_0_60px_rgba(15,17,22,0.06)]">
           {children}
         </div>
         <BottomNav />

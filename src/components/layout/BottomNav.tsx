@@ -80,7 +80,7 @@ export function BottomNav() {
       className="fixed bottom-0 inset-x-0 z-40 border-t border-ink-200 bg-white"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <ul className="mx-auto grid max-w-md grid-cols-5">
+      <ul className="mx-auto grid max-w-md md:max-w-2xl lg:max-w-5xl grid-cols-5">
         {items.map((it) => {
           const active = it.match(pathname);
           const Icon = it.icon;

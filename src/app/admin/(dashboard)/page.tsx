@@ -76,7 +76,7 @@ export default async function AdminDashboardPage() {
         <h1 className="text-[22px] font-extrabold text-ink-900">Обзор</h1>
       </header>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           href="/admin/orders?range=today"
           icon={<ClipboardList size={18} />}
@@ -153,7 +153,7 @@ export default async function AdminDashboardPage() {
 
       <section>
         <h2 className="mb-2 text-[15px] font-bold text-ink-900">Управление</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <ServiceCard
             href="/admin/orders"
             icon={<ClipboardList size={20} />}

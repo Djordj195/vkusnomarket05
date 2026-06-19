@@ -8,7 +8,7 @@ export default function VendorFinancesPage() {
         Тариф, комиссия маркетплейса, выплаты, акты и история транзакций.
       </p>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Box label="Тариф" value="Базовый" />
         <Box label="Комиссия" value="Договорная" />
         <Box label="К выплате" value="—" />
