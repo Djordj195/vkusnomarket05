@@ -93,6 +93,7 @@ export async function listProducts(): Promise<Product[]> {
     const { data, error } = await sb
       .from("products")
       .select("*")
+      .neq("vendor_deleted", true)
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error)) return staticProductsHydrated();
@@ -150,6 +151,7 @@ export async function getProductsByCategory(
       .from("products")
       .select("*")
       .eq("category_id", categoryId)
+      .neq("vendor_deleted", true)
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error))
@@ -172,6 +174,7 @@ export async function getProductsByShop(shopId: string): Promise<Product[]> {
       .from("products")
       .select("*")
       .eq("shop_id", shopId)
+      .neq("vendor_deleted", true)
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error))
@@ -192,6 +195,7 @@ export async function getProductsBySource(
       .from("products")
       .select("*")
       .eq("source", source)
+      .neq("vendor_deleted", true)
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error))
@@ -232,6 +236,7 @@ export async function getProductsByVertical(
       .from("products")
       .select("*")
       .eq("vertical", vertical)
+      .neq("vendor_deleted", true)
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error))
@@ -250,6 +255,7 @@ export async function getWeeklyProducts(): Promise<Product[]> {
       .from("products")
       .select("*")
       .eq("is_weekly", true)
+      .neq("vendor_deleted", true)
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error))

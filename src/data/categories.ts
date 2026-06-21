@@ -204,6 +204,40 @@ export const CATEGORIES: Category[] = [
     emoji: "🍰",
     itemsCount: 4,
   },
+  {
+    id: "cat-ready-food",
+    slug: "gotovaya-eda",
+    name: "Готовая еда",
+    source: "food",
+    icon: "utensils",
+    emoji: "🍱",
+    itemsCount: 0,
+    highlight: true,
+  },
+
+  // === Бытовая химия ===
+  {
+    id: "cat-chemistry",
+    slug: "bytovaya-khimiya",
+    name: "Бытовая химия",
+    source: "market",
+    icon: "spray",
+    emoji: "🧴",
+    itemsCount: 0,
+    highlight: true,
+  },
+
+  // === Аптека ===
+  {
+    id: "cat-pharmacy",
+    slug: "apteka",
+    name: "Аптека",
+    source: "market",
+    icon: "pill",
+    emoji: "💊",
+    itemsCount: 0,
+    highlight: true,
+  },
 ];
 
 export function getCategoriesBySource(source: Category["source"]): Category[] {

@@ -12,6 +12,7 @@ import {
   toggleVendorFeaturedAction,
   updateVendorStatusAction,
 } from "@/server/vendor-actions";
+import { DeleteVendorButton } from "./DeleteVendorButton";
 import { AdminResetPasswordForm } from "./AdminResetPasswordForm";
 
 export const dynamic = "force-dynamic";
@@ -162,6 +163,7 @@ export default async function AdminVendorDetailPage({
               </button>
             </form>
           )}
+          <DeleteVendorButton vendorId={vendor.id} brandName={vendor.brandName} />
         </div>
       </section>
 
