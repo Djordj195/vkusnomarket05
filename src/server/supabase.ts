@@ -13,12 +13,15 @@ let cached: SupabaseClient | null = null;
 export function getSupabaseAdmin(): SupabaseClient | null {
   if (cached) return cached;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+  let url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !serviceRole) {
     return null;
   }
+
+  // Strip trailing /rest/v1/ if accidentally included — Supabase client adds it
+  url = url.replace(/\/rest\/v1\/?$/, "");
 
   cached = createClient(url, serviceRole, {
     auth: { persistSession: false, autoRefreshToken: false },
