@@ -90,6 +90,7 @@ export async function listVendors(
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
     let q = sb.from("vendors").select(VENDOR_COLS);
+    q = q.is("deleted_at", null);
     if (cityId) q = q.eq("city_id", cityId);
     if (vertical) q = q.eq("vertical_primary", vertical);
     if (Array.isArray(status)) q = q.in("status", status);
@@ -367,6 +368,30 @@ export async function updateVendorContacts(
   const sb = getSupabaseAdmin()!;
   const { error } = await sb.from("vendors").update(row).eq("id", id);
   if (error) throw new Error(`updateVendorContacts: ${error.message}`);
+}
+
+export async function softDeleteVendor(id: string): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("softDeleteVendor: Supabase не настроен.");
+  }
+  const sb = getSupabaseAdmin()!;
+  const now = new Date().toISOString();
+
+  // Mark vendor as deleted
+  const { error } = await sb
+    .from("vendors")
+    .update({ deleted_at: now, status: "blocked" as VendorStatus })
+    .eq("id", id);
+  if (error) throw new Error(`softDeleteVendor: ${error.message}`);
+
+  // Hide vendor's products from buyers
+  const { error: prodErr } = await sb
+    .from("products")
+    .update({ vendor_deleted: true })
+    .eq("vendor_id", id);
+  if (prodErr) {
+    console.error(`softDeleteVendor: failed to hide products: ${prodErr.message}`);
+  }
 }
 
 export async function isSlugAvailable(slug: string): Promise<boolean> {

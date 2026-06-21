@@ -8,6 +8,7 @@ import {
   getVendorById,
   getVendorByContactPhone,
   isSlugAvailable,
+  softDeleteVendor,
   updateVendorFeatured,
   updateVendorStatus,
   type CreateVendorInput,
@@ -197,6 +198,8 @@ export async function updateVendorStatusAction(
 
   revalidatePath("/admin/vendors");
   revalidatePath(`/admin/vendors/${id}`);
+  revalidatePath("/");
+  revalidatePath("/catalog");
   revalidatePath("/", "layout");
 }
 
@@ -239,4 +242,29 @@ export async function checkApplicationStatusAction(
   }
 
   return { ok: true, status: vendor.status, brandName: vendor.brandName };
+}
+
+// ─── Soft-delete vendor (admin only) ──────────────────────────
+export async function deleteVendorAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const vendor = await getVendorById(id);
+  if (!vendor) return;
+
+  await softDeleteVendor(id);
+  await logAudit({
+    actorType: "admin",
+    action: "vendor.deleted",
+    targetType: "vendor",
+    targetId: id,
+    payload: { brandName: vendor.brandName },
+  });
+
+  revalidatePath("/admin/vendors");
+  revalidatePath("/");
+  revalidatePath("/catalog");
+  revalidatePath("/weekly");
+  revalidatePath("/", "layout");
 }
