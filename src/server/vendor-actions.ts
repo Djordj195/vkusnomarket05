@@ -14,6 +14,7 @@ import {
   type CreateVendorInput,
 } from "./vendors-store";
 import { getSmsProvider } from "./sms";
+import { notifyAdminNewVendorApplication } from "./telegram";
 import type { LegalEntityType, Vertical, VendorStatus } from "@/lib/types";
 
 const VALID_VERTICALS: Vertical[] = [
@@ -148,6 +149,14 @@ export async function submitVendorApplicationAction(
     return { ok: false, error: message };
   }
 
+  notifyAdminNewVendorApplication({
+    brandName,
+    contactPhone,
+    verticalPrimary,
+    cityId,
+    slug,
+  }).catch(() => {});
+
   revalidatePath("/admin/vendors");
   return { ok: true, slug };
 }
@@ -189,7 +198,7 @@ export async function updateVendorStatusAction(
     const phone = vendor.contacts.phone.replace(/\D/g, "");
     if (phone.length === 11) {
       const sms = getSmsProvider();
-      const text = `Ваша заявка на подключение к ВкусМаркет одобрена! Создайте логин и пароль: ${process.env.NEXT_PUBLIC_BASE_URL ?? "https://vkusnomarket05.vercel.app"}/vendor/create-password`;
+      const text = `Ваша заявка на подключение к ВкусМаркет одобрена! Войдите в кабинет продавца по номеру телефона: ${process.env.NEXT_PUBLIC_BASE_URL ?? "https://vkusnomarket05.vercel.app"}/vendor/login`;
       sms.sendText(phone, text).catch((err) => {
         console.error("[vendor-approve] SMS notification failed:", err);
       });

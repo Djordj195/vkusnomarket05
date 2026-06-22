@@ -36,7 +36,7 @@ export default async function SectionPage({ params }: PageProps) {
   const src = source as SourceType;
 
   const [allProducts, allCategories] = await Promise.all([
-    listProducts(),
+    listProducts({ buyerFacing: true }),
     listCategories(),
   ]);
   const products = allProducts.filter((p) => p.source === src);

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CatalogPage() {
-  const products = await listProducts();
+  const products = await listProducts({ buyerFacing: true });
 
   return (
     <PageShell>

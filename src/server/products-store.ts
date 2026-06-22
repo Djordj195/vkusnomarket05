@@ -87,13 +87,17 @@ function productToRow(
   return row;
 }
 
-export async function listProducts(): Promise<Product[]> {
+export async function listProducts(
+  opts: { buyerFacing?: boolean } = {}
+): Promise<Product[]> {
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
-    const { data, error } = await sb
+    let q = sb
       .from("products")
       .select("*")
-      .neq("vendor_deleted", true)
+      .neq("vendor_deleted", true);
+    if (opts.buyerFacing) q = q.eq("in_stock", true);
+    const { data, error } = await q
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error)) return staticProductsHydrated();
@@ -143,15 +147,18 @@ export async function getProductBySlug(
 }
 
 export async function getProductsByCategory(
-  categoryId: string
+  categoryId: string,
+  opts: { buyerFacing?: boolean } = {}
 ): Promise<Product[]> {
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
-    const { data, error } = await sb
+    let q = sb
       .from("products")
       .select("*")
       .eq("category_id", categoryId)
-      .neq("vendor_deleted", true)
+      .neq("vendor_deleted", true);
+    if (opts.buyerFacing) q = q.eq("in_stock", true);
+    const { data, error } = await q
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error))
@@ -187,15 +194,18 @@ export async function getProductsByShop(shopId: string): Promise<Product[]> {
 }
 
 export async function getProductsBySource(
-  source: SourceType
+  source: SourceType,
+  opts: { buyerFacing?: boolean } = {}
 ): Promise<Product[]> {
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
-    const { data, error } = await sb
+    let q = sb
       .from("products")
       .select("*")
       .eq("source", source)
-      .neq("vendor_deleted", true)
+      .neq("vendor_deleted", true);
+    if (opts.buyerFacing) q = q.eq("in_stock", true);
+    const { data, error } = await q
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error))
@@ -228,15 +238,18 @@ export async function getProductsByVendor(
 }
 
 export async function getProductsByVertical(
-  vertical: Vertical
+  vertical: Vertical,
+  opts: { buyerFacing?: boolean } = {}
 ): Promise<Product[]> {
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
-    const { data, error } = await sb
+    let q = sb
       .from("products")
       .select("*")
       .eq("vertical", vertical)
-      .neq("vendor_deleted", true)
+      .neq("vendor_deleted", true);
+    if (opts.buyerFacing) q = q.eq("in_stock", true);
+    const { data, error } = await q
       .order("sort_order", { ascending: true });
     if (error) {
       if (isMissingTableError(error))
@@ -277,6 +290,8 @@ export async function searchProducts(query: string): Promise<Product[]> {
       .from("products")
       .select("*")
       .or(`name.ilike.${pattern},description.ilike.${pattern}`)
+      .eq("in_stock", true)
+      .neq("vendor_deleted", true)
       .order("sort_order", { ascending: true })
       .limit(50);
     if (error) {

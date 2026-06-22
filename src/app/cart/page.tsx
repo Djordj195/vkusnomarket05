@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function CartPage() {
   const [products, vendors] = await Promise.all([
     listProducts(),
-    listVendors(),
+    listVendors({ status: "approved" }),
   ]);
   return <CartView products={products} vendors={vendors} />;
 }

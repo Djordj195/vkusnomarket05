@@ -25,7 +25,7 @@ export default async function HomePage() {
     await Promise.all([
       listCategories(),
       listShops(),
-      listProducts(),
+      listProducts({ buyerFacing: true }),
       listApprovedFeedback(3),
       countApprovedFeedback(),
       isActiveCity

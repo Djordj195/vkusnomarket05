@@ -58,6 +58,42 @@ export async function notifyAdminNewOrder(order: Order): Promise<void> {
   });
 }
 
+export async function notifyAdminNewVendorApplication(vendor: {
+  brandName: string;
+  contactPhone?: string;
+  verticalPrimary: string;
+  cityId: string;
+  slug: string;
+}): Promise<void> {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_ADMIN_CHAT_ID) return;
+  const lines: string[] = [];
+  lines.push(`<b>🏪 Новая заявка продавца</b>`);
+  lines.push("");
+  lines.push(`<b>Бренд:</b> ${escape(vendor.brandName)}`);
+  if (vendor.contactPhone) lines.push(`<b>Телефон:</b> ${escape(vendor.contactPhone)}`);
+  lines.push(`<b>Вертикаль:</b> ${escape(vendor.verticalPrimary)}`);
+  lines.push(`<b>Город:</b> ${escape(vendor.cityId)}`);
+  lines.push("");
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://vkusnomarket05.vercel.app";
+  lines.push(`<a href="${baseUrl}/admin/vendors/vnd-${escape(vendor.slug)}">Открыть в админке</a>`);
+
+  await fetch(
+    `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: TELEGRAM_ADMIN_CHAT_ID,
+        text: lines.join("\n"),
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      }),
+    }
+  ).catch((e) => {
+    console.error("Telegram vendor notify failed:", e);
+  });
+}
+
 function escape(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

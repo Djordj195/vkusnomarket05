@@ -41,7 +41,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   const [category, relatedAll, reviews, stats] = await Promise.all([
     getCategoryById(product.categoryId),
-    getProductsByCategory(product.categoryId),
+    getProductsByCategory(product.categoryId, { buyerFacing: true }),
     listApprovedReviews("product", product.id),
     getRatingStats("product", product.id),
   ]);
