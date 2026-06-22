@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { PageShell } from "@/components/layout/PageShell";
 import { BrandPill } from "@/components/layout/Logo";
 import { getCurrentVendor } from "@/server/vendor-auth";
-import { LoginForm } from "./LoginForm";
+import { VendorLoginTabs } from "./VendorLoginTabs";
 import { Store } from "lucide-react";
 
 export const metadata = {
@@ -48,12 +48,12 @@ export default async function VendorLoginPage() {
           Вход для продавцов
         </h1>
         <p className="mt-2 text-[13px] text-ink-500">
-          Введите логин и пароль, которые вы создали после одобрения заявки.
+          Введите номер телефона из заявки — после одобрения вы получите код для входа.
         </p>
       </div>
 
       <div className="px-4 pt-6 pb-4">
-        <LoginForm />
+        <VendorLoginTabs />
       </div>
 
       <div className="px-4 pb-6">
@@ -65,14 +65,7 @@ export default async function VendorLoginPage() {
           >
             странице регистрации
           </Link>
-          . После одобрения вы сможете{" "}
-          <Link
-            href="/vendor/create-password"
-            className="font-semibold text-brand-700 hover:underline"
-          >
-            создать логин и пароль
-          </Link>{" "}
-          для входа.
+          . После одобрения администратором войдите по номеру телефона.
         </div>
       </div>
     </PageShell>
