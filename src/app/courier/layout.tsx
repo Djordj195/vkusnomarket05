@@ -1,29 +1,28 @@
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  title: { default: "ВМ Админ", template: "%s · ВМ Админ" },
-  manifest: "/api/manifest/admin",
-  robots: { index: false, follow: false },
+  title: { default: "ВМ Курьер", template: "%s · ВМ Курьер" },
+  manifest: "/api/manifest/courier",
   appleWebApp: {
     capable: true,
-    title: "ВМ Админ",
+    title: "ВМ Курьер",
     statusBarStyle: "black-translucent",
   },
   other: { "mobile-web-app-capable": "yes" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#dc2626",
+  themeColor: "#ea580c",
 };
 
-export default function AdminRootLayout({
+export default function CourierRootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <>
-      <link rel="apple-touch-icon" href="/icon-admin-apple.png" />
+      <link rel="apple-touch-icon" href="/icon-courier-apple.png" />
       {children}
     </>
   );
