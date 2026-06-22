@@ -30,6 +30,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [demoCode, setDemoCode] = useState<string | null>(null);
   const [cooldownSec, setCooldownSec] = useState(60);
+  const [method, setMethod] = useState<"sms" | "call" | "demo">("sms");
 
   const sendCode = useCallback(async () => {
     setError(null);
@@ -53,6 +54,7 @@ export default function AuthPage() {
       }
       setDemoCode(res.demoCode);
       setCooldownSec(res.cooldownSec);
+      setMethod(res.method);
       setStep("code");
       setError(null);
     } finally {
@@ -97,6 +99,7 @@ export default function AuthPage() {
       }
       setDemoCode(res.demoCode);
       setCooldownSec(res.cooldownSec);
+      setMethod(res.method);
       setError(null);
     } finally {
       setLoading(false);
@@ -175,6 +178,7 @@ export default function AuthPage() {
             phone={phone}
             demoCode={demoCode}
             cooldownSec={cooldownSec}
+            method={method}
             error={error}
             loading={loading}
             onVerify={verify}

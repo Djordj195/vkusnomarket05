@@ -31,4 +31,4 @@ export function isSmsRealProviderConfigured(): boolean {
 }
 
 export { buildSmsText, normalizeRuPhone } from "./types";
-export type { SmsPurpose, SendCodeResult, SmsProvider } from "./types";
+export type { SmsPurpose, SendCodeResult, SmsProvider, DeliveryMethod } from "./types";

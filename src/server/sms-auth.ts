@@ -1,19 +1,20 @@
 import "server-only";
-import { after } from "next/server";
 import { getSmsProvider, isSmsRealProviderConfigured, normalizeRuPhone } from "./sms";
 import { generateAndStore, verify as verifyOtp, consumeEntry, RESEND_COOLDOWN_MS } from "./otp-store";
 import { logAudit } from "./audit-store";
 import { DEMO_SMS_CODE } from "@/lib/constants";
-import type { SmsPurpose } from "./sms";
+import type { SmsPurpose, DeliveryMethod } from "./sms";
 
 // OTP flow — единая точка отправки/проверки OTP для всех логинов.
 //
-// Ключевое улучшение: отправка SMS происходит через `after()` — пользователь
-// НЕ ждёт ответа от SMS-провайдера. OTP генерируется и сохраняется мгновенно,
-// ответ возвращается клиенту сразу, а SMS отправляется в фоне.
+// ВАЖНО: Отправка SMS теперь СИНХРОННАЯ. Пользователь ждёт реального
+// ответа от провайдера. Это даёт:
+//  • Достоверный статус доставки (SMS/звонок/ошибка)
+//  • Немедленный retry при ошибках
+//  • Правильное сообщение в UI ("ожидайте SMS" vs "ожидайте звонок")
 
 export type SendCodeOutcome =
-  | { ok: true; demoCode: string | null; cooldownSec: number }
+  | { ok: true; demoCode: string | null; cooldownSec: number; method: DeliveryMethod | "demo" }
   | { ok: false; error: string; retryAfterSec?: number };
 
 export async function sendOtp(
@@ -49,45 +50,47 @@ export async function sendOtp(
       targetId: phone,
       payload: { purpose, provider: "demo", ok: true },
     }).catch(() => {});
-    return { ok: true, demoCode: DEMO_SMS_CODE, cooldownSec };
+    return { ok: true, demoCode: DEMO_SMS_CODE, cooldownSec, method: "demo" };
   }
 
-  // Non-blocking: SMS отправляется в фоне через after().
-  // Пользователь сразу видит "код отправлен" и может вводить код.
+  // СИНХРОННАЯ отправка — ждём ответ от провайдера
   const code = gen.code;
   const entryId = gen.entryId;
 
-  after(async () => {
-    try {
-      console.info(`[otp] background send to ${phone.slice(0, 4)}**** purpose=${purpose}`);
-      const send = await provider.sendCode(phone, code, purpose);
+  try {
+    console.info(`[otp] sending to ${phone.slice(0, 4)}**** purpose=${purpose}`);
+    const send = await provider.sendCode(phone, code, purpose);
 
-      logAudit({
-        actorType: "system",
-        action: "auth.code_sent",
-        targetType: "phone",
-        targetId: phone,
-        payload: {
-          purpose,
-          provider: provider.name,
-          ok: send.ok,
-          providerMessageId: send.ok ? send.providerMessageId : null,
-          error: send.ok ? null : send.error,
-        },
-      }).catch(() => {});
+    logAudit({
+      actorType: "system",
+      action: "auth.code_sent",
+      targetType: "phone",
+      targetId: phone,
+      payload: {
+        purpose,
+        provider: provider.name,
+        ok: send.ok,
+        method: send.ok ? (send.method ?? "sms") : null,
+        providerMessageId: send.ok ? send.providerMessageId : null,
+        error: send.ok ? null : send.error,
+      },
+    }).catch(() => {});
 
-      if (!send.ok) {
-        console.error(`[otp] SMS send failed for ${phone.slice(0, 4)}****: ${send.error}`);
-        // Invalidate OTP so user can retry immediately
-        await consumeEntry(entryId);
-      }
-    } catch (e) {
-      console.error("[otp] background send exception:", e);
-      await consumeEntry(entryId).catch(() => {});
+    if (!send.ok) {
+      console.error(`[otp] send failed for ${phone.slice(0, 4)}****: ${send.error}`);
+      // Invalidate OTP so user can retry sooner
+      await consumeEntry(entryId);
+      return { ok: false, error: "Не удалось отправить код. Попробуйте через 30 секунд." };
     }
-  });
 
-  return { ok: true, demoCode: null, cooldownSec };
+    const method: DeliveryMethod = send.method ?? "sms";
+    console.info(`[otp] sent OK via ${method} to ${phone.slice(0, 4)}****`);
+    return { ok: true, demoCode: null, cooldownSec, method };
+  } catch (e) {
+    console.error("[otp] send exception:", e);
+    await consumeEntry(entryId).catch(() => {});
+    return { ok: false, error: "Ошибка отправки. Попробуйте ещё раз." };
+  }
 }
 
 export type VerifyOutcome =

@@ -5,8 +5,10 @@ import "server-only";
 // Если провайдер не сконфигурирован — выбирается `DemoSmsProvider`, который
 // просто логирует код в server-console (preview-режим).
 
+export type DeliveryMethod = "sms" | "call";
+
 export type SendCodeResult =
-  | { ok: true; providerMessageId?: string }
+  | { ok: true; providerMessageId?: string; method?: DeliveryMethod }
   | { ok: false; error: string; statusCode?: number };
 
 export interface SmsProvider {

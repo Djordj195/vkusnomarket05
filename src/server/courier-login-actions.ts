@@ -7,9 +7,10 @@ import {
   setCourierSession,
 } from "./courier-auth";
 import { sendOtp, verifyAndConsume } from "./sms-auth";
+import type { DeliveryMethod } from "./sms";
 
 export type CourierSendCodeResult =
-  | { ok: true; demoCode: string | null; cooldownSec: number }
+  | { ok: true; demoCode: string | null; cooldownSec: number; method: DeliveryMethod | "demo" }
   | { ok: false; error: string; retryAfterSec?: number };
 
 export async function sendCourierCodeAction(
@@ -22,7 +23,7 @@ export async function sendCourierCodeAction(
   }
   const sent = await sendOtp(phone, "courier_login");
   if (!sent.ok) return { ok: false, error: sent.error, retryAfterSec: sent.retryAfterSec };
-  return { ok: true, demoCode: sent.demoCode, cooldownSec: sent.cooldownSec };
+  return { ok: true, demoCode: sent.demoCode, cooldownSec: sent.cooldownSec, method: sent.method };
 }
 
 export type CourierVerifyResult =

@@ -70,7 +70,7 @@ async function send(phone: string, message: string): Promise<SendCodeResult> {
         error: `SMSC error ${json.error_code ?? "?"}: ${json.error}`,
       };
     }
-    return { ok: true, providerMessageId: json.id ? String(json.id) : undefined };
+    return { ok: true, providerMessageId: json.id ? String(json.id) : undefined, method: "sms" as const };
   } catch (e) {
     return {
       ok: false,
