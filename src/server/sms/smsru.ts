@@ -118,7 +118,7 @@ async function doSend(
     return { ok: false, error: msg, statusCode: code };
   }
 
-  return { ok: true, providerMessageId: firstSms?.sms_id };
+  return { ok: true, providerMessageId: firstSms?.sms_id, method: "sms" as const };
 }
 
 async function doCallSend(phone: string, code: string): Promise<SendCodeResult> {
@@ -156,7 +156,7 @@ async function doCallSend(phone: string, code: string): Promise<SendCodeResult> 
     return { ok: false, error: msg, statusCode: sc };
   }
 
-  return { ok: true };
+  return { ok: true, method: "call" as const };
 }
 
 async function withRetry(
@@ -189,36 +189,41 @@ async function send(phone: string, message: string, code?: string): Promise<Send
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
-  // Step 1: SMS with sender (if configured)
+  // Для OTP-кодов: голосовой звонок ПЕРВЫЙ (надёжнее SMS на русских операторах).
+  // SMS.ru code/call — стандарт для OTP (используют Яндекс, Сбер, VK).
+  // Для обычных текстов: SMS как обычно.
+  if (code) {
+    // Step 1: Voice call (primary for OTP)
+    console.info(`[sms.ru] step1: trying voice call (code/call) — primary for OTP`);
+    const callResult = await withRetry(() => doCallSend(phone, code), 2);
+    if (callResult.ok) {
+      console.info(`[sms.ru] step1 OK: voice call initiated`);
+      return callResult;
+    }
+    console.warn(`[sms.ru] step1 (call) failed: ${callResult.error} (code=${callResult.statusCode})`);
+
+    // Step 2: Fallback to SMS (if call failed)
+    console.info(`[sms.ru] step2: fallback to SMS`);
+    const smsResult = await withRetry(() => doSend(phone, message), 1);
+    if (smsResult.ok) {
+      console.info(`[sms.ru] step2 OK: sms_id=${smsResult.providerMessageId}`);
+      return smsResult;
+    }
+    console.error(`[sms.ru] step2 (sms) also failed: ${smsResult.error}`);
+    // Return the call error since it's the primary method
+    return { ok: false, error: callResult.error, statusCode: callResult.statusCode };
+  }
+
+  // For plain text messages (not OTP): use SMS
   if (env.sender) {
+    console.info(`[sms.ru] text-send: trying SMS with sender="${env.sender}"`);
     const result = await withRetry(() => doSend(phone, message, env.sender), 1);
     if (result.ok) return result;
-    // If sender not approved (204), continue to next step
-    if (result.statusCode !== 204) {
-      console.warn(`[sms.ru] SMS with sender failed: ${result.error}`);
-    }
+    console.warn(`[sms.ru] text-send with sender failed: ${result.error}`);
   }
 
-  // Step 2: SMS without sender
-  const smsResult = await withRetry(() => doSend(phone, message), 1);
-  if (smsResult.ok) return smsResult;
-
-  // Step 3: Voice call fallback (only if we have the code)
-  if (code && smsResult.statusCode === 204) {
-    console.info("[sms.ru] SMS sender not approved, falling back to voice call");
-    const callResult = await withRetry(() => doCallSend(phone, code), 2);
-    if (callResult.ok) return callResult;
-    return callResult;
-  }
-
-  // Step 3b: Voice call for any SMS failure (general fallback)
-  if (code) {
-    console.info("[sms.ru] SMS failed, trying voice call as last resort");
-    const callResult = await withRetry(() => doCallSend(phone, code), 2);
-    return callResult;
-  }
-
-  return smsResult;
+  console.info(`[sms.ru] text-send: trying SMS without sender`);
+  return withRetry(() => doSend(phone, message), 1);
 }
 
 export class SmsruProvider implements SmsProvider {

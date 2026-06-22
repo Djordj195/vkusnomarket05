@@ -25,6 +25,7 @@ export function CourierLoginForm() {
   const [demoCode, setDemoCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [cooldownSec, setCooldownSec] = useState(60);
+  const [method, setMethod] = useState<"sms" | "call" | "demo">("sms");
 
   const onSendCode = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -45,6 +46,7 @@ export function CourierLoginForm() {
       }
       setDemoCode(res.demoCode);
       setCooldownSec(res.cooldownSec);
+      setMethod(res.method);
       setStep("code");
       setError(null);
     } finally {
@@ -86,6 +88,7 @@ export function CourierLoginForm() {
       }
       setDemoCode(res.demoCode);
       setCooldownSec(res.cooldownSec);
+      setMethod(res.method);
       setError(null);
     } finally {
       setLoading(false);
@@ -179,6 +182,7 @@ export function CourierLoginForm() {
       phone={phone}
       demoCode={demoCode}
       cooldownSec={cooldownSec}
+      method={method}
       error={error}
       loading={loading}
       onVerify={onVerify}

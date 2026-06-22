@@ -4,8 +4,10 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
+type DeliveryMethod = "sms" | "call" | "demo";
+
 type OtpStatus =
-  | "sent"       // код отправляется (SMS в фоне)
+  | "sent"       // код отправляется
   | "waiting"    // ждём ввода кода
   | "delayed"    // SMS задерживается (>30 сек)
   | "verifying"  // проверяем код
@@ -15,6 +17,7 @@ type Props = {
   phone: string;
   demoCode: string | null;
   cooldownSec: number;
+  method?: DeliveryMethod;
   error: string | null;
   loading: boolean;
   onVerify: (code: string) => void;
@@ -27,6 +30,7 @@ export function OtpCodeStep({
   phone,
   demoCode,
   cooldownSec,
+  method,
   error,
   loading,
   onVerify,
@@ -53,7 +57,7 @@ export function OtpCodeStep({
   const status: OtpStatus = useMemo(() => {
     if (error) return "error";
     if (loading) return "verifying";
-    if (elapsedSec < 5) return "sent";
+    if (elapsedSec < 3) return "sent";
     if (elapsedSec < 30) return "waiting";
     return "delayed";
   }, [error, loading, elapsedSec]);
@@ -78,6 +82,8 @@ export function OtpCodeStep({
     if (code.length >= 4) onVerify(code);
   }, [code, onVerify]);
 
+  const isCall = method === "call";
+
   const statusBanner = (() => {
     switch (status) {
       case "sent":
@@ -85,11 +91,13 @@ export function OtpCodeStep({
           <div className="rounded-xl bg-brand-50 p-3 text-[13px] text-brand-800">
             <div className="flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full bg-brand-500 animate-pulse" />
-              <span>Отправляем код на <strong>{phone}</strong>...</span>
+              <span>
+                {isCall
+                  ? <>Звоним на <strong>{phone}</strong>...</>
+                  : <>Отправляем код на <strong>{phone}</strong>...</>
+                }
+              </span>
             </div>
-            <p className="mt-1 text-[12px] text-brand-700/80">
-              Код придёт по SMS или звонком.
-            </p>
           </div>
         );
       case "waiting":
@@ -97,10 +105,18 @@ export function OtpCodeStep({
           <div className="rounded-xl bg-brand-50 p-3 text-[13px] text-brand-800">
             <div className="flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-              <span>Код отправлен на <strong>{phone}</strong></span>
+              <span>
+                {isCall
+                  ? <>Вам звонит робот на <strong>{phone}</strong></>
+                  : <>Код отправлен на <strong>{phone}</strong></>
+                }
+              </span>
             </div>
             <p className="mt-1 text-[12px] text-brand-700/80">
-              Проверьте SMS. Если не пришла — ожидайте звонок.
+              {isCall
+                ? "Ответьте на звонок — робот продиктует 4-значный код."
+                : "Проверьте SMS. Введите код из сообщения."
+              }
             </p>
           </div>
         );
@@ -109,10 +125,18 @@ export function OtpCodeStep({
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
             <div className="flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
-              <span>SMS задерживается</span>
+              <span>
+                {isCall
+                  ? "Звонок задерживается"
+                  : "SMS задерживается"
+                }
+              </span>
             </div>
             <p className="mt-1 text-[12px] text-amber-800/80">
-              Возможно, SMS или звонок ещё в пути. Подождите или отправьте код повторно.
+              {isCall
+                ? "Если звонок не поступил — отправьте код повторно."
+                : "Если SMS не пришла — отправьте код повторно."
+              }
             </p>
           </div>
         );
@@ -144,8 +168,8 @@ export function OtpCodeStep({
       )}
 
       <Input
-        label="Код подтверждения"
-        placeholder="••••••"
+        label={isCall ? "Код из звонка" : "Код подтверждения"}
+        placeholder={isCall ? "••••" : "••••••"}
         inputMode="numeric"
         value={code}
         onChange={(e) =>

@@ -2,9 +2,10 @@
 
 import { sendOtp, verifyAndConsume } from "./sms-auth";
 import { logConsent } from "./consent-store";
+import type { DeliveryMethod } from "./sms";
 
 export type ClientSendResult =
-  | { ok: true; demoCode: string | null; cooldownSec: number }
+  | { ok: true; demoCode: string | null; cooldownSec: number; method: DeliveryMethod | "demo" }
   | { ok: false; error: string; retryAfterSec?: number };
 
 export async function sendClientCodeAction(
@@ -17,7 +18,7 @@ export async function sendClientCodeAction(
   }
   const sent = await sendOtp(phone, "client_login");
   if (!sent.ok) return { ok: false, error: sent.error, retryAfterSec: sent.retryAfterSec };
-  return { ok: true, demoCode: sent.demoCode, cooldownSec: sent.cooldownSec };
+  return { ok: true, demoCode: sent.demoCode, cooldownSec: sent.cooldownSec, method: sent.method };
 }
 
 export type ClientVerifyResult =

@@ -132,18 +132,30 @@ export async function lastSentAt(
   phone: string,
   purpose: SmsPurpose
 ): Promise<Date | null> {
+  // Не считаем записи, которые были consumed менее чем через 10 секунд
+  // после создания — это значит отправка провалилась и entry был инвалидирован.
+  const FAIL_THRESHOLD_MS = 10_000;
+
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
     const { data, error } = await sb
       .from("otp_codes")
-      .select("created_at")
+      .select("created_at,consumed_at")
       .eq("phone", phone)
       .eq("purpose", purpose)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error || !data) return null;
-    return new Date((data as { created_at: string }).created_at);
+      .limit(5);
+    if (error || !data || data.length === 0) return null;
+    // Find the most recent entry that wasn't immediately consumed (failed send)
+    for (const row of data as { created_at: string; consumed_at: string | null }[]) {
+      if (!row.consumed_at) return new Date(row.created_at);
+      const created = new Date(row.created_at).getTime();
+      const consumed = new Date(row.consumed_at).getTime();
+      if (consumed - created > FAIL_THRESHOLD_MS) {
+        return new Date(row.created_at);
+      }
+    }
+    return null;
   }
   const list = memory()
     .codes.filter((c) => c.phone === phone && c.purpose === purpose)
@@ -151,7 +163,15 @@ export async function lastSentAt(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-  return list[0] ? new Date(list[0].createdAt) : null;
+  for (const entry of list) {
+    if (!entry.consumedAt) return new Date(entry.createdAt);
+    const created = new Date(entry.createdAt).getTime();
+    const consumed = new Date(entry.consumedAt).getTime();
+    if (consumed - created > FAIL_THRESHOLD_MS) {
+      return new Date(entry.createdAt);
+    }
+  }
+  return null;
 }
 
 export async function generateAndStore(
