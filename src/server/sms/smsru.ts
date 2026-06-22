@@ -4,10 +4,12 @@ import { buildSmsText } from "./types";
 
 // SMS.ru — провайдер SMS с голосовым fallback.
 //
-// Стратегия отправки (с exponential backoff):
-//  1. SMS с sender name (если задан)
-//  2. SMS без sender name
-//  3. Голосовой звонок (code/call) — не требует одобренного отправителя
+// Стратегия отправки OTP (с exponential backoff):
+//  1. SMS без sender name (лучшая доставляемость — операторы не фильтруют)
+//  2. Голосовой звонок (code/call) — fallback если SMS не прошёл
+//
+// Для OTP никогда не используем sender name — это частая причина
+// блокировки на стороне операторов (МегаФон, Теле2).
 //
 // Retry: до 2 повторов на каждый шаг при транзиентных ошибках.
 // Backoff: 500ms → 1000ms.
@@ -94,7 +96,7 @@ async function doSend(
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
     cache: "no-store",
-    signal: AbortSignal.timeout(6000),
+    signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) {
     console.error(`[sms.ru] HTTP ${res.status}`);
@@ -189,32 +191,31 @@ async function send(phone: string, message: string, code?: string): Promise<Send
   const env = readEnv();
   if (!env) return { ok: false, error: "SMS.ru не сконфигурирован." };
 
-  // Для OTP-кодов: голосовой звонок ПЕРВЫЙ (надёжнее SMS на русских операторах).
-  // SMS.ru code/call — стандарт для OTP (используют Яндекс, Сбер, VK).
-  // Для обычных текстов: SMS как обычно.
+  // Для OTP-кодов: SMS ПЕРВЫЙ, голосовой звонок — только если SMS не прошёл.
+  // Для OTP НЕ используем sender name — это частая причина фильтрации на операторах.
   if (code) {
-    // Step 1: Voice call (primary for OTP)
-    console.info(`[sms.ru] step1: trying voice call (code/call) — primary for OTP`);
-    const callResult = await withRetry(() => doCallSend(phone, code), 2);
-    if (callResult.ok) {
-      console.info(`[sms.ru] step1 OK: voice call initiated`);
-      return callResult;
-    }
-    console.warn(`[sms.ru] step1 (call) failed: ${callResult.error} (code=${callResult.statusCode})`);
-
-    // Step 2: Fallback to SMS (if call failed)
-    console.info(`[sms.ru] step2: fallback to SMS`);
-    const smsResult = await withRetry(() => doSend(phone, message), 1);
+    // Step 1: SMS без sender name (надёжнее для OTP — операторы не фильтруют)
+    console.info(`[sms.ru] step1: sending OTP via SMS (no sender — best deliverability)`);
+    const smsResult = await withRetry(() => doSend(phone, message), 2);
     if (smsResult.ok) {
-      console.info(`[sms.ru] step2 OK: sms_id=${smsResult.providerMessageId}`);
+      console.info(`[sms.ru] step1 OK: sms_id=${smsResult.providerMessageId}`);
       return smsResult;
     }
-    console.error(`[sms.ru] step2 (sms) also failed: ${smsResult.error}`);
-    // Return the call error since it's the primary method
-    return { ok: false, error: callResult.error, statusCode: callResult.statusCode };
+    console.warn(`[sms.ru] step1 (sms) failed: ${smsResult.error} (code=${smsResult.statusCode})`);
+
+    // Step 2: Голосовой звонок (fallback если SMS не доставляется)
+    console.info(`[sms.ru] step2: fallback to voice call (code/call)`);
+    const callResult = await withRetry(() => doCallSend(phone, code), 2);
+    if (callResult.ok) {
+      console.info(`[sms.ru] step2 OK: voice call initiated`);
+      return callResult;
+    }
+    console.error(`[sms.ru] step2 (call) also failed: ${callResult.error}`);
+    // Return SMS error since it's the primary method
+    return { ok: false, error: smsResult.error, statusCode: smsResult.statusCode };
   }
 
-  // For plain text messages (not OTP): use SMS
+  // For plain text messages (not OTP): use SMS with sender if available
   if (env.sender) {
     console.info(`[sms.ru] text-send: trying SMS with sender="${env.sender}"`);
     const result = await withRetry(() => doSend(phone, message, env.sender), 1);
