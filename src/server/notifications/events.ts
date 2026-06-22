@@ -10,7 +10,7 @@ import { notify } from "./dispatcher";
 // продакшен-flow не валится из-за уведомлений.
 
 function siteBase(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://vkusmarket.ru";
+  return process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "https://vkusnomarket05.vercel.app";
 }
 
 /**
