@@ -28,7 +28,7 @@ export function readVapidEnv(): VapidEnv | null {
     privateKey: priv,
     subject:
       process.env.VAPID_SUBJECT ||
-      `mailto:support@${process.env.NEXT_PUBLIC_SITE_URL ?? "vkusmarket.ru"}`,
+      `mailto:support@${process.env.NEXT_PUBLIC_SITE_URL ?? "vkusnomarket05.vercel.app"}`,
   };
 }
 

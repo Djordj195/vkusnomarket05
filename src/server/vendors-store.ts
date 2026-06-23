@@ -165,31 +165,32 @@ export async function getVendorByContactPhone(
 
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
-    const { data, error } = await sb
-      .from("vendors")
-      .select(VENDOR_COLS)
-      .eq("contact_phone", phone)
-      .maybeSingle();
-    if (error && !isMissingTableError(error)) {
-      throw new Error(`getVendorByContactPhone: ${error.message}`);
-    }
-    if (data) return rowToVendor(data as VendorRow);
-
-    // Try normalized forms: +7XXXXXXXXXX, 7XXXXXXXXXX, 8XXXXXXXXXX
-    const variants = [
-      `+7${normalized.slice(1)}`,
+    // Try all possible stored formats: digits-only, +7..., 8..., formatted
+    const variants = new Set([
       normalized,
+      phone,
+      `+7${normalized.slice(1)}`,
       `8${normalized.slice(1)}`,
-    ];
+    ]);
     for (const variant of variants) {
-      if (variant === phone) continue;
-      const { data: d2, error: e2 } = await sb
+      const { data, error } = await sb
         .from("vendors")
         .select(VENDOR_COLS)
         .eq("contact_phone", variant)
         .maybeSingle();
-      if (e2 && !isMissingTableError(e2)) continue;
-      if (d2) return rowToVendor(d2 as VendorRow);
+      if (error && !isMissingTableError(error)) continue;
+      if (data) return rowToVendor(data as VendorRow);
+    }
+    // Fallback: search by digits suffix using ilike
+    const last10 = normalized.slice(-10);
+    if (last10.length === 10) {
+      const { data, error } = await sb
+        .from("vendors")
+        .select(VENDOR_COLS)
+        .ilike("contact_phone", `%${last10.slice(0, 3)}%${last10.slice(3, 6)}%${last10.slice(6)}`)
+        .limit(1)
+        .maybeSingle();
+      if (!error && data) return rowToVendor(data as VendorRow);
     }
     return undefined;
   }
@@ -251,7 +252,7 @@ export async function createVendorApplication(
     legal_address: input.legalAddress ?? null,
     license_number: input.licenseNumber ?? null,
     license_expires_at: input.licenseExpiresAt ?? null,
-    contact_phone: input.contactPhone ?? null,
+    contact_phone: input.contactPhone ? input.contactPhone.replace(/\D/g, "") : null,
     contact_email: input.contactEmail ?? null,
     contact_telegram: input.contactTelegram ?? null,
     contact_whatsapp: input.contactWhatsapp ?? null,
@@ -353,14 +354,10 @@ export async function updateVendorContacts(
     throw new Error("updateVendorContacts: Supabase не настроен.");
   }
   const row: Record<string, unknown> = {};
-  if (patch.phone !== undefined || patch.email !== undefined || patch.telegram !== undefined || patch.whatsapp !== undefined) {
-    row.contacts = {
-      ...(patch.phone !== undefined && { phone: patch.phone }),
-      ...(patch.email !== undefined && { email: patch.email }),
-      ...(patch.telegram !== undefined && { telegram: patch.telegram }),
-      ...(patch.whatsapp !== undefined && { whatsapp: patch.whatsapp }),
-    };
-  }
+  if (patch.phone !== undefined) row.contact_phone = patch.phone.replace(/\D/g, "") || null;
+  if (patch.email !== undefined) row.contact_email = patch.email || null;
+  if (patch.telegram !== undefined) row.contact_telegram = patch.telegram || null;
+  if (patch.whatsapp !== undefined) row.contact_whatsapp = patch.whatsapp || null;
   if (patch.legalEntityType !== undefined) row.legal_entity_type = patch.legalEntityType;
   if (patch.legalName !== undefined) row.legal_name = patch.legalName;
   if (patch.inn !== undefined) row.inn = patch.inn;

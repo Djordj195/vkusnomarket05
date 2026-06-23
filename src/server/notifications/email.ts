@@ -27,7 +27,7 @@ function readFrom(): string {
   return (
     process.env.EMAIL_FROM ||
     `ВкусМаркет <noreply@${
-      (process.env.NEXT_PUBLIC_SITE_URL ?? "vkusmarket.ru").replace(
+      (process.env.NEXT_PUBLIC_SITE_URL ?? "vkusnomarket05.vercel.app").replace(
         /^https?:\/\//,
         ""
       )

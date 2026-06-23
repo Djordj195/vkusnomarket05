@@ -29,7 +29,7 @@ export default async function CategoryPage({ params }: PageProps) {
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const products = await getProductsByCategory(category.id);
+  const products = await getProductsByCategory(category.id, { buyerFacing: true });
 
   return (
     <PageShell>
