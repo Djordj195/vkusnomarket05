@@ -18,8 +18,10 @@ import {
   yooCreatePayment,
   yooCreateRefund,
   yooGetPayment,
+  yooMethodType,
 } from "./yookassa";
 import type {
+  OnlinePaymentMethod,
   Payment,
   PaymentProvider,
   PaymentStatus,
@@ -28,6 +30,34 @@ import {
   notifyPaymentRefunded,
   notifyPaymentSucceeded,
 } from "../notifications/events";
+
+// Причина отмены платежа из ЮKassa cancellation_details → человекочитаемо.
+function cancellationFrom(data: {
+  cancellation_details?: { party?: string; reason?: string };
+}): { errorCode: string | null; errorMessage: string | null } {
+  const reason = data.cancellation_details?.reason ?? null;
+  return { errorCode: reason, errorMessage: reason };
+}
+
+// Извлекает причину отмены из произвольного raw: это может быть объект
+// платежа ЮKassa (cancellation_details на верхнем уровне) или webhook-
+// payload (cancellation_details внутри .object).
+function cancellationFromRaw(
+  raw: unknown
+): { errorCode: string | null; errorMessage: string | null } {
+  if (!raw || typeof raw !== "object") {
+    return { errorCode: null, errorMessage: null };
+  }
+  const top = raw as {
+    cancellation_details?: { reason?: string };
+    object?: { cancellation_details?: { reason?: string } };
+  };
+  const reason =
+    top.cancellation_details?.reason ??
+    top.object?.cancellation_details?.reason ??
+    null;
+  return { errorCode: reason, errorMessage: reason };
+}
 
 function newPaymentId(): string {
   return `pmt-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -57,7 +87,7 @@ export async function createPaymentForCheckoutGroup(input: {
   checkoutGroupId: string;
   customerPhone?: string;
   customerEmail?: string;
-  paymentMethodType?: "bank_card" | "sbp";
+  method?: OnlinePaymentMethod;
 }): Promise<
   | { ok: true; payment: Payment; demo: boolean }
   | { ok: false; error: string }
@@ -112,8 +142,9 @@ export async function createPaymentForCheckoutGroup(input: {
       metadata: {
         checkout_group_id: input.checkoutGroupId,
         payment_id: paymentId,
+        ...(input.method ? { method: input.method } : {}),
       },
-      paymentMethodType: input.paymentMethodType,
+      paymentMethodType: yooMethodType(input.method),
     });
     if (!res.ok) {
       await logAudit({
@@ -136,12 +167,14 @@ export async function createPaymentForCheckoutGroup(input: {
             ? "waiting_for_capture"
             : "pending";
 
+    const cancel = cancellationFrom(res.data);
     const payment: Payment = {
       id: paymentId,
       checkoutGroupId: input.checkoutGroupId,
       amountKop,
       currency: res.data.amount.currency || "RUB",
       provider: "yookassa" as PaymentProvider,
+      method: input.method ?? null,
       providerPaymentId: res.data.id,
       status,
       idempotencyKey,
@@ -151,6 +184,8 @@ export async function createPaymentForCheckoutGroup(input: {
       receipt,
       refundedKop: 0,
       refunds: [],
+      errorCode: status === "canceled" ? cancel.errorCode : null,
+      errorMessage: status === "canceled" ? cancel.errorMessage : null,
       createdAt: now,
       updatedAt: now,
     };
@@ -183,6 +218,7 @@ export async function createPaymentForCheckoutGroup(input: {
     amountKop,
     currency: "RUB",
     provider: "yookassa",
+    method: input.method ?? null,
     providerPaymentId: `demo-${paymentId}`,
     status: "pending",
     idempotencyKey,
@@ -192,6 +228,8 @@ export async function createPaymentForCheckoutGroup(input: {
     receipt,
     refundedKop: 0,
     refunds: [],
+    errorCode: null,
+    errorMessage: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -231,7 +269,10 @@ export async function applyPaymentStatus(
   raw?: unknown
 ): Promise<Payment | undefined> {
   const prev = await getPaymentById(paymentId);
-  const updated = await updatePaymentStatus(paymentId, status, raw);
+  // При отмене сохраняем причину из ЮKassa (cancellation_details.reason).
+  const error =
+    status === "canceled" ? cancellationFromRaw(raw) : undefined;
+  const updated = await updatePaymentStatus(paymentId, status, raw, error);
   if (!updated) return undefined;
   const orders = await listOrdersByCheckoutGroup(updated.checkoutGroupId);
   for (const o of orders) {
@@ -359,6 +400,7 @@ export async function handleYookassaWebhook(payload: {
     status: "pending" | "waiting_for_capture" | "succeeded" | "canceled";
     paid?: boolean;
     metadata?: Record<string, string>;
+    cancellation_details?: { party?: string; reason?: string };
   };
 }): Promise<{ ok: boolean; error?: string }> {
   const providerId = payload.object.id;

@@ -7,12 +7,9 @@ import {
   Check,
   ChevronLeft,
   MapPin,
-  ShieldCheck,
-  Smartphone,
   Store,
   Tag,
   Truck,
-  Wallet,
   X,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -33,6 +30,7 @@ import type {
 import {
   PAYMENT_LABELS,
 } from "@/lib/types";
+import { PaymentMethodPicker } from "@/components/payment/PaymentMethodPicker";
 import {
   cn,
   formatPrice,
@@ -335,14 +333,14 @@ export function CheckoutView({ products, vendors }: Props) {
       }
       clearCart();
 
-      // Phase 8: для card/sbp-оплаты создаём платёж в ЮKassa и редиректим
+      // Phase 8: для онлайн-оплаты создаём платёж в ЮKassa и редиректим
       // клиента на confirmation_url. После оплаты он вернётся на /orders
       // с ?pay=return — там покажется статус.
-      if (payment === "card" || payment === "sbp") {
+      if (payment !== "cash") {
         const pay = await createPaymentForCheckoutGroup({
           checkoutGroupId: result.groupId,
           customerPhone: phone,
-          paymentMethodType: payment === "sbp" ? "sbp" : "bank_card",
+          method: payment,
         });
         if (!pay.ok) {
           setError(`Платёж не создан: ${pay.error}`);
@@ -751,6 +749,22 @@ function DeliveryStep({
   );
 }
 
+function paymentHint(payment: PaymentMethod): string {
+  switch (payment) {
+    case "cash":
+      return "Оплатите заказ наличными курьеру при получении.";
+    case "sbp":
+      return "После подтверждения откроется QR-код или приложение вашего банка. Оплата проходит мгновенно.";
+    case "card":
+      return "После подтверждения вас перенаправит на защищённую страницу ЮKassa для ввода данных карты.";
+    case "mirpay":
+    case "alfapay":
+      return "После подтверждения откроется страница ЮKassa, где можно выбрать нужный способ оплаты.";
+    default:
+      return "После подтверждения вас перенаправит на защищённую страницу ЮKassa для завершения оплаты.";
+  }
+}
+
 function PaymentStep({
   payment,
   setPayment,
@@ -765,32 +779,10 @@ function PaymentStep({
   return (
     <>
       <Section title="Способ оплаты">
-        <div className="space-y-2">
-          <PaymentOption
-            checked={payment === "cash"}
-            onClick={() => setPayment("cash")}
-            label={PAYMENT_LABELS.cash}
-            icon={<Wallet size={20} />}
-          />
-          <PaymentOption
-            checked={payment === "card"}
-            onClick={() => setPayment("card")}
-            label={PAYMENT_LABELS.card}
-            icon={<ShieldCheck size={20} />}
-          />
-          <PaymentOption
-            checked={payment === "sbp"}
-            onClick={() => setPayment("sbp")}
-            label={PAYMENT_LABELS.sbp}
-            icon={<Smartphone size={20} />}
-            subtitle="Мгновенно и без комиссии"
-          />
-        </div>
+        <PaymentMethodPicker value={payment} onChange={setPayment} />
         <p className="text-[11px] text-ink-500">
-          {payment === "sbp"
-            ? "После подтверждения откроется QR-код или приложение вашего банка. Оплата проходит мгновенно."
-            : "После подтверждения вас перенаправит на защищённую страницу ЮKassa для ввода данных карты."}{" "}
-          Чек 54-ФЗ выдаётся автоматически.{" "}
+          {paymentHint(payment)}{" "}
+          {payment !== "cash" && "Чек 54-ФЗ выдаётся автоматически. "}
           <Link href="/legal" className="underline">
             54-ФЗ / реквизиты
           </Link>
@@ -1097,53 +1089,6 @@ function SelectableTile({
       </span>
       <span className="text-[14px] font-bold text-ink-900">{title}</span>
       <span className="text-[11px] text-ink-500">{subtitle}</span>
-    </button>
-  );
-}
-
-function PaymentOption({
-  checked,
-  onClick,
-  label,
-  icon,
-  disabled,
-  subtitle,
-}: {
-  checked: boolean;
-  onClick: () => void;
-  label: string;
-  icon: React.ReactNode;
-  disabled?: boolean;
-  subtitle?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => !disabled && onClick()}
-      disabled={disabled}
-      className={cn(
-        "flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-colors",
-        checked
-          ? "border-brand-500 bg-brand-50"
-          : "border-ink-200 bg-white",
-        disabled && "opacity-60"
-      )}
-    >
-      <span
-        className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-xl",
-          checked ? "bg-brand-500 text-white" : "bg-ink-100 text-ink-700"
-        )}
-      >
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[14px] font-semibold text-ink-900">{label}</span>
-        {subtitle && (
-          <span className="block text-[11px] text-ink-500">{subtitle}</span>
-        )}
-      </span>
-      {checked && <Check size={18} className="text-brand-600" />}
     </button>
   );
 }

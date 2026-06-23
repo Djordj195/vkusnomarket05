@@ -166,13 +166,48 @@ export const ORDER_STATUS_FLOW: OrderStatus[] = [
   "delivered",
 ];
 
-export type PaymentMethod = "cash" | "card" | "sbp";
+export type PaymentMethod =
+  | "cash"
+  | "card"
+  | "sbp"
+  | "sberpay"
+  | "tpay"
+  | "alfapay"
+  | "mirpay"
+  | "yoomoney";
+
+// Онлайн-методы — всё, кроме наличных. Оплата проходит через ЮKassa.
+export type OnlinePaymentMethod = Exclude<PaymentMethod, "cash">;
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   cash: "Наличными курьеру",
-  card: "Картой онлайн (ЮKassa)",
-  sbp: "СБП (Система быстрых платежей)",
+  card: "Банковская карта",
+  sbp: "СБП",
+  sberpay: "SberPay",
+  tpay: "T-Pay",
+  alfapay: "Alfa Pay",
+  mirpay: "Mir Pay",
+  yoomoney: "ЮMoney",
 };
+
+// Все онлайн-методы оплаты в порядке отображения. `primary` — крупные
+// кнопки в чек-ауте; остальные прячутся в блок «Другие способы оплаты».
+export const ONLINE_PAYMENT_METHODS: ReadonlyArray<OnlinePaymentMethod> = [
+  "card",
+  "sbp",
+  "sberpay",
+  "tpay",
+  "alfapay",
+  "mirpay",
+  "yoomoney",
+];
+
+export const PRIMARY_PAYMENT_METHODS: ReadonlyArray<OnlinePaymentMethod> = [
+  "card",
+  "sbp",
+  "sberpay",
+  "tpay",
+];
 
 // Тип доставки заказа. Phase 4 — добавили самовывоз.
 export type DeliveryKind = "delivery" | "pickup";
@@ -306,6 +341,9 @@ export type Payment = {
   amountKop: number;
   currency: string;
   provider: PaymentProvider;
+  // Выбранный пользователем способ оплаты (для онлайн-платежей).
+  // null — для старых записей до миграции 0026.
+  method: OnlinePaymentMethod | null;
   providerPaymentId: string | null;
   status: PaymentStatus;
   idempotencyKey: string | null;
@@ -315,6 +353,9 @@ export type Payment = {
   receipt: PaymentReceipt | null;
   refundedKop: number;
   refunds: PaymentRefund[];
+  // Код/причина ошибки или отмены платежа (из ЮKassa cancellation_details).
+  errorCode: string | null;
+  errorMessage: string | null;
   createdAt: string;
   updatedAt: string;
 };

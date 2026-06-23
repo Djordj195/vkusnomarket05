@@ -1,5 +1,6 @@
 import "server-only";
 import type {
+  OnlinePaymentMethod,
   Payment,
   PaymentProvider,
   PaymentReceipt,
@@ -25,6 +26,7 @@ type PaymentRow = {
   amount_kop: number;
   currency: string;
   provider: PaymentProvider;
+  method: OnlinePaymentMethod | null;
   provider_payment_id: string | null;
   status: PaymentStatus;
   idempotency_key: string | null;
@@ -35,6 +37,8 @@ type PaymentRow = {
   raw: unknown;
   refunded_kop: number;
   refunds: PaymentRefund[];
+  error_code: string | null;
+  error_message: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -46,6 +50,7 @@ function rowToPayment(row: PaymentRow): Payment {
     amountKop: row.amount_kop,
     currency: row.currency,
     provider: row.provider,
+    method: row.method ?? null,
     providerPaymentId: row.provider_payment_id,
     status: row.status,
     idempotencyKey: row.idempotency_key,
@@ -55,6 +60,8 @@ function rowToPayment(row: PaymentRow): Payment {
     receipt: row.receipt,
     refundedKop: row.refunded_kop,
     refunds: row.refunds ?? [],
+    errorCode: row.error_code ?? null,
+    errorMessage: row.error_message ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -67,6 +74,7 @@ function paymentToRow(p: Payment, raw?: unknown): PaymentRow {
     amount_kop: p.amountKop,
     currency: p.currency,
     provider: p.provider,
+    method: p.method,
     provider_payment_id: p.providerPaymentId,
     status: p.status,
     idempotency_key: p.idempotencyKey,
@@ -77,6 +85,8 @@ function paymentToRow(p: Payment, raw?: unknown): PaymentRow {
     raw: raw ?? null,
     refunded_kop: p.refundedKop,
     refunds: p.refunds,
+    error_code: p.errorCode,
+    error_message: p.errorMessage,
     created_at: p.createdAt,
     updated_at: p.updatedAt,
   };
@@ -161,13 +171,16 @@ export async function listPayments(opts?: {
 export async function updatePaymentStatus(
   id: string,
   status: PaymentStatus,
-  raw?: unknown
+  raw?: unknown,
+  error?: { errorCode: string | null; errorMessage: string | null }
 ): Promise<Payment | undefined> {
   const existing = await getPaymentById(id);
   if (!existing) return undefined;
   const updated: Payment = {
     ...existing,
     status,
+    errorCode: error ? error.errorCode : existing.errorCode,
+    errorMessage: error ? error.errorMessage : existing.errorMessage,
     updatedAt: new Date().toISOString(),
   };
   await savePayment(updated, raw);
