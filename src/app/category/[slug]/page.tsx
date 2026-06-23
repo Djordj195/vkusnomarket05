@@ -54,7 +54,7 @@ export default async function CategoryPage({ params }: PageProps) {
           <EmptyState
             icon={Package}
             title="В этой категории пока пусто"
-            description="Добавьте товары через админ-панель."
+            description="Скоро здесь появятся товары от продавцов."
           />
         )}
       </div>
