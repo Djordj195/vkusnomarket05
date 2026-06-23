@@ -21,7 +21,8 @@ export function formatPhone(raw: string): string {
 
 export function maskPhoneInput(raw: string): string {
   const digits = raw.replace(/\D/g, "").slice(0, 11);
-  const d = digits.startsWith("8") ? `7${digits.slice(1)}` : digits;
+  let d = digits.startsWith("8") ? `7${digits.slice(1)}` : digits;
+  if (d.length === 10 && !d.startsWith("7")) d = `7${d}`;
   if (d.length === 0) return "";
   let out = "+7";
   if (d.length > 1) out += ` (${d.slice(1, 4)}`;
@@ -34,7 +35,9 @@ export function maskPhoneInput(raw: string): string {
 
 export function isValidPhone(raw: string): boolean {
   const digits = raw.replace(/\D/g, "");
-  return digits.length === 11 && (digits.startsWith("7") || digits.startsWith("8"));
+  if (digits.length === 11 && (digits.startsWith("7") || digits.startsWith("8"))) return true;
+  if (digits.length === 10 && digits.startsWith("9")) return true;
+  return false;
 }
 
 export function formatDate(iso: string): string {
@@ -45,6 +48,15 @@ export function formatDate(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+export function pluralize(n: number, forms: [string, string, string]): string {
+  const m100 = n % 100;
+  const m10 = n % 10;
+  if (m100 >= 11 && m100 <= 14) return forms[2];
+  if (m10 === 1) return forms[0];
+  if (m10 >= 2 && m10 <= 4) return forms[1];
+  return forms[2];
 }
 
 export function generateOrderNumber(): string {
