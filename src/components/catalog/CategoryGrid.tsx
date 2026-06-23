@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Category } from "@/lib/types";
+import { pluralize } from "@/lib/utils";
 
 function CategoryThumb({ cat, size }: { cat: Category; size: "lg" | "sm" }) {
   const box = size === "lg" ? "h-12 w-12 text-[34px]" : "h-10 w-10 text-[28px]";
@@ -31,7 +32,7 @@ export function CategoryGrid({ items }: { items: Category[] }) {
               {cat.name}
             </h3>
             <p className="mt-0.5 text-[12px] text-ink-500">
-              {cat.itemsCount} товаров
+              {cat.itemsCount} {pluralize(cat.itemsCount, ["товар", "товара", "товаров"])}
             </p>
           </div>
         </Link>
