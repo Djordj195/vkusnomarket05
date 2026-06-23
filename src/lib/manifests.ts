@@ -51,7 +51,7 @@ const CONFIGS: Record<AppRole, ManifestConfig> = {
     shortName: "ВМ Админ",
     description: "Панель управления ВкусМаркет — продавцы, заказы, каталог, аналитика.",
     startUrl: "/admin",
-    scope: "/admin/",
+    scope: "/admin",
     id: "/admin",
     themeColor: "#dc2626",
     backgroundColor: "#ffffff",

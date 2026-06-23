@@ -3,6 +3,10 @@ import type { Metadata, Viewport } from "next";
 export const metadata: Metadata = {
   title: { default: "ВМ Продавец", template: "%s · ВМ Продавец" },
   manifest: "/api/manifest/vendor",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-vendor-apple.png",
+  },
   appleWebApp: {
     capable: true,
     title: "ВМ Продавец",
@@ -20,10 +24,5 @@ export default function VendorRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <link rel="apple-touch-icon" href="/icon-vendor-apple.png" />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }
