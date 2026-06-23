@@ -4,7 +4,7 @@ import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { IOSInstallPrompt } from "@/components/pwa/IOSInstallPrompt";
-import { AppInstallBanner } from "@/components/pwa/AppInstallBanner";
+import { ClientInstallBanner } from "@/components/pwa/ClientInstallBanner";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 
 const inter = Inter({
@@ -100,7 +100,7 @@ export default function RootLayout({
         <div className="mx-auto max-w-md md:max-w-2xl lg:max-w-5xl min-h-screen bg-white shadow-[0_0_60px_rgba(15,17,22,0.06)]">
           {children}
         </div>
-        <AppInstallBanner appName="ВкусМаркет" themeColor="#6f46ff" />
+        <ClientInstallBanner />
         <BottomNav />
         <ServiceWorkerRegister />
         <IOSInstallPrompt />

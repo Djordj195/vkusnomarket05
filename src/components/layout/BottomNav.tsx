@@ -72,7 +72,11 @@ export function BottomNav() {
     [cartItems]
   );
 
-  if (pathname.startsWith("/admin")) return null;
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/vendor") ||
+    pathname.startsWith("/courier")
+  ) return null;
 
   return (
     <nav

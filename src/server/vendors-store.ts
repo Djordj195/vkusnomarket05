@@ -165,13 +165,19 @@ export async function getVendorByContactPhone(
 
   if (isSupabaseConfigured()) {
     const sb = getSupabaseAdmin()!;
-    // Try all possible stored formats: digits-only, +7..., 8..., formatted
+    // Try all possible stored formats: digits-only, +7..., 8..., +7 (XXX) XXX-XX-XX
     const variants = new Set([
       normalized,
       phone,
       `+7${normalized.slice(1)}`,
       `8${normalized.slice(1)}`,
     ]);
+    // Add common formatted variant: +7 (XXX) XXX-XX-XX
+    if (normalized.length === 11) {
+      const d = normalized;
+      variants.add(`+7 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7, 9)}-${d.slice(9, 11)}`);
+      variants.add(`+7(${d.slice(1, 4)})${d.slice(4, 7)}-${d.slice(7, 9)}-${d.slice(9, 11)}`);
+    }
     for (const variant of variants) {
       const { data, error } = await sb
         .from("vendors")
@@ -181,13 +187,14 @@ export async function getVendorByContactPhone(
       if (error && !isMissingTableError(error)) continue;
       if (data) return rowToVendor(data as VendorRow);
     }
-    // Fallback: search by digits suffix using ilike
+    // Fallback: search using individual digits with % wildcards between each
     const last10 = normalized.slice(-10);
     if (last10.length === 10) {
+      const pattern = "%" + last10.split("").join("%") + "%";
       const { data, error } = await sb
         .from("vendors")
         .select(VENDOR_COLS)
-        .ilike("contact_phone", `%${last10.slice(0, 3)}%${last10.slice(3, 6)}%${last10.slice(6)}`)
+        .ilike("contact_phone", pattern)
         .limit(1)
         .maybeSingle();
       if (!error && data) return rowToVendor(data as VendorRow);
