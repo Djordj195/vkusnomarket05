@@ -90,12 +90,17 @@ export async function createOrder(
   }
 
   // Группируем позиции по vendorId, попутно резолвя каждую через store.
-  // Пропускаем товары, которые были удалены или не найдены в БД.
+  // Пропускаем товары, которые были удалены, сняты с продажи или не найдены.
+  const unavailable: string[] = [];
   const buckets = new Map<string, OrderItem[]>();
   for (const it of input.items) {
     if (it.quantity <= 0) continue;
     const product = await getProductById(it.productId);
     if (!product) continue;
+    if (!product.inStock) {
+      unavailable.push(product.name);
+      continue;
+    }
     const key = product.vendorId ?? "__unknown__";
     const bucket = buckets.get(key) ?? [];
     bucket.push({
@@ -110,6 +115,9 @@ export async function createOrder(
   }
 
   if (buckets.size === 0) {
+    if (unavailable.length > 0) {
+      return { ok: false, error: `Товары не в наличии: ${unavailable.join(", ")}. Обновите корзину.` };
+    }
     return { ok: false, error: "Корзина пуста." };
   }
 
