@@ -22,6 +22,10 @@ export const metadata: Metadata = {
     "Всё что вы любите. Быстро. Рядом. Доставка продуктов и готовой еды по всей России.",
   applicationName: APP_NAME,
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     title: APP_NAME,
@@ -59,7 +63,6 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} h-full antialiased`}>
       <head>
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-status-bar-style"

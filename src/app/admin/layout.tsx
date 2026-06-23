@@ -3,6 +3,10 @@ import type { Metadata, Viewport } from "next";
 export const metadata: Metadata = {
   title: { default: "ВМ Админ", template: "%s · ВМ Админ" },
   manifest: "/api/manifest/admin",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-admin-apple.png",
+  },
   robots: { index: false, follow: false },
   appleWebApp: {
     capable: true,
@@ -21,10 +25,5 @@ export default function AdminRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <link rel="apple-touch-icon" href="/icon-admin-apple.png" />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

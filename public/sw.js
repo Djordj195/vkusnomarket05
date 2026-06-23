@@ -1,13 +1,19 @@
 // Main Service Worker — handles offline caching + push notifications.
 // Combines asset caching for PWA install (iOS/Android) with push events.
 
-const CACHE_NAME = "vkusmarket-v3";
+const CACHE_NAME = "vkusmarket-v4";
 const OFFLINE_URL = "/offline";
 
 // Precache app shell (only icons — no HTML pages to avoid stale cache on iOS)
 const PRECACHE_URLS = [
   "/icon-192.png",
   "/icon-512.png",
+  "/icon-vendor-192.png",
+  "/icon-vendor-512.png",
+  "/icon-courier-192.png",
+  "/icon-courier-512.png",
+  "/icon-admin-192.png",
+  "/icon-admin-512.png",
 ];
 
 self.addEventListener("install", (event) => {

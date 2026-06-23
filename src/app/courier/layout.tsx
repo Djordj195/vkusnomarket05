@@ -3,6 +3,10 @@ import type { Metadata, Viewport } from "next";
 export const metadata: Metadata = {
   title: { default: "ВМ Курьер", template: "%s · ВМ Курьер" },
   manifest: "/api/manifest/courier",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-courier-apple.png",
+  },
   appleWebApp: {
     capable: true,
     title: "ВМ Курьер",
@@ -20,10 +24,5 @@ export default function CourierRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <link rel="apple-touch-icon" href="/icon-courier-apple.png" />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }
