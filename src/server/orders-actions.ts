@@ -184,7 +184,7 @@ export async function createOrder(
       deliveryKind,
       desiredAt: input.desiredAt ?? undefined,
       checkoutGroupId: groupId,
-      paymentStatus: input.payment === "card" ? "pending" : undefined,
+      paymentStatus: input.payment === "cash" ? undefined : "pending",
       discountTotal: discountTotal > 0 ? discountTotal : undefined,
       promoCodeId: promoCodeApplied && discountTotal > 0 ? promoCodeApplied.id : undefined,
       promoCode: promoCodeApplied && discountTotal > 0 ? promoCodeApplied.code : undefined,

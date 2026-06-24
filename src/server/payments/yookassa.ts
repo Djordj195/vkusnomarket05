@@ -1,5 +1,5 @@
 import "server-only";
-import type { PaymentReceipt } from "@/lib/types";
+import type { OnlinePaymentMethod, PaymentReceipt } from "@/lib/types";
 
 // Phase 8: ЮKassa HTTP-клиент.
 //
@@ -61,6 +61,37 @@ function kopToAmountString(kop: number): string {
   return `${rub}.${cents.toString().padStart(2, "0")}`;
 }
 
+// Значения `payment_method_data.type`, поддерживаемые ЮKassa, на которые
+// мы маппим методы приложения. Для методов без явного типа (Mir Pay,
+// Alfa Pay) поле не передаётся — клиент выбирает способ на странице ЮKassa.
+// BNPL/кредитные типы (sber_loan, installments) намеренно НЕ используются.
+export type YooPaymentMethodType =
+  | "bank_card"
+  | "sbp"
+  | "sberbank"
+  | "tinkoff_bank"
+  | "yoo_money";
+
+const APP_METHOD_TO_YOO: Partial<
+  Record<OnlinePaymentMethod, YooPaymentMethodType>
+> = {
+  card: "bank_card",
+  sbp: "sbp",
+  sberpay: "sberbank",
+  tpay: "tinkoff_bank",
+  yoomoney: "yoo_money",
+  // mirpay / alfapay — нет выделенного типа в API ЮKassa: ведём на
+  // стандартную платёжную страницу, где способ выбирается клиентом.
+};
+
+/** Маппинг метода приложения в `payment_method_data.type` ЮKassa. */
+export function yooMethodType(
+  method: OnlinePaymentMethod | null | undefined
+): YooPaymentMethodType | undefined {
+  if (!method) return undefined;
+  return APP_METHOD_TO_YOO[method];
+}
+
 export type YooCreatePaymentInput = {
   amountKop: number;
   currency?: string;
@@ -69,8 +100,8 @@ export type YooCreatePaymentInput = {
   returnUrl?: string;
   receipt?: PaymentReceipt;
   metadata?: Record<string, string>;
-  /** Способ оплаты: "bank_card" (default) | "sbp". */
-  paymentMethodType?: "bank_card" | "sbp";
+  /** Тип способа оплаты ЮKassa. Если не задан — выбор на стороне ЮKassa. */
+  paymentMethodType?: YooPaymentMethodType;
 };
 
 // Минимально-достаточный тип ответа ЮKassa, который мы используем
@@ -85,10 +116,12 @@ export type YooPaymentResponse = {
   paid: boolean;
   amount: { value: string; currency: string };
   description?: string;
+  payment_method?: { type?: string };
   confirmation?: {
     type: "redirect" | "embedded";
     confirmation_url?: string;
   };
+  cancellation_details?: { party?: string; reason?: string };
   test?: boolean;
   refunded_amount?: { value: string; currency: string };
 };

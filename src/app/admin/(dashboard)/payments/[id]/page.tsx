@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { getPaymentById } from "@/server/payments/payments-store";
 import { listOrdersByCheckoutGroup } from "@/server/orders-store";
 import {
+  PAYMENT_LABELS,
   PAYMENT_STATUS_LABELS,
   type PaymentStatus,
 } from "@/lib/types";
@@ -66,6 +67,10 @@ export default async function AdminPaymentDetail({
       <section className="rounded-2xl border border-ink-200 bg-white p-4 text-[13px]">
         <Row label="Провайдер" value={payment.provider} />
         <Row
+          label="Способ оплаты"
+          value={payment.method ? PAYMENT_LABELS[payment.method] : "—"}
+        />
+        <Row
           label="ID платежа провайдера"
           value={payment.providerPaymentId ?? "—"}
         />
@@ -92,6 +97,20 @@ export default async function AdminPaymentDetail({
           value={<code>{payment.checkoutGroupId}</code>}
         />
       </section>
+
+      {(payment.errorCode || payment.errorMessage) && (
+        <section className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-[13px]">
+          <h2 className="text-[14px] font-bold text-rose-700">
+            Ошибка / причина отмены
+          </h2>
+          {payment.errorCode && (
+            <Row label="Код" value={<code>{payment.errorCode}</code>} />
+          )}
+          {payment.errorMessage && (
+            <Row label="Сообщение" value={payment.errorMessage} />
+          )}
+        </section>
+      )}
 
       {canRefund && <RefundForm paymentId={payment.id} maxKop={remainingKop} />}
 

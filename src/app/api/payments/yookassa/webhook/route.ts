@@ -51,6 +51,7 @@ export async function POST(req: Request) {
       status: "pending" | "waiting_for_capture" | "succeeded" | "canceled";
       paid?: boolean;
       metadata?: Record<string, string>;
+      cancellation_details?: { party?: string; reason?: string };
     };
   });
   // ЮKassa требует 200 OK на принятые события. На ошибку поиска платежа
