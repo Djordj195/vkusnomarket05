@@ -55,7 +55,7 @@ export async function createCategoryAction(
     });
     revalidatePath("/admin/categories");
     revalidatePath("/admin");
-    revalidatePath("/");
+    revalidatePath("/market");
     return { ok: true, category };
   } catch (e) {
     return {
@@ -88,8 +88,8 @@ export async function updateCategoryAction(
     if (!category) return { ok: false, error: "Категория не найдена" };
     revalidatePath("/admin/categories");
     revalidatePath("/admin");
-    revalidatePath("/");
-    revalidatePath(`/category/${category.slug}`);
+    revalidatePath("/market");
+    revalidatePath(`/market/category/${category.slug}`);
     return { ok: true, category };
   } catch (e) {
     return {
@@ -108,7 +108,7 @@ export async function deleteCategoryAction(id: string): Promise<Result> {
     if (!ok) return { ok: false, error: "Категория не найдена" };
     revalidatePath("/admin/categories");
     revalidatePath("/admin");
-    revalidatePath("/");
+    revalidatePath("/market");
     return { ok: true };
   } catch (e) {
     return {

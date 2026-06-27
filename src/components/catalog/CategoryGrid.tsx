@@ -23,7 +23,7 @@ export function CategoryGrid({ items }: { items: Category[] }) {
       {items.map((cat) => (
         <Link
           key={cat.id}
-          href={`/category/${cat.slug}`}
+          href={`/market/category/${cat.slug}`}
           className="group flex flex-col justify-between rounded-2xl bg-ink-50 p-4 transition hover:bg-ink-100"
         >
           <CategoryThumb cat={cat} size="lg" />
@@ -48,7 +48,7 @@ export function CategoryRail({ items }: { items: Category[] }) {
         {items.map((cat) => (
           <Link
             key={cat.id}
-            href={`/category/${cat.slug}`}
+            href={`/market/category/${cat.slug}`}
             className="flex w-[120px] shrink-0 flex-col items-start rounded-2xl bg-ink-50 p-3 transition hover:bg-ink-100"
           >
             <CategoryThumb cat={cat} size="sm" />

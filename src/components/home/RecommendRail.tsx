@@ -10,25 +10,25 @@ type Story = {
 
 const PROMO_STORIES: Story[] = [
   {
-    href: "/weekly",
+    href: "/market/weekly",
     title: "Скидки недели",
     image:
       "https://images.unsplash.com/photo-1518843875459-f738682238a6?auto=format&fit=crop&w=480&q=70",
   },
   {
-    href: "/section/food",
+    href: "/market/section/food",
     title: "Готовая еда",
     image:
       "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?auto=format&fit=crop&w=480&q=70",
   },
   {
-    href: "/section/market",
+    href: "/market/section/market",
     title: "Свежее с рынка",
     image:
       "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=480&q=70",
   },
   {
-    href: "/shops",
+    href: "/market/shops",
     title: "Лавки и магазины",
     image:
       "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=480&q=70",
@@ -45,7 +45,7 @@ export function RecommendRail({
   const productStories: Story[] = [...weekly, ...popular]
     .slice(0, 8)
     .map((p) => ({
-      href: `/product/${p.slug}`,
+      href: `/market/product/${p.slug}`,
       title: p.name,
       image: p.image,
     }));

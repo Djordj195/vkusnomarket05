@@ -207,8 +207,8 @@ export async function updateVendorStatusAction(
 
   revalidatePath("/admin/vendors");
   revalidatePath(`/admin/vendors/${id}`);
-  revalidatePath("/");
-  revalidatePath("/catalog");
+  revalidatePath("/market");
+  revalidatePath("/market/catalog");
   revalidatePath("/", "layout");
 }
 
@@ -272,8 +272,8 @@ export async function deleteVendorAction(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/admin/vendors");
-  revalidatePath("/");
-  revalidatePath("/catalog");
-  revalidatePath("/weekly");
+  revalidatePath("/market");
+  revalidatePath("/market/catalog");
+  revalidatePath("/market/weekly");
   revalidatePath("/", "layout");
 }

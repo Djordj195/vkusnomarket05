@@ -156,7 +156,7 @@ export async function createTicketAction(
   await notifyTicketCreated(ticket);
 
   revalidatePath("/admin/tickets");
-  revalidatePath("/support/tickets");
+  revalidatePath("/market/support/tickets");
   return { ok: true, ticket };
 }
 
@@ -252,8 +252,8 @@ export async function replyToTicketAction(input: {
 
   revalidatePath("/admin/tickets");
   revalidatePath(`/admin/tickets/${ticket.id}`);
-  revalidatePath("/support/tickets");
-  revalidatePath(`/support/tickets/${ticket.id}`);
+  revalidatePath("/market/support/tickets");
+  revalidatePath(`/market/support/tickets/${ticket.id}`);
   return { ok: true, message };
 }
 
@@ -302,7 +302,7 @@ export async function updateTicketAction(input: {
 
   revalidatePath("/admin/tickets");
   revalidatePath(`/admin/tickets/${ticket.id}`);
-  revalidatePath("/support/tickets");
+  revalidatePath("/market/support/tickets");
   return { ok: true, ticket: updated };
 }
 

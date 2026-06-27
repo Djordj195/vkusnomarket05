@@ -18,7 +18,7 @@ export function SearchBar({
   if (asLink) {
     return (
       <Link
-        href="/search"
+        href="/market/search"
         className="flex h-12 w-full items-center gap-2 rounded-2xl bg-ink-100 px-4 text-[14px] text-ink-500"
       >
         <Search size={18} />
@@ -32,7 +32,7 @@ export function SearchBar({
       onSubmit={(e) => {
         e.preventDefault();
         const q = value.trim();
-        router.push(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
+        router.push(q ? `/market/search?q=${encodeURIComponent(q)}` : "/market/search");
       }}
       className="flex h-12 w-full items-center gap-2 rounded-2xl bg-ink-100 px-4 text-[14px] text-ink-700 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-200"
     >

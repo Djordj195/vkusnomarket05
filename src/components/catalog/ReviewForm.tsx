@@ -29,7 +29,7 @@ export function ReviewForm({ targetType, targetId, targetName }: ReviewFormProps
   if (!user) {
     return (
       <div className="rounded-2xl bg-ink-50 p-4 text-center text-[13px] text-ink-600">
-        <a href="/auth" className="font-semibold text-brand-600 hover:underline">
+        <a href="/market/auth" className="font-semibold text-brand-600 hover:underline">
           Войдите
         </a>{" "}
         по номеру телефона, чтобы оставить отзыв.

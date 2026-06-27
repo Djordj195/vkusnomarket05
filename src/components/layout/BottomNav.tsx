@@ -16,49 +16,49 @@ import { useMounted } from "@/lib/use-mounted";
 
 const items = [
   {
-    href: "/",
+    href: "/market",
     label: "Главная",
     icon: Home,
     match: (p: string) =>
-      p === "/" ||
-      p.startsWith("/catalog") ||
-      p.startsWith("/category") ||
-      p.startsWith("/product") ||
-      p.startsWith("/search") ||
-      p.startsWith("/shop") ||
-      p.startsWith("/weekly") ||
-      p.startsWith("/reviews") ||
-      p.startsWith("/section"),
+      p === "/market" ||
+      p.startsWith("/market/catalog") ||
+      p.startsWith("/market/category") ||
+      p.startsWith("/market/product") ||
+      p.startsWith("/market/search") ||
+      p.startsWith("/market/shop") ||
+      p.startsWith("/market/weekly") ||
+      p.startsWith("/market/reviews") ||
+      p.startsWith("/market/section"),
   },
   {
-    href: "/cart",
+    href: "/market/cart",
     label: "Корзина",
     icon: ShoppingBasket,
     match: (p: string) =>
-      p.startsWith("/cart") ||
-      p.startsWith("/checkout") ||
-      p.startsWith("/favorites"),
+      p.startsWith("/market/cart") ||
+      p.startsWith("/market/checkout") ||
+      p.startsWith("/market/favorites"),
   },
   {
-    href: "/orders",
+    href: "/market/orders",
     label: "Заказы",
     icon: ClipboardList,
-    match: (p: string) => p.startsWith("/orders"),
+    match: (p: string) => p.startsWith("/market/orders"),
   },
   {
-    href: "/support",
+    href: "/market/support",
     label: "Помощь",
     icon: MessageCircle,
-    match: (p: string) => p.startsWith("/support"),
+    match: (p: string) => p.startsWith("/market/support"),
   },
   {
-    href: "/profile",
+    href: "/market/profile",
     label: "Профиль",
     icon: User,
     match: (p: string) =>
-      p.startsWith("/profile") ||
-      p.startsWith("/auth") ||
-      p.startsWith("/feedback"),
+      p.startsWith("/market/profile") ||
+      p.startsWith("/market/auth") ||
+      p.startsWith("/market/feedback"),
   },
 ] as const;
 
@@ -72,11 +72,7 @@ export function BottomNav() {
     [cartItems]
   );
 
-  if (
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/vendor") ||
-    pathname.startsWith("/courier")
-  ) return null;
+  if (!pathname.startsWith("/market")) return null;
 
   return (
     <nav
@@ -89,7 +85,7 @@ export function BottomNav() {
           const active = it.match(pathname);
           const Icon = it.icon;
           const showBadge =
-            it.href === "/cart" && mounted && hydrated && cartCount > 0;
+            it.href === "/market/cart" && mounted && hydrated && cartCount > 0;
           return (
             <li key={it.href} className="flex">
               <Link

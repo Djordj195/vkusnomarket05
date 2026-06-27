@@ -285,7 +285,7 @@ export async function applyPaymentStatus(
   revalidatePath("/admin/orders");
   revalidatePath("/admin/payments");
   revalidatePath("/vendor/dashboard/orders");
-  revalidatePath("/orders");
+  revalidatePath("/market/orders");
   return updated;
 }
 
