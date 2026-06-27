@@ -124,8 +124,8 @@ export async function approveFeedbackAction(formData: FormData): Promise<void> {
   if (!id) throw new Error("Не указан id.");
   await setFeedbackStatus(id, "approved", "admin");
   revalidatePath("/admin/feedback");
-  revalidatePath("/");
-  revalidatePath("/reviews");
+  revalidatePath("/market");
+  revalidatePath("/market/reviews");
 }
 
 export async function rejectFeedbackAction(formData: FormData): Promise<void> {
@@ -134,8 +134,8 @@ export async function rejectFeedbackAction(formData: FormData): Promise<void> {
   if (!id) throw new Error("Не указан id.");
   await setFeedbackStatus(id, "rejected", "admin");
   revalidatePath("/admin/feedback");
-  revalidatePath("/");
-  revalidatePath("/reviews");
+  revalidatePath("/market");
+  revalidatePath("/market/reviews");
 }
 
 export async function deleteFeedbackAction(formData: FormData): Promise<void> {
@@ -144,6 +144,6 @@ export async function deleteFeedbackAction(formData: FormData): Promise<void> {
   if (!id) throw new Error("Не указан id.");
   await deleteFeedback(id);
   revalidatePath("/admin/feedback");
-  revalidatePath("/");
-  revalidatePath("/reviews");
+  revalidatePath("/market");
+  revalidatePath("/market/reviews");
 }

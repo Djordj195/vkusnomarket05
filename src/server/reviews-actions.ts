@@ -53,11 +53,11 @@ export async function submitReviewAction(
 
   // Revalidate relevant pages
   if (input.targetType === "product") {
-    revalidatePath(`/product/${input.targetId}`);
+    revalidatePath(`/market/product/${input.targetId}`);
   } else {
-    revalidatePath(`/shop/${input.targetId}`);
+    revalidatePath(`/market/shop/${input.targetId}`);
   }
-  revalidatePath("/reviews");
+  revalidatePath("/market/reviews");
   revalidatePath("/admin/reviews");
 
   return { ok: true };
@@ -79,8 +79,8 @@ export async function approveReviewAction(formData: FormData): Promise<void> {
   if (!id) throw new Error("Не указан id.");
   await setReviewStatus(id, "approved", "admin");
   revalidatePath("/admin/reviews");
-  revalidatePath("/reviews");
-  revalidatePath("/");
+  revalidatePath("/market/reviews");
+  revalidatePath("/market");
 }
 
 export async function rejectReviewAction(formData: FormData): Promise<void> {
@@ -89,8 +89,8 @@ export async function rejectReviewAction(formData: FormData): Promise<void> {
   if (!id) throw new Error("Не указан id.");
   await setReviewStatus(id, "rejected", "admin");
   revalidatePath("/admin/reviews");
-  revalidatePath("/reviews");
-  revalidatePath("/");
+  revalidatePath("/market/reviews");
+  revalidatePath("/market");
 }
 
 export async function deleteReviewAction(formData: FormData): Promise<void> {
@@ -99,6 +99,6 @@ export async function deleteReviewAction(formData: FormData): Promise<void> {
   if (!id) throw new Error("Не указан id.");
   await deleteReview(id);
   revalidatePath("/admin/reviews");
-  revalidatePath("/reviews");
-  revalidatePath("/");
+  revalidatePath("/market/reviews");
+  revalidatePath("/market");
 }

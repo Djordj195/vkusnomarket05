@@ -51,7 +51,7 @@ export async function createShopAction(
     });
     revalidatePath("/admin/shops");
     revalidatePath("/admin");
-    revalidatePath("/");
+    revalidatePath("/market");
     return { ok: true, shop };
   } catch (e) {
     return {
@@ -84,7 +84,7 @@ export async function updateShopAction(
     if (!shop) return { ok: false, error: "Магазин не найден" };
     revalidatePath("/admin/shops");
     revalidatePath("/admin");
-    revalidatePath("/");
+    revalidatePath("/market");
     return { ok: true, shop };
   } catch (e) {
     return {
@@ -103,7 +103,7 @@ export async function deleteShopAction(id: string): Promise<Result> {
     if (!ok) return { ok: false, error: "Магазин не найден" };
     revalidatePath("/admin/shops");
     revalidatePath("/admin");
-    revalidatePath("/");
+    revalidatePath("/market");
     return { ok: true };
   } catch (e) {
     return {

@@ -31,7 +31,7 @@ export function FeedbackHomeCard({ items, total }: Props) {
   return (
     <section className="px-4">
       <Link
-        href="/reviews"
+        href="/market/reviews"
         aria-label="Все отзывы клиентов"
         className="group relative block overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-500 to-brand-700 p-5 text-white card-shadow"
       >

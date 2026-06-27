@@ -252,7 +252,7 @@ export async function createOrder(
 
   revalidatePath("/admin/orders");
   revalidatePath("/vendor/dashboard/orders");
-  revalidatePath("/orders");
+  revalidatePath("/market/orders");
 
   return { ok: true, orders, groupId };
 }

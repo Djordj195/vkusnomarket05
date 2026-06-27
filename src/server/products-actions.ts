@@ -80,8 +80,8 @@ export async function createProductAction(
       isWeekly: input.isWeekly,
     });
     revalidatePath("/admin/products");
-    revalidatePath("/");
-    revalidatePath(`/product/${product.slug}`);
+    revalidatePath("/market");
+    revalidatePath(`/market/product/${product.slug}`);
     return { ok: true, product };
   } catch (e) {
     return {
@@ -120,8 +120,8 @@ export async function updateProductAction(
     });
     if (!product) return { ok: false, error: "Товар не найден" };
     revalidatePath("/admin/products");
-    revalidatePath("/");
-    revalidatePath(`/product/${product.slug}`);
+    revalidatePath("/market");
+    revalidatePath(`/market/product/${product.slug}`);
     return { ok: true, product };
   } catch (e) {
     return {
@@ -139,7 +139,7 @@ export async function deleteProductAction(id: string): Promise<Result> {
     const ok = await deleteProduct(id);
     if (!ok) return { ok: false, error: "Товар не найден" };
     revalidatePath("/admin/products");
-    revalidatePath("/");
+    revalidatePath("/market");
     return { ok: true };
   } catch (e) {
     return {
@@ -163,9 +163,9 @@ export async function setProductWeeklyAction(
     if (!product) return { ok: false, error: "Товар не найден" };
     revalidatePath("/admin/weekly");
     revalidatePath("/admin/products");
-    revalidatePath("/weekly");
-    revalidatePath("/");
-    revalidatePath(`/product/${product.slug}`);
+    revalidatePath("/market/weekly");
+    revalidatePath("/market");
+    revalidatePath(`/market/product/${product.slug}`);
     return { ok: true, product };
   } catch (e) {
     return {

@@ -38,7 +38,7 @@ export function RepeatOrderButton({
         quantity: it.quantity,
       }))
     );
-    router.push("/cart?repeated=1");
+    router.push("/market/cart?repeated=1");
   };
 
   return (

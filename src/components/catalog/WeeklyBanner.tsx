@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 export function WeeklyBanner({ count }: { count: number }) {
   return (
     <Link
-      href="/weekly"
+      href="/market/weekly"
       className="flex items-center justify-between rounded-3xl bg-gradient-to-r from-brand-600 to-brand-500 px-5 py-4 text-white shadow-md shadow-brand-600/25"
     >
       <div className="flex flex-col">

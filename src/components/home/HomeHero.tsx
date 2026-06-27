@@ -77,7 +77,7 @@ export function HomeHero({ citySlot }: HomeHeroProps) {
       <div className="px-4" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
         <div className="flex items-center justify-between">
           <Link
-            href="/"
+            href="/market"
             aria-label="ВкусМаркет — на главную"
             className="block"
           >
@@ -110,7 +110,7 @@ function VerticalHeroTile({ tile }: { tile: VerticalTile }) {
   const Icon = tile.icon;
   return (
     <Link
-      href={`/vertical/${tile.vertical}`}
+      href={`/market/vertical/${tile.vertical}`}
       className={`glass-tile relative flex h-[104px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br ${tile.gradient} p-3 text-white transition active:scale-[0.98]`}
     >
       <Icon size={26} strokeWidth={2} />

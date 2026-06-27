@@ -39,7 +39,7 @@ export function Header({
       >
         <div className="mx-auto max-w-screen-lg px-4 pt-3 pb-2">
           <div className="flex items-center justify-between">
-            <Link href="/" className="block">
+            <Link href="/market" className="block">
               <Logo size={32} />
             </Link>
             {citySlot}

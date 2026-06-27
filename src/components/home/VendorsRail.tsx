@@ -22,7 +22,7 @@ export function VendorsRail({
           Продавцы · {cityName}
         </h2>
         <Link
-          href="/vertical/food"
+          href="/market/vertical/food"
           className="inline-flex items-center gap-1 text-[14px] font-semibold text-brand-600 hover:text-brand-700"
         >
           Все

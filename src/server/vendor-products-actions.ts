@@ -93,11 +93,11 @@ export async function vendorCreateProductAction(
       isWeekly: false,
     });
     revalidatePath("/vendor/dashboard/catalog");
-    revalidatePath("/");
-    revalidatePath("/catalog");
-    revalidatePath(`/section/${source}`);
-    revalidatePath(`/product/${product.slug}`);
-    revalidatePath(`/category/${input.categoryId}`);
+    revalidatePath("/market");
+    revalidatePath("/market/catalog");
+    revalidatePath(`/market/section/${source}`);
+    revalidatePath(`/market/product/${product.slug}`);
+    revalidatePath(`/market/category/${input.categoryId}`);
     return { ok: true, product };
   } catch (e) {
     return {
@@ -139,9 +139,9 @@ export async function vendorUpdateProductAction(
     });
     if (!product) return { ok: false, error: "Товар не найден" };
     revalidatePath("/vendor/dashboard/catalog");
-    revalidatePath("/");
-    revalidatePath("/catalog");
-    revalidatePath(`/product/${product.slug}`);
+    revalidatePath("/market");
+    revalidatePath("/market/catalog");
+    revalidatePath(`/market/product/${product.slug}`);
     return { ok: true, product };
   } catch (e) {
     return {
@@ -164,8 +164,8 @@ export async function vendorDeleteProductAction(id: string): Promise<Result> {
     const ok = await deleteProduct(id);
     if (!ok) return { ok: false, error: "Товар не найден" };
     revalidatePath("/vendor/dashboard/catalog");
-    revalidatePath("/");
-    revalidatePath("/catalog");
+    revalidatePath("/market");
+    revalidatePath("/market/catalog");
     return { ok: true };
   } catch (e) {
     return {
@@ -191,8 +191,8 @@ export async function vendorToggleStockAction(
     const product = await updateProduct(id, { inStock });
     if (!product) return { ok: false, error: "Товар не найден" };
     revalidatePath("/vendor/dashboard/catalog");
-    revalidatePath("/");
-    revalidatePath("/catalog");
+    revalidatePath("/market");
+    revalidatePath("/market/catalog");
     return { ok: true, product };
   } catch (e) {
     return {
