@@ -36,6 +36,7 @@ import {
   formatPrice,
   isValidPhone,
   maskPhoneInput,
+  pluralize,
 } from "@/lib/utils";
 import { DELIVERY_FEE } from "@/lib/constants";
 import { createOrder } from "@/server/orders-actions";
@@ -463,7 +464,7 @@ export function CheckoutView({ products, vendors }: Props) {
             Итого:{" "}
             <b className="text-ink-900">{formatPrice(grandTotal)}</b>
             {detailedItems.length > 0 && (
-              <> · {groups.length > 1 ? `${groups.length} заказа` : "1 заказ"}</>
+              <> · {groups.length} {pluralize(groups.length, ["заказ", "заказа", "заказов"])}</>
             )}
           </span>
         </div>
@@ -870,7 +871,7 @@ function ConfirmStep({
       <Section
         title={
           groups.length > 1
-            ? `Будет оформлено ${groups.length} заказа`
+            ? `Будет оформлено ${groups.length} ${pluralize(groups.length, ["заказ", "заказа", "заказов"])}`
             : "Состав заказа"
         }
       >

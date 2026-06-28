@@ -14,7 +14,7 @@ import {
   type Order,
   type OrderStatus,
 } from "@/lib/types";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatDate, formatPrice, pluralize } from "@/lib/utils";
 import { VendorOrdersAutoRefresh } from "./VendorOrdersAutoRefresh";
 
 type Tab = { key: string; label: string; statuses: OrderStatus[] | null };
@@ -157,7 +157,7 @@ function OrderRow({ order }: { order: Order }) {
         </div>
         <div className="mt-2 flex items-center justify-between text-[12px] text-ink-600">
           <span>
-            {order.items.length} позиции · {deliveryLabel}
+            {order.items.length} {pluralize(order.items.length, ["позиция", "позиции", "позиций"])} · {deliveryLabel}
           </span>
           <span className="text-[14px] font-bold text-ink-900">
             {formatPrice(order.total)}
