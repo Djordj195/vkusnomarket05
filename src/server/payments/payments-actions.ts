@@ -20,8 +20,10 @@ import {
   yooGetPayment,
   yooMethodType,
 } from "./yookassa";
+import type { YooTransfer } from "./yookassa";
 import type {
   OnlinePaymentMethod,
+  Order,
   Payment,
   PaymentProvider,
   PaymentStatus,
@@ -30,6 +32,7 @@ import {
   notifyPaymentRefunded,
   notifyPaymentSucceeded,
 } from "../notifications/events";
+import { getVendorById } from "../vendors-store";
 
 // Причина отмены платежа из ЮKassa cancellation_details → человекочитаемо.
 function cancellationFrom(data: {
@@ -73,6 +76,46 @@ function publicSiteUrl(): string {
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://vkusnomarket05.vercel.app"
   );
+}
+
+/**
+ * Строит массив transfers для сплитования ЮKassa.
+ * Группирует заказы по vendorId, вычисляет комиссию платформы для каждого.
+ * Если ни у одного продавца нет yookassaShopId — transfers пустой (обычный
+ * платёж, средства идут на счёт платформы целиком).
+ */
+async function buildTransfers(
+  orders: Order[],
+  _totalKop: number
+): Promise<{ transfers: YooTransfer[]; onBehalfOf?: string }> {
+  const vendorTotalsKop = new Map<string, number>();
+  for (const order of orders) {
+    if (!order.vendorId) continue;
+    const current = vendorTotalsKop.get(order.vendorId) ?? 0;
+    vendorTotalsKop.set(order.vendorId, current + Math.round(order.total * 100));
+  }
+
+  const transfers: YooTransfer[] = [];
+  let onBehalfOf: string | undefined;
+
+  for (const [vendorId, vendorKop] of vendorTotalsKop) {
+    const vendor = await getVendorById(vendorId);
+    if (!vendor?.yookassaShopId) continue;
+
+    const rate = vendor.commissionRate / 100;
+    const platformFeeKop = Math.round(vendorKop * rate);
+    const vendorAmountKop = vendorKop - platformFeeKop;
+
+    transfers.push({
+      accountId: vendor.yookassaShopId,
+      amountKop: vendorAmountKop,
+      platformFeeKop,
+    });
+
+    if (!onBehalfOf) onBehalfOf = vendor.yookassaShopId;
+  }
+
+  return { transfers, onBehalfOf };
 }
 
 /**
@@ -133,6 +176,7 @@ export async function createPaymentForCheckoutGroup(input: {
   )}&pay=return`;
 
   if (isYookassaConfigured()) {
+    const splitData = await buildTransfers(orders, amountKop);
     const res = await yooCreatePayment({
       amountKop,
       description,
@@ -145,6 +189,8 @@ export async function createPaymentForCheckoutGroup(input: {
         ...(input.method ? { method: input.method } : {}),
       },
       paymentMethodType: yooMethodType(input.method),
+      transfers: splitData.transfers,
+      onBehalfOf: splitData.onBehalfOf,
     });
     if (!res.ok) {
       await logAudit({

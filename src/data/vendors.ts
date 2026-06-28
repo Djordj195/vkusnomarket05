@@ -29,5 +29,6 @@ export const VENDORS: Vendor[] = [
     featured: true,
     subscriptionTier: "free",
     sortOrder: 1,
+    commissionRate: 5,
   },
 ];

@@ -94,6 +94,8 @@ export type Vendor = {
   featured: boolean;
   subscriptionTier: "free" | "basic" | "premium";
   sortOrder: number;
+  yookassaShopId?: string;
+  commissionRate: number;
 };
 
 export type Category = {

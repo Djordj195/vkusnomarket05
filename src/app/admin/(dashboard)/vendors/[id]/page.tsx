@@ -11,6 +11,7 @@ import {
 import {
   toggleVendorFeaturedAction,
   updateVendorStatusAction,
+  updateVendorYookassaAction,
 } from "@/server/vendor-actions";
 import { DeleteVendorButton } from "./DeleteVendorButton";
 import { AdminResetPasswordForm } from "./AdminResetPasswordForm";
@@ -200,6 +201,48 @@ export default async function AdminVendorDetailPage({
             )}
           </div>
         )}
+      </section>
+
+      <section className="rounded-2xl bg-white border border-ink-200 p-4">
+        <h2 className="text-[14px] font-bold text-ink-800">ЮKassa сплитование</h2>
+        <p className="mt-1 text-[12px] text-ink-500">
+          Shop ID продавца в ЮKassa для автоматического разделения средств.
+        </p>
+        <form action={updateVendorYookassaAction} className="mt-3 space-y-3">
+          <input type="hidden" name="id" value={vendor.id} />
+          <div>
+            <label className="block text-[12px] font-medium text-ink-600 mb-1">
+              YooKassa Shop ID
+            </label>
+            <input
+              type="text"
+              name="yookassaShopId"
+              defaultValue={vendor.yookassaShopId ?? ""}
+              placeholder="Например: 123456"
+              className="w-full rounded-lg border border-ink-200 px-3 py-2 text-[13px] focus:border-brand-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-ink-600 mb-1">
+              Комиссия платформы (%)
+            </label>
+            <input
+              type="number"
+              name="commissionRate"
+              defaultValue={vendor.commissionRate}
+              min={0}
+              max={100}
+              step={0.01}
+              className="w-full rounded-lg border border-ink-200 px-3 py-2 text-[13px] focus:border-brand-500 focus:outline-none"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-lg bg-brand-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-brand-700"
+          >
+            Сохранить
+          </button>
+        </form>
       </section>
 
       <DataCard title="Юридическая информация">
