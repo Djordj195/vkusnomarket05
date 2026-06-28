@@ -39,6 +39,8 @@ type VendorRow = {
   featured: boolean;
   subscription_tier: "free" | "basic" | "premium";
   sort_order: number;
+  yookassa_shop_id: string | null;
+  commission_rate: number;
 };
 
 function rowToVendor(r: VendorRow): Vendor {
@@ -69,11 +71,13 @@ function rowToVendor(r: VendorRow): Vendor {
     featured: r.featured,
     subscriptionTier: r.subscription_tier,
     sortOrder: r.sort_order,
+    yookassaShopId: r.yookassa_shop_id ?? undefined,
+    commissionRate: r.commission_rate ?? 5,
   };
 }
 
 const VENDOR_COLS =
-  "id, slug, brand_name, vertical_primary, verticals, city_id, owner_user_id, status, logo_url, banner_url, short_description, description, legal_entity_type, legal_name, inn, contact_phone, contact_email, contact_telegram, contact_whatsapp, rating_avg, rating_count, featured, subscription_tier, sort_order";
+  "id, slug, brand_name, vertical_primary, verticals, city_id, owner_user_id, status, logo_url, banner_url, short_description, description, legal_entity_type, legal_name, inn, contact_phone, contact_email, contact_telegram, contact_whatsapp, rating_avg, rating_count, featured, subscription_tier, sort_order, yookassa_shop_id, commission_rate";
 
 export type ListVendorsOptions = {
   cityId?: string;
@@ -372,6 +376,23 @@ export async function updateVendorContacts(
   const sb = getSupabaseAdmin()!;
   const { error } = await sb.from("vendors").update(row).eq("id", id);
   if (error) throw new Error(`updateVendorContacts: ${error.message}`);
+}
+
+export async function updateVendorYookassa(
+  id: string,
+  yookassaShopId: string | null,
+  commissionRate?: number
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("updateVendorYookassa: Supabase не настроен.");
+  }
+  const sb = getSupabaseAdmin()!;
+  const row: Record<string, unknown> = {
+    yookassa_shop_id: yookassaShopId,
+  };
+  if (commissionRate !== undefined) row.commission_rate = commissionRate;
+  const { error } = await sb.from("vendors").update(row).eq("id", id);
+  if (error) throw new Error(`updateVendorYookassa: ${error.message}`);
 }
 
 export async function softDeleteVendor(id: string): Promise<void> {

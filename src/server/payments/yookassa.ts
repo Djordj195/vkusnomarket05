@@ -92,6 +92,12 @@ export function yooMethodType(
   return APP_METHOD_TO_YOO[method];
 }
 
+export type YooTransfer = {
+  accountId: string;
+  amountKop: number;
+  platformFeeKop: number;
+};
+
 export type YooCreatePaymentInput = {
   amountKop: number;
   currency?: string;
@@ -102,6 +108,10 @@ export type YooCreatePaymentInput = {
   metadata?: Record<string, string>;
   /** Тип способа оплаты ЮKassa. Если не задан — выбор на стороне ЮKassa. */
   paymentMethodType?: YooPaymentMethodType;
+  /** Сплитование: автоматическое разделение средств между платформой и продавцами. */
+  transfers?: YooTransfer[];
+  /** Shop ID продавца — чек выставляется от его имени (54-ФЗ). */
+  onBehalfOf?: string;
 };
 
 // Минимально-достаточный тип ответа ЮKassa, который мы используем
@@ -179,6 +189,22 @@ export async function yooCreatePayment(
   if (input.metadata) body.metadata = input.metadata;
   if (input.receipt) {
     body.receipt = buildReceiptBody(input.receipt, env.taxSystemCode);
+  }
+  if (input.transfers && input.transfers.length > 0) {
+    body.transfers = input.transfers.map((t) => ({
+      account_id: t.accountId,
+      amount: {
+        value: kopToAmountString(t.amountKop),
+        currency: input.currency ?? "RUB",
+      },
+      platform_fee_amount: {
+        value: kopToAmountString(t.platformFeeKop),
+        currency: input.currency ?? "RUB",
+      },
+    }));
+  }
+  if (input.onBehalfOf) {
+    body.on_behalf_of = input.onBehalfOf;
   }
 
   try {

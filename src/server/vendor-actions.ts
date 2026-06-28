@@ -11,6 +11,7 @@ import {
   softDeleteVendor,
   updateVendorFeatured,
   updateVendorStatus,
+  updateVendorYookassa,
   type CreateVendorInput,
 } from "./vendors-store";
 import { getSmsProvider } from "./sms";
@@ -276,4 +277,32 @@ export async function deleteVendorAction(formData: FormData): Promise<void> {
   revalidatePath("/market/catalog");
   revalidatePath("/market/weekly");
   revalidatePath("/", "layout");
+}
+
+// ─── YooKassa split-payments settings (admin only) ────────────
+export async function updateVendorYookassaAction(
+  formData: FormData
+): Promise<void> {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const yookassaShopId = String(formData.get("yookassaShopId") ?? "").trim() || null;
+  const commissionRateRaw = String(formData.get("commissionRate") ?? "").trim();
+  const commissionRate = commissionRateRaw ? parseFloat(commissionRateRaw) : undefined;
+
+  if (!id) return;
+  if (commissionRate !== undefined && (isNaN(commissionRate) || commissionRate < 0 || commissionRate > 100)) {
+    return;
+  }
+
+  await updateVendorYookassa(id, yookassaShopId, commissionRate);
+  await logAudit({
+    actorType: "admin",
+    action: "vendor.yookassa_update",
+    targetType: "vendor",
+    targetId: id,
+    payload: { yookassaShopId, commissionRate },
+  });
+
+  revalidatePath("/admin/vendors");
+  revalidatePath(`/admin/vendors/${id}`);
 }
