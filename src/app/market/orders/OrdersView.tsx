@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { RepeatOrderButton } from "@/components/orders/RepeatOrderButton";
 import { useOrders } from "@/store/orders";
-import { formatDate, formatPrice } from "@/lib/utils";
+import { formatDate, formatPrice, pluralize } from "@/lib/utils";
 import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
@@ -140,7 +140,7 @@ export function OrdersView() {
             />
             <div>
               <div className="text-[14px] font-bold text-ink-900">
-                Создано {groupOrders.length} заказа
+                Создано {groupOrders.length} {pluralize(groupOrders.length, ["заказ", "заказа", "заказов"])}
               </div>
               <div className="mt-0.5 text-[12px] text-ink-700">
                 Каждый продавец готовит и доставляет свою часть отдельно. Статусы
@@ -196,7 +196,7 @@ export function OrdersView() {
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-[13px] text-ink-500">
-                    {order.items.length} товаров
+                    {order.items.length} {pluralize(order.items.length, ["товар", "товара", "товаров"])}
                   </span>
                   <span className="text-[15px] font-bold text-ink-900">
                     {formatPrice(order.total)}

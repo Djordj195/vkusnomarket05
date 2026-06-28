@@ -128,7 +128,7 @@ export async function createPaymentForCheckoutGroup(input: {
   const description = `ВКУСМАРКЕТ заказ ${orders
     .map((o) => o.number)
     .join(", ")}`;
-  const returnUrl = `${publicSiteUrl()}/orders?group=${encodeURIComponent(
+  const returnUrl = `${publicSiteUrl()}/market/orders?group=${encodeURIComponent(
     input.checkoutGroupId
   )}&pay=return`;
 

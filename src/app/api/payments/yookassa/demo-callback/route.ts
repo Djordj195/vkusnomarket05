@@ -9,7 +9,7 @@ import { applyPaymentStatus } from "@/server/payments/payments-actions";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const paymentId = url.searchParams.get("paymentId");
-  const returnUrl = url.searchParams.get("returnUrl") || "/orders";
+  const returnUrl = url.searchParams.get("returnUrl") || "/market/orders";
   if (!paymentId) {
     return NextResponse.json({ error: "paymentId required" }, { status: 400 });
   }
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   // Prevent open redirect — only allow same-origin relative paths.
   const safeUrl = returnUrl.startsWith("/") && !returnUrl.startsWith("//")
     ? returnUrl
-    : "/orders";
+    : "/market/orders";
 
   await applyPaymentStatus(paymentId, "succeeded", { demo: true });
   return NextResponse.redirect(new URL(safeUrl, url.origin));

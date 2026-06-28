@@ -29,9 +29,10 @@ export async function GET(
   return NextResponse.json({
     id: order.id,
     status: order.status,
+    courierId: order.courierId ?? null,
     courier:
       courier && order.status === "courier"
-        ? { name: courier.name }
+        ? { name: courier.name, phone: courier.phone }
         : null,
   });
 }

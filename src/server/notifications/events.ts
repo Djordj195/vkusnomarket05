@@ -70,7 +70,7 @@ export async function notifyOrderStatusChanged(order: Order): Promise<void> {
       phone: order.customerPhone,
       title: `Заказ № ${order.number}: ${label}`,
       body: `Статус заказа обновлён. Сумма: ${formatPrice(order.total)}.`,
-      url: `${siteBase()}/orders/${order.id}`,
+      url: `${siteBase()}/market/orders/${order.id}`,
       payload: { orderId: order.id, status: order.status },
     });
   } catch (e) {
@@ -123,7 +123,7 @@ export async function notifyPaymentSucceeded(
         email,
         title: "Оплата прошла",
         body: `${amount}. Чек придёт на ваш номер и email.`,
-        url: `${siteBase()}/orders?group=${payment.checkoutGroupId}&pay=return`,
+        url: `${siteBase()}/market/orders?group=${payment.checkoutGroupId}&pay=return`,
         payload: { paymentId: payment.id },
       });
     }
@@ -173,7 +173,7 @@ export async function notifyPaymentRefunded(
       email: payment.customerEmail || undefined,
       title: "Возврат оформлен",
       body: `${amount} вернётся на карту в течение 3-7 рабочих дней.`,
-      url: `${siteBase()}/orders?group=${payment.checkoutGroupId}`,
+      url: `${siteBase()}/market/orders?group=${payment.checkoutGroupId}`,
       payload: { paymentId: payment.id },
     });
   } catch (e) {
@@ -222,7 +222,7 @@ export async function notifyTicketReplied(
           phone: isEmail ? undefined : ticket.requesterContact,
           title: `Ответ по обращению ${ticket.number}`,
           body: ticket.subject,
-          url: `${siteBase()}/support/tickets/${ticket.id}`,
+          url: `${siteBase()}/market/support/tickets/${ticket.id}`,
           payload: { ticketId: ticket.id },
         });
         return;
@@ -240,7 +240,7 @@ export async function notifyTicketReplied(
           : undefined,
         title: `Ответ по обращению ${ticket.number}`,
         body: ticket.subject,
-        url: `${siteBase()}/support/tickets/${ticket.id}`,
+        url: `${siteBase()}/market/support/tickets/${ticket.id}`,
         payload: { ticketId: ticket.id },
       });
     } else {
